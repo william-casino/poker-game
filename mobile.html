@@ -292,9 +292,10 @@
     .hero-hand-display .card .rank { font-size: 15px; }
     .hero-hand-display .card .suit { font-size: 17px; }
     #message-log {
-      position:absolute; left:10px; top:10px;
-      width:150px; max-width:150px; text-align:left; pointer-events:none;
+      position:absolute; left:4px; top:50%; transform:translateY(-50%);
+      width:128px; max-width:128px; text-align:left; pointer-events:none;
       z-index:10; display:flex; flex-direction:column; gap:4px;
+      /* 不影响table的flex布局，因为是absolute定位 */
     }
     .msg-item {
       font-size:13px; color:rgba(255,255,255,.95); background:rgba(0,0,0,.72);
@@ -617,8 +618,8 @@
           <!-- 9个座位对应的桌面内筹码落点 (bc-0 ~ bc-8) -->
         </div>
         <div id="seats-container"></div>
-        <div id="message-log"></div>
       </div>
+      <div id="message-log"></div>
     </div>
 
     <div id="action-area" class="hidden">
