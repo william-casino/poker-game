@@ -37,10 +37,10 @@
     #topbar .info span { color:var(--gold); margin:0 4px; }
     #table-wrap {
       flex:1; display:flex; align-items:center; justify-content:center;
-      padding:40px 40px 10px; position:relative; min-height:0;
+      padding:48px 20px 8px; position:relative; min-height:0;
     }
     #table {
-      width:min(860px,96vw); aspect-ratio:860/520;
+      width:min(860px,100%); aspect-ratio:860/520;
       background:radial-gradient(ellipse 80% 70% at 50% 50%,var(--felt-light),var(--felt),var(--felt-dark));
       border-radius:50% / 42%; border:10px solid #5a3a1a;
       box-shadow:0 0 0 3px #8b6020,0 10px 60px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.3);
@@ -256,6 +256,36 @@
     /* 覆盖桌面版旧的 .raise-wrap（手机版不用） */
     .raise-wrap { display: none !important; }
     .action-buttons { display: none !important; }
+
+    /* ===== 手机横屏全屏适配 ===== */
+    @media screen and (orientation: landscape) and (max-height: 500px) {
+      html, body {
+        width: 100%;
+        height: 100%;
+        max-width: 100vw;
+        overflow: hidden;
+      }
+      body {
+        height: 100dvh;
+        min-height: unset;
+      }
+      #topbar {
+        padding: 4px 12px;
+      }
+      #topbar .logo { font-size: 15px; }
+      #topbar .info { font-size: 11px; }
+      #table-wrap {
+        padding: 44px 16px 6px;
+      }
+      #table {
+        width: min(860px, 100%);
+        max-height: calc(100dvh - 44px - 110px);
+        aspect-ratio: 860/520;
+      }
+      .mob-top-row { padding: 4px 10px 2px; }
+      .mob-btn-row { padding: 3px 10px 4px; }
+      .btn { padding: 8px 4px; font-size: 12px; }
+    }
 
     /* 卡牌尺寸 */
     .hero-hand-display .card { width: 40px; height: 58px; }
