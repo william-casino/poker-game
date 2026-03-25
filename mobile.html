@@ -36,11 +36,18 @@
     #topbar .info { font-size:15px; color:var(--text-dim); }
     #topbar .info span { color:var(--gold); margin:0 4px; }
     #table-wrap {
-      flex:1; display:flex; align-items:center; justify-content:center;
-      padding:48px 20px 8px; position:relative; min-height:0;
+      flex:1; display:flex; flex-direction:row; align-items:center;
+      padding:48px 8px 8px 6px; position:relative; min-height:0; gap:4px;
+    }
+    #message-log {
+      width:120px; min-width:120px; max-width:120px; flex-shrink:0;
+      align-self:center; pointer-events:none;
+      display:flex; flex-direction:column; gap:4px;
+      z-index:10; padding:0 4px;
+      /* 静态布局，不再用absolute定位 */
     }
     #table {
-      width:min(860px,100%); aspect-ratio:860/520;
+      flex:1; min-width:0; aspect-ratio:860/520;
       background:radial-gradient(ellipse 80% 70% at 50% 50%,var(--felt-light),var(--felt),var(--felt-dark));
       border-radius:50% / 42%; border:10px solid #5a3a1a;
       box-shadow:0 0 0 3px #8b6020,0 10px 60px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.3);
@@ -275,7 +282,8 @@
       #topbar .logo { font-size: 15px; }
       #topbar .info { font-size: 11px; }
       #table-wrap {
-        padding: 44px 16px 6px;
+        padding: 44px 8px 6px 4px;
+        gap: 3px;
       }
       #table {
         width: min(860px, 100%);
@@ -291,12 +299,6 @@
     .hero-hand-display .card { width: 46px; height: 66px; }
     .hero-hand-display .card .rank { font-size: 15px; }
     .hero-hand-display .card .suit { font-size: 17px; }
-    #message-log {
-      position:absolute; left:4px; top:50%; transform:translateY(-50%);
-      width:128px; max-width:128px; text-align:left; pointer-events:none;
-      z-index:10; display:flex; flex-direction:column; gap:4px;
-      /* 不影响table的flex布局，因为是absolute定位 */
-    }
     .msg-item {
       font-size:13px; color:rgba(255,255,255,.95); background:rgba(0,0,0,.72);
       padding:4px 10px; border-radius:14px; margin:0;
@@ -470,10 +472,12 @@
       #topbar .info { font-size: 10px; }
 
       /* ── 牌桌 ── */
-      #table-wrap { padding: 48px 8px 4px; }
+      #table-wrap { padding: 48px 8px 4px 4px; gap: 3px; }
+      #message-log { width: 80px; min-width: 80px; }
       #table {
         height: min(220px, calc(100dvh - 26px - 120px - 44px));
         width: auto; aspect-ratio: 860/520;
+        flex: 1;
       }
 
       /* ── 座位极简 ── */
@@ -541,7 +545,7 @@
       #btn-next-hand { padding: 5px 14px; font-size: 12px; }
 
       /* ── 消息日志 ── */
-      #message-log { width: 55%; }
+      #message-log { width: 90px; min-width: 90px; }
       .msg-item { font-size: 9px; padding: 1px 7px; }
     }
 
