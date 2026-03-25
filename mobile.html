@@ -107,15 +107,15 @@
       box-shadow:0 2px 4px rgba(0,0,0,.5);
     }
     /* 座位坐标 */
-    .seat-pos-0 { bottom:-58px; left:50%; transform:translateX(-50%); }
-    .seat-pos-1 { bottom:6%; left:2%; }
-    .seat-pos-2 { top:26%; left:-2%; transform:translateY(-50%); }
-    .seat-pos-3 { top:-72px; left:10%; }
-    .seat-pos-4 { top:-72px; left:32%; transform:translateX(-50%); }
-    .seat-pos-5 { top:-72px; left:68%; transform:translateX(-50%); }
-    .seat-pos-6 { top:-72px; right:10%; }
-    .seat-pos-7 { top:26%; right:-2%; transform:translateY(-50%); }
-    .seat-pos-8 { bottom:6%; right:2%; }
+    .seat-pos-0 { bottom:-62px; left:50%; transform:translateX(-50%); }
+    .seat-pos-1 { bottom:2%; left:-1%; }
+    .seat-pos-2 { top:22%; left:-4%; transform:translateY(-50%); }
+    .seat-pos-3 { top:-78px; left:6%; }
+    .seat-pos-4 { top:-78px; left:28%; transform:translateX(-50%); }
+    .seat-pos-5 { top:-78px; left:72%; transform:translateX(-50%); }
+    .seat-pos-6 { top:-78px; right:6%; }
+    .seat-pos-7 { top:22%; right:-4%; transform:translateY(-50%); }
+    .seat-pos-8 { bottom:2%; right:-1%; }
     /* ===== 桌面筹码投注显示 ===== */
     #bets-layer {
       position:absolute; inset:0; pointer-events:none; z-index:6;
@@ -292,15 +292,16 @@
     .hero-hand-display .card .rank { font-size: 15px; }
     .hero-hand-display .card .suit { font-size: 17px; }
     #message-log {
-      position:absolute; left:8px; top:50%; transform:translateY(-50%);
-      width:120px; max-width:120px; text-align:left; pointer-events:none;
-      z-index:5; display:flex; flex-direction:column; gap:3px;
+      position:absolute; left:10px; top:10px;
+      width:150px; max-width:150px; text-align:left; pointer-events:none;
+      z-index:10; display:flex; flex-direction:column; gap:4px;
     }
     .msg-item {
-      font-size:13px; color:rgba(255,255,255,.9); background:rgba(0,0,0,.65);
-      padding:3px 10px; border-radius:14px; margin:0;
+      font-size:13px; color:rgba(255,255,255,.95); background:rgba(0,0,0,.72);
+      padding:4px 10px; border-radius:14px; margin:0;
       animation:fadeUp .3s ease; display:block;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      border-left: 3px solid rgba(240,192,64,.5);
     }
     .msg-item.gold { color:var(--gold); }
     .msg-item.red { color:#f88; }
@@ -924,7 +925,6 @@ function renderActions(){
       { label:'半池',  val: Math.round((pot*0.5+hero.bet)/BB)*BB },
       { label:'2/3池', val: Math.round((pot*2/3+hero.bet)/BB)*BB },
       { label:'1倍池', val: Math.round((pot+hero.bet)/BB)*BB },
-      { label:'2倍池', val: Math.round((pot*2+hero.bet)/BB)*BB },
     ];
     // 过滤：必须在 minRT~maxRT 范围内，且去重
     const seen=new Set();
@@ -944,6 +944,36 @@ function renderActions(){
       };
       raiseRow.appendChild(qb);
     });
+
+    // 自定义金额按钮
+    const customWrap = document.createElement('div');
+    customWrap.className = 'btn-quick-custom-wrap';
+    customWrap.style.cssText = 'flex:1.2; display:flex; flex-direction:column; gap:3px; min-width:0;';
+    customWrap.innerHTML = `
+      <div style="font-size:10px;color:var(--text-dim);text-align:center;">自定义</div>
+      <div style="display:flex;gap:3px;align-items:center;">
+        <input type="number" id="custom-raise-input"
+          min="${minRT}" max="${maxRT}" step="${BB}"
+          placeholder="${minRT}"
+          style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);
+          border-radius:6px;color:#fff;font-size:13px;font-weight:700;padding:5px 6px;
+          text-align:center;-webkit-appearance:none;outline:none;" />
+        <button id="custom-raise-btn"
+          style="padding:5px 8px;background:var(--btn-raise);border:none;border-radius:6px;
+          color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">确定</button>
+      </div>`;
+    raiseRow.appendChild(customWrap);
+    document.getElementById('custom-raise-btn').onclick = () => {
+      const inp = document.getElementById('custom-raise-input');
+      let v = Math.round(parseInt(inp.value)||minRT);
+      v = Math.max(minRT, Math.min(maxRT, v));
+      raiseRow.querySelectorAll('.btn-quick').forEach(b=>b.classList.remove('selected'));
+      resolveHero('raise', v);
+    };
+    // 按回车也触发确定
+    document.getElementById('custom-raise-input').onkeydown = (e) => {
+      if(e.key === 'Enter') document.getElementById('custom-raise-btn').click();
+    };
 
     // All-in 快捷按钮（放最后）
     const aib=document.createElement('button');
