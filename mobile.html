@@ -32,8 +32,8 @@
       padding:8px 20px; background:rgba(0,0,0,.6);
       border-bottom:1px solid rgba(255,255,255,.08); flex-shrink:0; z-index:10;
     }
-    #topbar .logo { font-size:18px; font-weight:700; color:var(--gold); letter-spacing:1px; }
-    #topbar .info { font-size:13px; color:var(--text-dim); }
+    #topbar .logo { font-size:20px; font-weight:700; color:var(--gold); letter-spacing:1px; }
+    #topbar .info { font-size:15px; color:var(--text-dim); }
     #topbar .info span { color:var(--gold); margin:0 4px; }
     #table-wrap {
       flex:1; display:flex; align-items:center; justify-content:center;
@@ -75,16 +75,16 @@
     .seat { position:absolute; display:flex; flex-direction:column; align-items:center; gap:4px; }
     .seat-info {
       background:rgba(0,0,0,.78); border:1.5px solid rgba(255,255,255,.14);
-      border-radius:10px; padding:5px 10px; min-width:88px; text-align:center;
-      font-size:12px; position:relative;
+      border-radius:10px; padding:5px 10px; min-width:96px; text-align:center;
+      font-size:14px; position:relative;
     }
     .seat-info.active { border-color:var(--gold); box-shadow:0 0 10px rgba(240,192,64,.5); }
     .seat-info.folded { opacity:.4; }
     .seat-info.eliminated { opacity:.18; }
     .seat-info.hero { border-color:#4af; }
-    .seat-name { font-weight:600; font-size:12px; }
-    .seat-chips { color:var(--gold); font-size:11px; }
-    .seat-bet { color:#7df; font-size:11px; min-height:14px; }
+    .seat-name { font-weight:600; font-size:15px; }
+    .seat-chips { color:var(--gold); font-size:13px; }
+    .seat-bet { color:#7df; font-size:12px; min-height:15px; }
     .seat-cards { display:flex; gap:3px; }
     /* 根据位置决定底牌出现的方向，避免遮挡公共牌 */
     /* 上方座位：底牌在上（column-reverse），牌向上展开 */
@@ -198,14 +198,14 @@
     .mob-hand-block { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
     .hero-hand-display { display: flex; gap: 5px; align-items: center; }
     #hand-strength {
-      font-size: 11px; color: var(--gold);
-      background: rgba(0,0,0,.5); padding: 1px 8px;
+      font-size: 13px; color: var(--gold);
+      background: rgba(0,0,0,.5); padding: 2px 10px;
       border-radius: 10px; font-weight: 600;
     }
     .mob-chips-block { text-align: right; line-height: 1.4; }
-    .chips-big { font-size: 18px; font-weight: 700; color: var(--text); }
-    .hero-status { font-size: 10px; color: var(--text-dim); }
-    #hero-bet-display { color: var(--gold); font-size: 10px; margin-top: 1px; }
+    .chips-big { font-size: 22px; font-weight: 700; color: var(--text); }
+    .hero-status { font-size: 12px; color: var(--text-dim); }
+    #hero-bet-display { color: var(--gold); font-size: 12px; margin-top: 1px; }
 
     /* 第二行：主操作按钮 */
     .mob-btn-row {
@@ -288,18 +288,19 @@
     }
 
     /* 卡牌尺寸 */
-    .hero-hand-display .card { width: 40px; height: 58px; }
-    .hero-hand-display .card .rank { font-size: 12px; }
-    .hero-hand-display .card .suit { font-size: 14px; }
+    .hero-hand-display .card { width: 46px; height: 66px; }
+    .hero-hand-display .card .rank { font-size: 15px; }
+    .hero-hand-display .card .suit { font-size: 17px; }
     #message-log {
-      position:absolute; bottom:18%; left:50%; transform:translateX(-50%);
-      width:80%; max-width:560px; text-align:center; pointer-events:none;
-      z-index:5;
+      position:absolute; left:8px; top:50%; transform:translateY(-50%);
+      width:120px; max-width:120px; text-align:left; pointer-events:none;
+      z-index:5; display:flex; flex-direction:column; gap:3px;
     }
     .msg-item {
-      font-size:12px; color:rgba(255,255,255,.85); background:rgba(0,0,0,.58);
-      padding:2px 12px; border-radius:20px; margin:2px auto;
-      animation:fadeUp .3s ease; display:inline-block;
+      font-size:13px; color:rgba(255,255,255,.9); background:rgba(0,0,0,.65);
+      padding:3px 10px; border-radius:14px; margin:0;
+      animation:fadeUp .3s ease; display:block;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .msg-item.gold { color:var(--gold); }
     .msg-item.red { color:#f88; }
