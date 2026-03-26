@@ -6,1909 +6,2889 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="游戏瞎" />
-  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#0d1117" />
-  <title>德州扑克 — 游戏瞎</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --felt: #1a6b3c; --felt-dark: #145530; --felt-light: #1f7d47;
-      --gold: #f0c040; --gold-dark: #c89a20;
-      --text: #f5f0e8; --text-dim: #a09080;
-      --btn-fold: #c0392b; --btn-call: #27ae60; --btn-raise: #2980b9; --btn-allin: #8e44ad;
-    }
-    body {
-      background: #0d1117;
-      font-family: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
-      color: var(--text);
-      min-height: 100vh;
-      min-height: 100dvh; /* 动态视口，适配 iPhone 安全区 */
-      height: 100dvh;
-      overflow: hidden;
-      display: flex; flex-direction: column;
-    }
-    #topbar {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:8px 20px; background:rgba(0,0,0,.6);
-      border-bottom:1px solid rgba(255,255,255,.08); flex-shrink:0; z-index:10;
-    }
-    #topbar .logo { font-size:20px; font-weight:700; color:var(--gold); letter-spacing:1px; }
-    #topbar .info { font-size:15px; color:var(--text-dim); }
-    #topbar .info span { color:var(--gold); margin:0 4px; }
-    #table-wrap {
-      flex:1; display:flex; flex-direction:row; align-items:center;
-      padding:48px 8px 8px 6px; position:relative; min-height:0; gap:4px;
-    }
-    #message-log {
-      width:120px; min-width:120px; max-width:120px; flex-shrink:0;
-      align-self:center; pointer-events:none;
-      display:flex; flex-direction:column; gap:4px;
-      z-index:10; padding:0 4px;
-      /* 静态布局，不再用absolute定位 */
-    }
-    #table {
-      flex:1; min-width:0; aspect-ratio:860/520;
-      background:radial-gradient(ellipse 80% 70% at 50% 50%,var(--felt-light),var(--felt),var(--felt-dark));
-      border-radius:50% / 42%; border:10px solid #5a3a1a;
-      box-shadow:0 0 0 3px #8b6020,0 10px 60px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.3);
-      position:relative;
-    }
-    #community-area {
-      position:absolute; top:50%; left:50%;
-      transform:translate(-50%,-50%);
-      display:flex; flex-direction:column; align-items:center; gap:6px;
-    }
-    #community-cards { display:flex; gap:6px; align-items:center; }
-    #pot-display {
-      text-align:center; font-size:13px; color:var(--gold); font-weight:600;
-      background:rgba(0,0,0,.45); padding:3px 14px; border-radius:20px;
-    }
-    #round-label { font-size:11px; color:rgba(255,255,255,.5); text-align:center; }
-    .card {
-      width:50px; height:72px; background:#fff; border:1.5px solid #ccc;
-      border-radius:7px; display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      box-shadow:2px 3px 8px rgba(0,0,0,.5);
-      user-select:none; flex-shrink:0; transition:transform .15s;
-    }
-    .card .rank { font-size:15px; font-weight:700; line-height:1; }
-    .card .suit { font-size:18px; line-height:1; }
-    .card.red { color:#d32f2f; } .card.black { color:#111; }
-    .card.back { background:linear-gradient(135deg,#1a3a6b,#0d1f40,#1a3a6b); border-color:#2a4a8b; }
-    .card.back::after { content:'🂠'; font-size:34px; color:rgba(255,255,255,.12); }
-    .card.placeholder { border:2px dashed rgba(255,255,255,.2); background:rgba(255,255,255,.04); }
-    .card-sm { width:34px; height:50px; }
-    .card-sm .rank { font-size:11px; } .card-sm .suit { font-size:13px; }
-    .seat { position:absolute; display:flex; flex-direction:column; align-items:center; gap:4px; }
-    .seat-info {
-      background:rgba(0,0,0,.78); border:1.5px solid rgba(255,255,255,.14);
-      border-radius:10px; padding:5px 10px; min-width:96px; text-align:center;
-      font-size:14px; position:relative;
-    }
-    .seat-info.active { border-color:var(--gold); box-shadow:0 0 10px rgba(240,192,64,.5); }
-    .seat-info.folded { opacity:.4; }
-    .seat-info.eliminated { opacity:.18; }
-    .seat-info.hero { border-color:#4af; }
-    .seat-name { font-weight:600; font-size:15px; }
-    .seat-chips { color:var(--gold); font-size:13px; }
-    .seat-bet { color:#7df; font-size:12px; min-height:15px; }
-    .seat-cards { display:flex; gap:3px; }
-    /* 根据位置决定底牌出现的方向，避免遮挡公共牌 */
-    /* 上方座位：底牌在上（column-reverse），牌向上展开 */
-    .seat-pos-3, .seat-pos-4, .seat-pos-5, .seat-pos-6 { flex-direction:column-reverse; }
-    .seat-pos-3 > .seat-cards,
-    .seat-pos-4 > .seat-cards,
-    .seat-pos-5 > .seat-cards,
-    .seat-pos-6 > .seat-cards { margin-bottom:3px; }
-    /* 左侧座位：底牌在右侧 */
-    .seat-pos-1, .seat-pos-2 { flex-direction:row; align-items:center; }
-    .seat-pos-1 > .seat-cards, .seat-pos-2 > .seat-cards { margin-left:4px; }
-    /* 右侧座位：底牌在左侧 */
-    .seat-pos-7, .seat-pos-8 { flex-direction:row-reverse; align-items:center; }
-    .seat-pos-7 > .seat-cards, .seat-pos-8 > .seat-cards { margin-right:4px; }
-    .dealer-btn {
-      position:absolute; top:-10px; right:-10px;
-      width:22px; height:22px; background:var(--gold); color:#000;
-      border-radius:50%; font-size:9px; font-weight:900;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 2px 4px rgba(0,0,0,.5);
-    }
-    /* 座位坐标 */
-    .seat-pos-0 { bottom:-62px; left:50%; transform:translateX(-50%); }
-    .seat-pos-1 { bottom:2%; left:-1%; }
-    .seat-pos-2 { top:22%; left:-4%; transform:translateY(-50%); }
-    .seat-pos-3 { top:-78px; left:6%; }
-    .seat-pos-4 { top:-78px; left:28%; transform:translateX(-50%); }
-    .seat-pos-5 { top:-78px; left:72%; transform:translateX(-50%); }
-    .seat-pos-6 { top:-78px; right:6%; }
-    .seat-pos-7 { top:22%; right:-4%; transform:translateY(-50%); }
-    .seat-pos-8 { bottom:2%; right:-1%; }
-    /* ===== 桌面筹码投注显示 ===== */
-    #bets-layer {
-      position:absolute; inset:0; pointer-events:none; z-index:6;
-    }
-    .bet-chip-spot {
-      position:absolute; display:flex; flex-direction:column;
-      align-items:center; gap:3px; transform:translate(-50%,-50%);
-    }
-    /* 每个座位对应桌面内的筹码落点坐标（相对 #table 百分比） */
-    .bc-0  { left:50%;  top:82%; }
-    .bc-1  { left:16%;  top:74%; }
-    .bc-2  { left:10%;  top:42%; }
-    .bc-3  { left:20%;  top:18%; }
-    .bc-4  { left:38%;  top:12%; }
-    .bc-5  { left:62%;  top:12%; }
-    .bc-6  { left:80%;  top:18%; }
-    .bc-7  { left:90%;  top:42%; }
-    .bc-8  { left:84%;  top:74%; }
+  <title>游戏瞎 · 德州扑克</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold: #f0c040; --gold-dark: #c89a20;
+  --text: #f5f0e8; --text-dim: #a09080;
+  --bg: #0d1117; --bg2: #161b22; --bg3: #1e2530;
+  --border: rgba(255,255,255,.1);
+  --felt: #1a6b3c; --felt-dark: #145530; --felt-light: #1f7d47;
+  --btn-fold: #c0392b; --btn-call: #27ae60; --btn-raise: #2980b9; --btn-allin: #8e44ad;
+  --tab-h: 60px;
+}
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg);
+  font-family: 'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;
+  color: var(--text);
+  overflow: hidden;
+}
+/* =========================================================
+   顶栏
+   ========================================================= */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px;
+  background: rgba(13,17,23,.95);
+  border-bottom: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+#topbar .logo { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
+#topbar .player-info { font-size: 13px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+#topbar .player-info .name { color: var(--text); font-weight: 600; }
+#topbar .player-info .score { color: var(--gold); font-weight: 700; }
 
-    .bet-chip-coin {
-      width:28px; height:28px; border-radius:50%;
-      background:radial-gradient(circle at 35% 35%, #ffe066, #c8960a);
-      border:2px solid #f0c040;
-      box-shadow:0 2px 6px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,255,255,.4);
-      display:flex; align-items:center; justify-content:center;
-      font-size:9px; font-weight:800; color:#5a3a00;
-    }
-    .bet-chip-amt {
-      font-size:10px; font-weight:700; color:#ffe066;
-      text-shadow:0 1px 3px rgba(0,0,0,.9);
-      white-space:nowrap;
-    }
+/* =========================================================
+   底部Tab导航
+   ========================================================= */
+#bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  height: var(--tab-h);
+  display: flex;
+  background: rgba(13,17,23,.97);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tab-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer; transition: opacity .15s;
+  opacity: .5;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-item.active { opacity: 1; }
+.tab-item .tab-icon { font-size: 22px; line-height: 1; }
+.tab-item .tab-label { font-size: 10px; color: var(--text-dim); }
+.tab-item.active .tab-label { color: var(--gold); }
 
-    /* 飞币动画关键帧 - 从座位飞向落点 */
-    @keyframes chip-fly {
-      0%   { opacity:0; transform:scale(0.4) translate(var(--dx), var(--dy)); }
-      60%  { opacity:1; transform:scale(1.15) translate(0,0); }
-      100% { opacity:1; transform:scale(1)    translate(0,0); }
-    }
-    .bet-chip-coin.flying {
-      animation: chip-fly 0.38s cubic-bezier(.22,.68,0,1.2) forwards;
-    }
+/* =========================================================
+   主内容区
+   ========================================================= */
+#main-content {
+  position: fixed;
+  top: 52px;
+  bottom: var(--tab-h);
+  left: 0; right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.page { display: none; min-height: 100%; }
+.page.active { display: block; }
 
-    /* ============================================================
-       手机版操作区（全局覆盖桌面版样式）
-       布局：
-         #action-area
-           .mob-top-row  →  [手牌+强度]  [积分信息]
-           .mob-btn-row  →  [弃牌] [过牌/跟注] [加注] [全下]
-           .mob-raise-row（加注模式）→ 快捷金额按钮
-       ============================================================ */
-    body {
-      background: #0d1117;
-      font-family: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
-      color: var(--text);
-      height: 100dvh;
-      min-height: 100dvh;
-      overflow: hidden;
-      display: flex; flex-direction: column;
-    }
+/* =========================================================
+   主页
+   ========================================================= */
+#page-home {
+  padding: 20px 16px 20px;
+}
+.home-banner {
+  background: linear-gradient(135deg, #1a2744 0%, #0d2233 50%, #1a3320 100%);
+  border-radius: 16px; padding: 24px 20px; margin-bottom: 20px;
+  border: 1px solid rgba(255,200,0,.15);
+  text-align: center;
+}
+.home-banner h1 { font-size: 24px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+.home-banner p { font-size: 13px; color: var(--text-dim); }
+.home-player-card {
+  background: var(--bg2); border-radius: 14px; padding: 16px 18px;
+  margin-bottom: 20px; border: 1px solid var(--border);
+}
+.home-player-card .no-player {
+  text-align: center; color: var(--text-dim); font-size: 14px; padding: 8px 0;
+}
+.home-player-row { display: flex; align-items: center; gap: 12px; }
+.home-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), #c89a20);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; color: #000; flex-shrink: 0;
+}
+.home-player-detail { flex: 1; }
+.home-player-name { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+.home-player-level { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+.home-player-score { font-size: 22px; font-weight: 700; color: var(--gold); }
+.home-cards-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin-bottom: 20px;
+}
+.home-card {
+  background: var(--bg2); border-radius: 14px; padding: 18px 16px;
+  border: 1px solid var(--border); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .15s, transform .1s;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.home-card:active { transform: scale(.97); border-color: var(--gold); }
+.home-card .card-icon { font-size: 28px; }
+.home-card .card-title { font-size: 15px; font-weight: 700; }
+.home-card .card-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+.home-card.featured { 
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(240,192,64,.12), rgba(240,192,64,.04));
+  border-color: rgba(240,192,64,.3);
+}
 
-    /* 操作区：三行结构 */
-    #action-area {
-      background: rgba(0,0,0,.80);
-      border-top: 1px solid rgba(255,255,255,.10);
-      padding: 0;
-      display: flex; flex-direction: column;
-      flex-shrink: 0;
-    }
-    #action-area.hidden { display: none; }
-    #action-area.invisible { visibility: hidden; pointer-events: none; }
+/* 玩家选择弹窗 */
+#player-modal {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.7);
+  align-items: flex-end; justify-content: center;
+}
+#player-modal.show { display: flex; }
+.modal-sheet {
+  background: var(--bg2); border-radius: 20px 20px 0 0;
+  width: 100%; max-height: 75vh;
+  padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0));
+  overflow-y: auto;
+}
+.modal-handle {
+  width: 36px; height: 4px; background: rgba(255,255,255,.2);
+  border-radius: 2px; margin: 0 auto 18px;
+}
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+.player-list-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.player-list-item:last-child { border-bottom: none; }
+.player-list-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), #c89a20);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: #000;
+}
+.player-list-name { flex: 1; font-size: 15px; font-weight: 600; }
+.player-list-score { font-size: 13px; color: var(--gold); }
+.new-player-btn {
+  width: 100%; margin-top: 16px; padding: 14px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.new-player-input-row {
+  display: none; gap: 10px; margin-top: 12px;
+}
+.new-player-input-row.show { display: flex; }
+.new-player-input {
+  flex: 1; padding: 12px 14px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-size: 15px;
+}
+.new-player-input:focus { outline: none; border-color: var(--gold); }
+.new-player-confirm {
+  padding: 12px 18px; background: var(--gold); color: #000;
+  border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+}
 
-    /* 第一行：手牌 + 强度  /  积分信息 */
-    .mob-top-row {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 6px 14px 4px;
-      gap: 10px;
-    }
-    .mob-hand-block { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
-    .hero-hand-display { display: flex; gap: 5px; align-items: center; }
-    #hand-strength {
-      font-size: 13px; color: var(--gold);
-      background: rgba(0,0,0,.5); padding: 2px 10px;
-      border-radius: 10px; font-weight: 600;
-    }
-    .mob-chips-block { text-align: right; line-height: 1.4; }
-    .chips-big { font-size: 22px; font-weight: 700; color: var(--text); }
-    .hero-status { font-size: 12px; color: var(--text-dim); }
-    #hero-bet-display { color: var(--gold); font-size: 12px; margin-top: 1px; }
+/* =========================================================
+   情景实战页
+   ========================================================= */
+#page-scenario { padding: 16px 14px 16px; }
 
-    /* 第二行：主操作按钮 */
-    .mob-btn-row {
-      display: flex; gap: 8px; align-items: center;
-      padding: 4px 14px 6px;
-      flex-wrap: nowrap;
-    }
-    .btn {
-      flex: 1; padding: 10px 6px; border: none; border-radius: 8px;
-      font-size: 13px; font-weight: 700; cursor: pointer;
-      transition: all .12s; white-space: nowrap;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .btn:active { filter: brightness(.85); transform: scale(.97); }
-    .btn-fold  { background: var(--btn-fold);  color: #fff; }
-    .btn-check { background: #555;             color: #fff; }
-    .btn-call  { background: var(--btn-call);  color: #fff; }
-    .btn-raise { background: var(--btn-raise); color: #fff; }
-    .btn-allin { background: var(--btn-allin); color: #fff; }
-    .btn-cancel{ background: #444; color: #fff; }
+/* --- 筛选区 --- */
+.sc-section-title {
+  font-size: 13px; font-weight: 700; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 10px;
+}
+.sc-filter-group { margin-bottom: 16px; }
+.sc-filter-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.sc-chip {
+  padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  background: var(--bg3); border: 1.5px solid var(--border);
+  color: var(--text-dim); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all .15s;
+}
+.sc-chip.active {
+  background: rgba(240,192,64,.15);
+  border-color: var(--gold); color: var(--gold);
+}
+.sc-start-btn {
+  width: 100%; padding: 16px; margin-top: 8px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sc-filter-desc {
+  text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 12px;
+}
 
-    /* 第三行：快捷加注金额（仅加注模式显示） */
-    .mob-raise-row {
-      display: none;
-      gap: 6px; align-items: center;
-      padding: 0 14px 8px;
-      flex-wrap: wrap;
-    }
-    .mob-raise-row.visible { display: flex; }
-    .mob-raise-row .raise-label {
-      font-size: 10px; color: var(--text-dim);
-      width: 100%; margin-bottom: 2px;
-    }
-    .btn-quick {
-      flex: 1; min-width: 0; padding: 8px 4px;
-      border: 1.5px solid rgba(255,255,255,.2);
-      border-radius: 7px; background: rgba(255,255,255,.06);
-      color: var(--text); font-size: 11px; font-weight: 600;
-      cursor: pointer; text-align: center; white-space: nowrap;
-      transition: all .12s; -webkit-tap-highlight-color: transparent;
-    }
-    .btn-quick:active { background: rgba(41,128,185,.5); border-color: var(--btn-raise); }
-    .btn-quick.selected {
-      background: rgba(41,128,185,.35);
-      border-color: var(--btn-raise); color: #fff;
-    }
+/* --- 题目区 --- */
+#sc-q-wrap { display: none; }
+.sc-progress-bar-wrap {
+  height: 4px; background: var(--bg3); border-radius: 2px; margin-bottom: 14px; overflow: hidden;
+}
+.sc-progress-fill {
+  height: 100%; background: var(--gold); border-radius: 2px; transition: width .4s;
+}
+.sc-progress-text {
+  font-size: 12px; color: var(--text-dim); text-align: right; margin-bottom: 10px;
+}
 
-    /* 覆盖桌面版旧的 .raise-wrap（手机版不用） */
-    .raise-wrap { display: none !important; }
-    .action-buttons { display: none !important; }
+/* 手牌卡片 */
+.sc-q-card {
+  background: var(--bg2); border-radius: 16px;
+  padding: 16px 14px; border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.sc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.sc-tag {
+  padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
+}
+.sc-tag-preflop { background: rgba(240,192,64,.15); color: var(--gold); }
+.sc-tag-flop    { background: rgba(78,201,176,.15); color: #4ec9b0; }
+.sc-tag-turn    { background: rgba(100,149,237,.15); color: #6495ED; }
+.sc-tag-river   { background: rgba(231,76,60,.12); color: #e74c3c; }
+.sc-tag-ip  { background: rgba(78,201,176,.1); color: #4ec9b0; }
+.sc-tag-oop { background: rgba(231,76,60,.1); color: #e74c3c; }
+.sc-tag-pot { background: rgba(255,255,255,.07); color: var(--text-dim); }
 
-    /* ===== 手机横屏全屏适配 ===== */
-    @media screen and (orientation: landscape) and (max-height: 500px) {
-      html, body {
-        width: 100%;
-        height: 100%;
-        max-width: 100vw;
-        overflow: hidden;
-      }
-      body {
-        height: 100dvh;
-        min-height: unset;
-      }
-      #topbar {
-        padding: 4px 12px;
-      }
-      #topbar .logo { font-size: 15px; }
-      #topbar .info { font-size: 11px; }
-      #table-wrap {
-        padding: 44px 8px 6px 4px;
-        gap: 3px;
-      }
-      #table {
-        width: min(860px, 100%);
-        max-height: calc(100dvh - 44px - 110px);
-        aspect-ratio: 860/520;
-      }
-      .mob-top-row { padding: 4px 10px 2px; }
-      .mob-btn-row { padding: 3px 10px 4px; }
-      .btn { padding: 8px 4px; font-size: 12px; }
-    }
+.sc-q-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
 
-    /* 卡牌尺寸 */
-    .hero-hand-display .card { width: 46px; height: 66px; }
-    .hero-hand-display .card .rank { font-size: 15px; }
-    .hero-hand-display .card .suit { font-size: 17px; }
-    .msg-item {
-      font-size:13px; color:rgba(255,255,255,.95); background:rgba(0,0,0,.72);
-      padding:4px 10px; border-radius:14px; margin:0;
-      animation:fadeUp .3s ease; display:block;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      border-left: 3px solid rgba(240,192,64,.5);
-    }
-    .msg-item.gold { color:var(--gold); }
-    .msg-item.red { color:#f88; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;} }
-    /* 摊牌时亮牌动效 */
-    .seat-info.showdown-winner { border-color:var(--gold)!important; box-shadow:0 0 16px rgba(240,192,64,.7)!important; }
-    .seat-info.showdown-loser { opacity:.55; }
-    /* 结算条（替代弹窗） */
-    #result-bar {
-      display:none; align-items:center; justify-content:center; gap:18px;
-      background:rgba(0,0,0,.92); border-top:2px solid var(--gold);
-      padding:10px 24px; flex-shrink:0;
-      position:absolute; bottom:0; left:0; right:0; z-index:20;
-      min-height:82px;
-    }
-    #result-bar .rb-winner { color:var(--gold); font-size:15px; font-weight:700; }
-    #result-bar .rb-detail { color:var(--text-dim); font-size:13px; }
-    #btn-next-hand {
-      padding:8px 24px; background:var(--gold);
-      color:#000; border:none; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer;
-    }
-    #btn-next-hand:hover { background:var(--gold-dark); }
-    /* 开始界面 */
-    #start-overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,.9);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      z-index:200; gap:18px;
-    }
-    #start-overlay h1 { font-size:34px; color:var(--gold); letter-spacing:2px; }
-    #start-overlay p { color:var(--text-dim); font-size:14px; text-align:center; }
-    .config-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
-    .config-item { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.14); border-radius:10px; padding:10px 18px; text-align:center; }
-    .config-item .ci-label { font-size:11px; color:var(--text-dim); margin-bottom:4px; }
-    .config-item .ci-value { font-size:18px; color:var(--gold); font-weight:700; }
-    .cnt-select { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-    .cnt-select button {
-      padding:6px 16px; border-radius:8px; border:1.5px solid rgba(255,255,255,.2);
-      background:rgba(255,255,255,.05); color:var(--text); cursor:pointer; font-size:14px; transition:all .15s;
-    }
-    .cnt-select button.selected,.cnt-select button:hover { border-color:var(--gold); background:rgba(240,192,64,.15); color:var(--gold); }
-    #btn-start { padding:12px 40px; background:var(--gold); color:#000; border:none; border-radius:12px; font-size:17px; font-weight:800; cursor:pointer; margin-top:8px; }
-    #btn-start:hover { background:var(--gold-dark); }
+.sc-cards-row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+.sc-cards-group {}
+.sc-cards-label { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+.sc-cards-display { display: flex; gap: 6px; }
+.sc-card {
+  width: 44px; height: 62px;
+  background: #fff; border: 1.5px solid #ccc; border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; line-height: 1.1;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.sc-card-red { color: #c0392b; }
+.sc-card-black { color: #111; }
+.sc-card-empty {
+  width: 44px; height: 62px; border: 2px dashed rgba(255,255,255,.2);
+  border-radius: 8px; background: rgba(255,255,255,.03);
+}
 
-    /* ===== 策略面板 ===== */
-    #main-layout {
-      flex:1; display:flex; overflow:hidden; min-height:0;
-    }
-    #game-area {
-      flex:1; display:flex; flex-direction:column; min-width:0; overflow:hidden;
-      position:relative;
-    }
-    #strategy-panel {
-      width:0; overflow:hidden; transition:width .3s ease;
-      background:#0d1520; border-left:1px solid rgba(255,255,255,.08);
-      display:flex; flex-direction:column; flex-shrink:0;
-    }
-    #strategy-panel.open { width:280px; }
-    #strategy-inner { width:280px; display:flex; flex-direction:column; height:100%; overflow:hidden; }
+.sc-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.sc-info-item {
+  font-size: 13px; color: var(--text); padding: 6px 10px;
+  background: var(--bg3); border-radius: 8px;
+}
+.sc-info-item.full { grid-column: 1 / -1; }
+.sc-info-label { color: var(--text-dim); }
 
-    /* 面板顶栏 */
-    .sp-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.08);
-      flex-shrink:0;
-    }
-    .sp-header h3 { font-size:14px; color:var(--gold); font-weight:700; margin:0; }
-    #sp-toggle-btn {
-      position:fixed; right:0; top:50%; transform:translateY(-50%);
-      width:22px; height:52px; background:#1a2a40; border:1px solid rgba(255,255,255,.15);
-      border-right:none; border-radius:8px 0 0 8px; cursor:pointer; z-index:50;
-      display:flex; align-items:center; justify-content:center;
-      font-size:12px; color:var(--gold); transition:right .3s ease;
-    }
-    #strategy-panel.open ~ #sp-toggle-btn,
-    body.panel-open #sp-toggle-btn { right:280px; }
-    .sp-body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
-    .sp-body::-webkit-scrollbar { width:4px; }
-    .sp-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:2px; }
+/* 问题和选项 */
+.sc-question {
+  font-size: 15px; font-weight: 600; line-height: 1.5;
+  padding: 14px 14px 12px; margin-bottom: 12px;
+}
+.sc-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.sc-opt-btn {
+  width: 100%; padding: 15px 18px;
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 12px; color: var(--text);
+  font-size: 15px; font-weight: 600; text-align: left;
+  cursor: pointer; transition: all .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sc-opt-btn:active { transform: scale(.98); border-color: var(--gold); background: rgba(240,192,64,.08); }
+.sc-opt-btn:disabled { opacity: .55; cursor: default; transform: none; }
 
-    /* 实时分析区块 */
-    .sp-section { display:flex; flex-direction:column; gap:6px; }
-    .sp-section-title {
-      font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.8px;
-      font-weight:600; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,.06);
-    }
+/* --- 结果区 --- */
+#sc-result-wrap { display: none; }
+.sc-result-card {
+  background: var(--bg2); border-radius: 16px;
+  padding: 18px 16px; border: 1px solid var(--border); margin-bottom: 14px;
+}
+.sc-result-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.sc-score-big {
+  font-size: 48px; font-weight: 800; line-height: 1;
+  min-width: 70px; text-align: center;
+}
+.sc-score-big.score-perfect { color: #FFD700; }
+.sc-score-big.score-good    { color: #4ec9b0; }
+.sc-score-big.score-ok      { color: #FFA500; }
+.sc-score-big.score-bad     { color: #e74c3c; }
+.sc-result-meta { flex: 1; }
+.sc-score-bar-wrap {
+  height: 8px; background: rgba(255,255,255,.1); border-radius: 4px;
+  overflow: hidden; margin-bottom: 8px;
+}
+.sc-bar-fill { height: 100%; border-radius: 4px; transition: width .5s; }
+.sc-bar-fill.score-perfect { background: #FFD700; }
+.sc-bar-fill.score-good    { background: #4ec9b0; }
+.sc-bar-fill.score-ok      { background: #FFA500; }
+.sc-bar-fill.score-bad     { background: #e74c3c; }
+.sc-deviation {
+  display: inline-block; padding: 4px 12px; border-radius: 14px;
+  font-size: 13px; font-weight: 700;
+}
+.sc-dev-perfect { background: rgba(255,215,0,.15); color: #FFD700; }
+.sc-dev-good    { background: rgba(78,201,176,.15); color: #4ec9b0; }
+.sc-dev-ok      { background: rgba(255,165,0,.1);  color: #FFA500; }
+.sc-dev-bad     { background: rgba(231,76,60,.1);  color: #e74c3c; }
 
-    /* 胜率环形图 */
-    .winrate-ring-wrap { display:flex; align-items:center; gap:10px; }
-    .winrate-ring { position:relative; width:64px; height:64px; flex-shrink:0; }
-    .winrate-ring svg { transform:rotate(-90deg); }
-    .winrate-ring .ring-bg { fill:none; stroke:rgba(255,255,255,.07); stroke-width:7; }
-    .winrate-ring .ring-val { fill:none; stroke:var(--gold); stroke-width:7; stroke-linecap:round;
-      transition:stroke-dashoffset .6s ease; }
-    .winrate-ring .ring-text {
-      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:700; color:var(--gold);
-    }
-    .winrate-meta { flex:1; }
-    .winrate-meta .wm-label { font-size:10px; color:var(--text-dim); }
-    .winrate-meta .wm-val { font-size:15px; font-weight:700; color:var(--text); margin:1px 0; }
-    .winrate-meta .wm-sub { font-size:10px; color:var(--text-dim); }
+.sc-all-scores-title {
+  font-size: 12px; color: var(--text-dim); margin-bottom: 10px; font-weight: 700;
+}
+.sc-all-score-item {
+  display: grid; grid-template-columns: auto 1fr 46px;
+  align-items: center; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.sc-all-score-item:last-child { border-bottom: none; }
+.sc-all-score-item.sc-chosen {
+  background: rgba(255,200,0,.05); border-radius: 8px;
+  padding: 7px 8px; margin: 0 -8px;
+}
+.sc-all-score-label {
+  font-size: 12px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 120px;
+}
+.sc-all-score-bar-wrap {
+  height: 6px; background: rgba(255,255,255,.1);
+  border-radius: 3px; overflow: hidden;
+}
+.sc-all-score-bar {
+  height: 100%; border-radius: 3px; transition: width .5s;
+}
+.sc-all-score-bar.score-perfect { background: #FFD700; }
+.sc-all-score-bar.score-good    { background: #4ec9b0; }
+.sc-all-score-bar.score-ok      { background: #FFA500; }
+.sc-all-score-bar.score-bad     { background: #e74c3c; }
+.sc-all-score-num { font-size: 12px; font-weight: 700; text-align: right; }
 
-    /* 底池赔率条 */
-    .odds-bar-wrap { display:flex; flex-direction:column; gap:3px; }
-    .odds-label-row { display:flex; justify-content:space-between; font-size:11px; }
-    .odds-bar { height:6px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; }
-    .odds-bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
-    .odds-bar-fill.good { background:var(--btn-call); }
-    .odds-bar-fill.bad { background:var(--btn-fold); }
-    .odds-bar-fill.neutral { background:#888; }
-    .odds-verdict { font-size:11px; font-weight:600; margin-top:2px; }
+.sc-explain-box {
+  background: rgba(255,255,255,.04); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 8px;
+}
+.sc-explain-label {
+  font-size: 11px; font-weight: 700; color: var(--gold);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px;
+}
+.sc-explain-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+.sc-keypoint-box {
+  border-left: 3px solid var(--gold);
+  padding: 10px 12px; background: rgba(240,192,64,.06); border-radius: 0 8px 8px 0;
+}
+.sc-keypoint-text { font-size: 13px; color: var(--text); line-height: 1.5; }
 
-    /* GTO 建议卡 */
-    .gto-cards { display:flex; flex-direction:column; gap:5px; }
-    .gto-card {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:6px 10px; border-radius:7px; background:rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.07); cursor:default;
-    }
-    .gto-card.recommended { border-color:var(--gold); background:rgba(240,192,64,.08); }
-    .gto-card .gc-action { font-size:12px; font-weight:600; }
-    .gto-card .gc-freq {
-      font-size:11px; color:var(--text-dim);
-      background:rgba(255,255,255,.06); padding:2px 7px; border-radius:10px;
-    }
-    .gto-card.recommended .gc-freq { color:var(--gold); background:rgba(240,192,64,.15); }
+.sc-action-row {
+  display: flex; gap: 10px; margin-top: 4px;
+}
+.sc-next-btn {
+  flex: 1; padding: 15px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sc-end-btn {
+  padding: 15px 18px;
+  background: rgba(255,255,255,.08); color: var(--text);
+  border: 1px solid rgba(255,255,255,.15); border-radius: 12px;
+  font-size: 13px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    /* 位置信息 */
-    .position-badge {
-      display:inline-flex; align-items:center; gap:5px;
-      padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;
-      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
-    }
-    .position-badge .pb-dot { width:7px; height:7px; border-radius:50%; }
+/* --- 总结区 --- */
+#sc-summary-wrap { display: none; }
+.sc-summary-stats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  margin-bottom: 14px;
+}
+.sc-stat-cell {
+  background: var(--bg2); border-radius: 12px;
+  padding: 14px 8px; text-align: center;
+  border: 1px solid var(--border);
+}
+.sc-stat-num {
+  font-size: 26px; font-weight: 800; color: var(--gold); margin-bottom: 4px;
+}
+.sc-stat-label { font-size: 11px; color: var(--text-dim); }
+.sc-grade {
+  text-align: center; font-size: 20px; font-weight: 800; margin-bottom: 6px;
+}
+.sc-bonus-text {
+  text-align: center; font-size: 14px; color: var(--gold); margin-bottom: 16px;
+}
+.sc-review-title { font-size: 13px; font-weight: 700; color: var(--text-dim); margin-bottom: 10px; }
+.sc-review-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 13px;
+}
+.sc-review-item:last-child { border-bottom: none; }
+.sc-review-id { color: var(--gold); font-weight: 700; min-width: 36px; }
+.sc-review-ttl { flex: 1; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-review-score { font-weight: 700; min-width: 36px; text-align: right; }
+.sc-review-score.score-perfect { color: #FFD700; }
+.sc-review-score.score-good    { color: #4ec9b0; }
+.sc-review-score.score-ok      { color: #FFA500; }
+.sc-review-score.score-bad     { color: #e74c3c; }
+.sc-summary-btns { display: flex; gap: 10px; margin-top: 16px; }
+.sc-again-btn {
+  flex: 1; padding: 15px; background: var(--gold); color: #000;
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.sc-home-btn {
+  padding: 15px 20px; background: rgba(255,255,255,.08); color: var(--text);
+  border: 1px solid rgba(255,255,255,.15); border-radius: 12px;
+  font-size: 14px; cursor: pointer;
+}
 
-    /* 复盘区 */
-    .review-list { display:flex; flex-direction:column; gap:6px; }
-    .review-item {
-      padding:7px 10px; border-radius:7px;
-      background:rgba(255,255,255,.03); border-left:3px solid transparent;
-      font-size:11px;
-    }
-    .review-item.ok { border-left-color:var(--btn-call); }
-    .review-item.warn { border-left-color:#e8a020; }
-    .review-item.bad { border-left-color:var(--btn-fold); }
-    .review-item .ri-round { color:var(--text-dim); font-size:10px; margin-bottom:2px; }
-    .review-item .ri-action { font-weight:600; }
-    .review-item .ri-comment { color:var(--text-dim); margin-top:2px; line-height:1.4; }
-    .review-item .ri-ev { font-size:10px; margin-top:3px; }
-    .review-item .ri-ev.pos { color:var(--btn-call); }
-    .review-item .ri-ev.neg { color:var(--btn-fold); }
+/* =========================================================
+   自由游戏页（保留横屏牌局，提示用户横屏）
+   ========================================================= */
+#page-game {
+  padding: 0;
+  background: var(--bg);
+}
+.game-landscape-hint {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(100vh - 52px - var(--tab-h));
+  gap: 16px; padding: 24px;
+}
+.game-landscape-hint .hint-icon { font-size: 56px; }
+.game-landscape-hint h3 { font-size: 20px; font-weight: 700; text-align: center; }
+.game-landscape-hint p { font-size: 14px; color: var(--text-dim); text-align: center; line-height: 1.6; }
+.game-launch-btn {
+  width: 100%; max-width: 280px; padding: 16px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer;
+  margin-top: 8px;
+}
 
-    /* 空态 */
-    .sp-empty { color:var(--text-dim); font-size:12px; text-align:center; padding:20px 0; line-height:1.6; }
+/* =========================================================
+   练习模式页（简版，复用题库）
+   ========================================================= */
+#page-train { padding: 16px 14px; }
+.train-header { margin-bottom: 18px; }
+.train-header h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.train-header p { font-size: 13px; color: var(--text-dim); }
+.topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.topic-card {
+  background: var(--bg2); border-radius: 14px; padding: 16px 14px;
+  border: 1px solid var(--border); cursor: pointer; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .15s, transform .1s;
+}
+.topic-card:active { transform: scale(.97); border-color: var(--gold); }
+.topic-icon { font-size: 26px; margin-bottom: 8px; }
+.topic-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.topic-count { font-size: 12px; color: var(--text-dim); }
+.topic-prog-bar {
+  height: 4px; background: rgba(255,255,255,.1); border-radius: 2px;
+  overflow: hidden; margin-top: 8px;
+}
+.topic-prog-fill { height: 100%; background: var(--gold); border-radius: 2px; }
 
-    /* ===================================================
-       手机横屏适配（iPhone 15 横屏：852 × 393 逻辑像素）
-       操作区已是手机专用两行设计，此处只调整牌桌/面板
-       =================================================== */
-    @media screen and (max-height: 500px) and (orientation: landscape) {
-
-      /* ── 顶栏极简 ── */
-      #topbar { padding: 3px 10px; min-height: 26px; }
-      #topbar .logo { font-size: 13px; }
-      #topbar .info { font-size: 10px; }
-
-      /* ── 牌桌 ── */
-      #table-wrap { padding: 48px 8px 4px 4px; gap: 3px; }
-      #message-log { width: 80px; min-width: 80px; }
-      #table {
-        height: min(220px, calc(100dvh - 26px - 120px - 44px));
-        width: auto; aspect-ratio: 860/520;
-        flex: 1;
-      }
-
-      /* ── 座位极简 ── */
-      .seat-info {
-        padding: 2px 5px; min-width: 56px;
-        font-size: 8px; border-radius: 5px; line-height: 1.3;
-      }
-      .seat-name { font-size: 8px; font-weight: 700; }
-      .seat-chips { font-size: 7px; }
-      .card-sm { width: 20px; height: 28px; }
-      .card-sm .rank { font-size: 6px; }
-      .card-sm .suit { font-size: 8px; }
-      .dealer-btn { width: 14px; height: 14px; font-size: 6px; top: -7px; right: -7px; }
-
-      /* 座位位置收紧 */
-      .seat-pos-3 { top: -46px; }
-      .seat-pos-4 { top: -46px; }
-      .seat-pos-5 { top: -46px; }
-      .seat-pos-6 { top: -46px; }
-      .seat-pos-0 { bottom: -42px; }
-
-      /* ── 公共牌缩小 ── */
-      #community-cards .card { width: 28px; height: 40px; }
-      #community-cards .card .rank { font-size: 8px; }
-      #community-cards .card .suit { font-size: 10px; }
-      #pot-display { font-size: 10px; padding: 2px 8px; }
-      #round-label { font-size: 9px; }
-
-      /* ── 筹码层缩小 ── */
-      .bet-chip-coin { width: 18px; height: 18px; font-size: 6px; }
-      .bet-chip-amt { font-size: 7px; }
-
-      /* ── 操作区：手机两行设计，紧凑 ── */
-      .mob-top-row { padding: 4px 12px 2px; }
-      .hero-hand-display .card { width: 32px; height: 46px; }
-      .hero-hand-display .card .rank { font-size: 10px; }
-      .hero-hand-display .card .suit { font-size: 12px; }
-      #hand-strength { font-size: 9px; padding: 1px 5px; }
-      .chips-big { font-size: 15px; }
-      .hero-status { font-size: 9px; }
-      #hero-bet-display { font-size: 9px; }
-
-      .mob-btn-row { padding: 2px 12px 4px; gap: 6px; }
-      .btn { padding: 8px 4px; font-size: 12px; border-radius: 7px; }
-
-      .mob-raise-row { padding: 0 12px 5px; gap: 5px; }
-      .btn-quick { padding: 6px 3px; }
-      .btn-quick div:first-child { font-size: 9px; }
-      .btn-quick div:last-child { font-size: 12px; }
-
-      /* ── 策略面板：缩至 200px，默认收起 ── */
-      #strategy-panel.open { width: 200px; }
-      #strategy-inner { width: 200px; }
-      #strategy-panel.open ~ #sp-toggle-btn { right: 200px; }
-      #sp-toggle-btn { width: 20px; height: 40px; font-size: 12px; }
-      .sp-body { padding: 6px 8px; gap: 6px; font-size: 10px; }
-      .sp-section-title { font-size: 9px; }
-      .sp-header { padding: 6px 10px; }
-      .sp-header h3 { font-size: 12px; }
-
-      /* ── 结算条 ── */
-      #result-bar { min-height: 56px; max-height: 56px; padding: 6px 12px; gap: 8px; }
-      #result-bar .rb-winner { font-size: 12px; }
-      #result-bar .rb-detail { font-size: 10px; }
-      #btn-next-hand { padding: 5px 14px; font-size: 12px; }
-
-      /* ── 消息日志 ── */
-      #message-log { width: 90px; min-width: 90px; }
-      .msg-item { font-size: 9px; padding: 1px 7px; }
-    }
-
-    /* iPhone 刘海屏安全区 */
-    @supports (padding: env(safe-area-inset-left)) {
-      body {
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-        padding-bottom: env(safe-area-inset-bottom);
-      }
-    }
-
-    /* 横屏提示（竖屏时显示） */
-    #rotate-tip {
-      display: none;
-      position: fixed; inset: 0; z-index: 9999;
-      background: #0d1117;
-      flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 16px; color: var(--text); text-align: center;
-    }
-    #rotate-tip .rotate-icon { font-size: 60px; animation: rotate-hint 1.5s ease-in-out infinite; }
-    @keyframes rotate-hint {
-      0%,100% { transform: rotate(0deg); }
-      50%      { transform: rotate(90deg); }
-    }
-    @media screen and (orientation: portrait) and (max-width: 768px) {
-      #rotate-tip { display: flex; }
-    }
-
-  </style>
+/* =========================================================
+   通用
+   ========================================================= */
+.section-card {
+  background: var(--bg2); border-radius: 16px; padding: 16px 14px;
+  border: 1px solid var(--border); margin-bottom: 14px;
+}
+.section-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+button { font-family: inherit; }
+</style>
 </head>
 <body>
-<!-- 竖屏提示（仅手机竖屏时显示） -->
-<div id="rotate-tip">
-  <div class="rotate-icon">📱</div>
-  <div style="font-size:18px;font-weight:700;color:var(--gold)">请横屏游戏</div>
-  <div style="font-size:13px;color:var(--text-dim)">将手机旋转为横屏以获得最佳体验</div>
-</div>
 
-<div id="start-overlay">
-  <h1>🃏 德州扑克</h1>
-  <p>买入 <b style="color:var(--gold)">2000</b> 积分 · 大盲 <b style="color:var(--gold)">20</b> / 小盲 <b style="color:var(--gold)">10</b></p>
-  <div class="config-row">
-    <div class="config-item"><div class="ci-label">买入积分</div><div class="ci-value">2000</div></div>
-    <div class="config-item"><div class="ci-label">小盲/大盲</div><div class="ci-value">10/20</div></div>
-  </div>
-  <div style="font-size:13px;color:var(--text-dim)">选择人数（含你）</div>
-  <div class="cnt-select" id="cnt-select">
-    <button data-n="6">6 人</button>
-    <button data-n="7">7 人</button>
-    <button data-n="8" class="selected">8 人</button>
-    <button data-n="9">9 人</button>
-  </div>
-  <button id="btn-start">开始游戏</button>
-</div>
-
+<!-- 顶栏 -->
 <div id="topbar">
   <div class="logo">🃏 游戏瞎</div>
-  <div class="info">底池 <span id="top-pot">0</span> · 盲注 <span>10/20</span> · 手 #<span id="top-hand">1</span></div>
-  <div class="info" id="top-round">翻牌前</div>
-</div>
-
-<div id="main-layout">
-  <div id="game-area">
-    <div id="table-wrap">
-      <div id="table">
-        <div id="community-area">
-          <div id="round-label">-</div>
-          <div id="community-cards"></div>
-          <div id="pot-display">底池: 0</div>
-        </div>
-        <div id="bets-layer">
-          <!-- 9个座位对应的桌面内筹码落点 (bc-0 ~ bc-8) -->
-        </div>
-        <div id="seats-container"></div>
-      </div>
-      <div id="message-log"></div>
-    </div>
-
-    <div id="action-area" class="hidden">
-      <!-- 第一行：手牌 + 积分信息 -->
-      <div class="mob-top-row">
-        <div class="mob-hand-block">
-          <div class="hero-hand-display" id="hero-hand-large"></div>
-          <div id="hand-strength">-</div>
-        </div>
-        <div class="mob-chips-block hero-status">
-          <div class="chips-big" id="hero-chips-display">2000</div>
-          <div>你的筹码</div>
-          <div id="hero-bet-display"></div>
-        </div>
-      </div>
-      <!-- 第二行：主操作按钮 -->
-      <div class="mob-btn-row" id="action-buttons"></div>
-      <!-- 第三行：快捷加注金额（加注模式才显示） -->
-      <div class="mob-raise-row" id="mob-raise-row">
-        <div class="raise-label">选择加注金额：</div>
-      </div>
-    </div>
-
-    <div id="result-bar">
-      <div>
-        <div class="rb-winner" id="rb-winner-text"></div>
-        <div class="rb-detail" id="rb-detail-text"></div>
-      </div>
-      <button id="btn-next-hand">下一手牌 →</button>
-    </div>
-  </div>
-
-  <!-- 策略分析侧边面板 -->
-  <div id="strategy-panel">
-    <div id="strategy-inner">
-      <div class="sp-header">
-        <h3>📊 策略分析</h3>
-        <span style="font-size:10px;color:var(--text-dim)" id="sp-hand-label">等待开始</span>
-      </div>
-      <div class="sp-body" id="sp-body">
-        <div class="sp-empty">游戏开始后，<br>轮到你行动时<br>将自动更新分析</div>
-      </div>
-    </div>
+  <div class="player-info" id="topbar-player" onclick="showPlayerModal()">
+    <span class="name" id="tp-name">点击选择玩家</span>
+    <span class="score" id="tp-score"></span>
   </div>
 </div>
 
-<!-- 策略面板收起/展开按钮 -->
-<button id="sp-toggle-btn" title="策略分析">⟨</button>
+<!-- 主内容 -->
+<div id="main-content">
 
-<script>
-/* ============================================================
-   德州扑克 v4 — async/await + Promise 架构
-   - 游戏主循环是一个 async 函数，线性执行
-   - 英雄操作：用 Promise + resolve 等待用户点击按钮
-   - AI操作：用 sleep(delay) 延迟后执行
-   - 不使用任何全局锁（ticking/waitingHero），从根本上消除竞态
-   ============================================================ */
+  <!-- 主页 -->
+  <div class="page active" id="page-home">
+    <div class="home-banner">
+      <h1>🃏 游戏瞎</h1>
+      <p>德州扑克 · GTO实战训练平台</p>
+    </div>
 
-const SUITS = ['♠','♥','♦','♣'];
-const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-const RV = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
-const BUY_IN=2000, SB=10, BB=20;
-const AI_NAMES=['博少','杰笑','大表','小康','达仔','抽抽侠','阿钊','大舅子','小舅子'];
-const HAND_NAMES=['高牌','一对','两对','三条','顺子','同花','葫芦','四条','同花顺','皇家同花顺'];
-const ROUND_LABEL={preflop:'翻牌前',flop:'翻牌',turn:'转牌',river:'河牌'};
-
-/* ===== 工具函数 ===== */
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const makeDeck = () => { const d=[]; for(const s of SUITS) for(const r of RANKS) d.push({r,s}); return d; };
-const shuffle = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]];} return b; };
-const rv = r => RV[r] || parseInt(r);
-
-/* ===== 手牌评估 ===== */
-function choose5(cards) {
-  if(cards.length===5) return [cards];
-  const res=[];
-  function go(i,cur){
-    if(cur.length===5){res.push([...cur]);return;}
-    if(i>=cards.length)return;
-    cur.push(cards[i]);go(i+1,cur);cur.pop();go(i+1,cur);
-  }
-  go(0,[]);return res;
-}
-function scoreHand(cards){
-  const vals=cards.map(c=>rv(c.r)).sort((a,b)=>b-a);
-  const suits=cards.map(c=>c.s);
-  const flush=suits.every(s=>s===suits[0]);
-  let straight=false,strH=0;
-  if([...new Set(vals)].length===5){
-    if(vals[0]-vals[4]===4){straight=true;strH=vals[0];}
-    if(vals[0]===14&&vals[1]===5&&vals[2]===4&&vals[3]===3&&vals[4]===2){straight=true;strH=5;}
-  }
-  const cnt={};for(const v of vals)cnt[v]=(cnt[v]||0)+1;
-  const g=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||b[0]-a[0]);
-  const[g1v,g1c]=[+g[0][0],g[0][1]];
-  const[g2v,g2c]=g[1]?[+g[1][0],g[1][1]]:[0,0];
-  if(flush&&straight)return strH===14?[9,14]:[8,strH];
-  if(g1c===4)return[7,g1v,g2v];
-  if(g1c===3&&g2c===2)return[6,g1v,g2v];
-  if(flush)return[5,...vals];
-  if(straight)return[4,strH];
-  if(g1c===3)return[3,g1v,...g.slice(1).map(x=>+x[0])];
-  if(g1c===2&&g2c===2)return[2,Math.max(g1v,g2v),Math.min(g1v,g2v),...g.slice(2).map(x=>+x[0])];
-  if(g1c===2)return[1,g1v,...g.slice(1).map(x=>+x[0])];
-  return[0,...vals];
-}
-function cmpScore(a,b){for(let i=0;i<Math.max(a.length,b.length);i++){const d=(a[i]||0)-(b[i]||0);if(d)return d>0?1:-1;}return 0;}
-function evalHand(cards){
-  if(!cards||cards.length<5)return{score:[0],cards:cards||[]};
-  const cs=choose5(cards);let best=null;
-  for(const c of cs){const s=scoreHand(c);if(!best||cmpScore(s,best.score)>0)best={score:s,cards:c};}
-  return best;
-}
-const handName=s=>HAND_NAMES[s[0]]||'高牌';
-
-/* ===== 游戏状态 ===== */
-let G = null;
-// 当前等待英雄行动的 resolve 函数（null 表示不等待）
-let heroResolve = null;
-// 当前高亮的玩家索引（用于 UI）
-let activeIdx = -1;
-
-/* ===== 桌面筹码投注层 ===== */
-// 记录上一次各玩家的下注金额，用来判断是否新增了筹码
-const _prevBets = {};
-
-function renderBetsLayer(animIdx){
-  if(!G) return;
-  const layer = document.getElementById('bets-layer');
-  if(!layer) return;
-
-  // 清空并重建
-  layer.innerHTML = '';
-
-  for(let i = 0; i < G.players.length; i++){
-    const p = G.players[i];
-    if(p.eliminated || p.bet <= 0) continue;
-
-    const spot = document.createElement('div');
-    spot.className = `bet-chip-spot bc-${i}`;
-
-    // 是否是刚刚行动的那位（触发飞入动画）
-    const isNew = (i === animIdx) && ((_prevBets[i] || 0) < p.bet);
-
-    // 筹码堆：根据金额显示 1~3 枚堆叠
-    const coinCount = p.bet >= 200 ? 3 : p.bet >= 80 ? 2 : 1;
-    let coinsHtml = '';
-    for(let k = 0; k < coinCount; k++){
-      coinsHtml += `<div class="bet-chip-coin${isNew?' flying':''}" style="
-        margin-top:${k > 0 ? '-18px' : '0'};
-        z-index:${k + 1};
-        ${isNew ? `--dx:${_chipDX(i)}px; --dy:${_chipDY(i)}px;` : ''}
-        animation-delay:${isNew ? k * 0.06 : 0}s
-      ">●</div>`;
-    }
-
-    spot.innerHTML = coinsHtml +
-      `<div class="bet-chip-amt">${p.bet}</div>`;
-    layer.appendChild(spot);
-  }
-}
-
-// 计算每个座位到其筹码落点的 offset（用于飞入动画起始偏移）
-// 落点坐标见 CSS .bc-N，起点是座位本身（在桌面之外），这里给一个方向向量
-function _chipDX(i){
-  // 根据座位方向给一个 X 偏移（正=从右来，负=从左来）
-  const dx = [0, -120, -140, -80, -20, 20, 80, 140, 120];
-  return dx[i] || 0;
-}
-function _chipDY(i){
-  const dy = [90, 60, 0, -80, -100, -100, -80, 0, 60];
-  return dy[i] || 0;
-}
-
-/* ===== 渲染 ===== */
-function cardHtml(c, back=false, sm=false){
-  if(back||!c) return `<div class="card${sm?' card-sm':''} back"></div>`;
-  const red=['♥','♦'].includes(c.s)?'red':'black';
-  return `<div class="card${sm?' card-sm':''} ${red}"><div class="rank">${c.r}</div><div class="suit">${c.s}</div></div>`;
-}
-
-function renderAll(){
-  if(!G) return;
-  // 公共牌
-  const cEl=document.getElementById('community-cards');
-  cEl.innerHTML='';
-  for(let i=0;i<5;i++) cEl.innerHTML+=i<G.community.length?cardHtml(G.community[i]):`<div class="card placeholder"></div>`;
-  // 顶部信息
-  document.getElementById('top-pot').textContent=G.pot;
-  document.getElementById('top-round').textContent=ROUND_LABEL[G.round]||'';
-  document.getElementById('round-label').textContent=ROUND_LABEL[G.round]||'';
-  document.getElementById('pot-display').textContent=`底池: ${G.pot}`;
-  // 座位
-  const sc=document.getElementById('seats-container');
-  sc.innerHTML='';
-  for(let i=0;i<G.players.length;i++){
-    const p=G.players[i];
-    const isDealer=G.dealer===i;
-    const isActive=i===activeIdx&&!p.folded&&!p.allIn&&!p.eliminated;
-    let cls='seat-info';
-    if(p.isHero)cls+=' hero';
-    if(isActive)cls+=' active';
-    if(p.folded)cls+=' folded';
-    if(p.eliminated)cls+=' eliminated';
-    // 摊牌时高亮赢家/暗化输家
-    if(G.showdown && !p.folded && !p.eliminated){
-      if(p._isWinner) cls+=' showdown-winner';
-      else cls+=' showdown-loser';
-    }
-    let cards='';
-    if(!p.eliminated&&p.hand.length>0){
-      if(p.isHero) cards=p.hand.map(c=>cardHtml(c,false,true)).join('');
-      else if(G.showdown && !p.folded) cards=p.hand.map(c=>cardHtml(c,false,true)).join(''); // 摊牌亮牌
-      else if(!p.folded) cards=p.hand.map(()=>cardHtml(null,true,true)).join('');
-    }
-    // 摊牌时在座位下方显示牌型
-    const handRow = (G.showdown && !p.folded && !p.eliminated && p._handName)
-      ? `<div style="font-size:10px;color:var(--gold);margin-top:2px;">${p._handName}</div>` : '';
-    const betRow=''; // 投注金额改在桌面筹码层显示，不在座位内重复
-    const seat=document.createElement('div');
-    seat.className=`seat seat-pos-${i}`;
-    seat.innerHTML=`<div class="${cls}">${isDealer?'<div class="dealer-btn">D</div>':''}<div class="seat-name">${p.name}${p.allIn?' <small>[全下]</small>':''}</div><div class="seat-chips">${p.eliminated?'出局':p.chips+' 积分'}</div>${betRow}${handRow}</div><div class="seat-cards">${cards}</div>`;
-    sc.appendChild(seat);
-  }
-  // 操作区
-  renderActions();
-  // 桌面筹码投注层
-  renderBetsLayer();
-}
-
-function renderActions(){
-  const hero=G.players[0];
-  document.getElementById('hero-chips-display').textContent=hero.chips;
-  document.getElementById('hero-bet-display').textContent=hero.bet>0?`已投: ${hero.bet}`:'';
-  document.getElementById('hero-hand-large').innerHTML=hero.hand.map(c=>cardHtml(c,false,false)).join('');
-  const strEl=document.getElementById('hand-strength');
-  if(hero.hand.length>0&&!hero.folded&&!hero.eliminated){
-    strEl.textContent=handName(evalHand([...hero.hand,...G.community]).score);
-  } else strEl.textContent='-';
-
-  const area=document.getElementById('action-area');
-  if(hero.eliminated){area.classList.add('hidden');return;}
-  area.classList.remove('hidden');
-  area.classList.remove('invisible');
-
-  const btns=document.getElementById('action-buttons');
-  const raiseRow=document.getElementById('mob-raise-row');
-  btns.innerHTML='';
-  raiseRow.classList.remove('visible');
-  // 清除旧快捷按钮（保留 .raise-label）
-  Array.from(raiseRow.children).forEach(el=>{ if(!el.classList.contains('raise-label')) el.remove(); });
-
-  // 只有 heroResolve 不为 null 时才显示操作按钮
-  if(!heroResolve){
-    btns.innerHTML=`<div style="color:var(--text-dim);font-size:13px;padding:8px 0;">${hero.folded?'已弃牌':hero.allIn?'已全下':'等待其他玩家...'}</div>`;
-    return;
-  }
-
-  const callAmt=G.lastBet-hero.bet;
-  const canCheck=callAmt<=0;
-  const minRT=G.lastBet+Math.max(G.minRaise,BB);
-  const maxRT=hero.chips+hero.bet;
-  const canRaise=hero.chips>callAmt&&minRT<=maxRT;
-
-  // ── 主按钮行 ──
-  if(!canCheck){
-    const b=document.createElement('button');b.className='btn btn-fold';b.textContent='弃牌';
-    b.onclick=()=>{ resolveHero('fold',0); };btns.appendChild(b);
-  }
-  if(canCheck){
-    const b=document.createElement('button');b.className='btn btn-check';b.textContent='过牌';
-    b.onclick=()=>{ resolveHero('check',0); };btns.appendChild(b);
-  } else {
-    const actual=Math.min(callAmt,hero.chips);
-    const b=document.createElement('button');b.className='btn btn-call';
-    b.textContent=`跟注 ${actual}`;
-    b.onclick=()=>{ resolveHero('call',0); };btns.appendChild(b);
-  }
-
-  if(canRaise){
-    // 加注按钮：点击后展开快捷金额行
-    const rb=document.createElement('button');rb.className='btn btn-raise';
-    rb.textContent=canCheck?'下注':'加注';
-    rb.onclick=()=>{
-      const showing=raiseRow.classList.contains('visible');
-      raiseRow.classList.toggle('visible',!showing);
-    };
-    btns.appendChild(rb);
-  }
-
-  const ab=document.createElement('button');ab.className='btn btn-allin';
-  ab.textContent=`全下`;
-  ab.onclick=()=>{ resolveHero('allin',0); };btns.appendChild(ab);
-
-  // ── 快捷加注金额行（点加注后显示）──
-  if(canRaise){
-    // 计算底池快捷档位
-    const pot=G.pot;
-    const label=document.querySelector('#mob-raise-row .raise-label');
-    if(label) label.textContent=`${canCheck?'下注':'加注'}至（底池 ${pot}）：`;
-
-    const presets=[
-      { label:'1/3池', val: Math.round((pot*1/3+hero.bet)/BB)*BB },
-      { label:'半池',  val: Math.round((pot*0.5+hero.bet)/BB)*BB },
-      { label:'2/3池', val: Math.round((pot*2/3+hero.bet)/BB)*BB },
-      { label:'1倍池', val: Math.round((pot+hero.bet)/BB)*BB },
-    ];
-    // 过滤：必须在 minRT~maxRT 范围内，且去重
-    const seen=new Set();
-    const valid=presets
-      .map(p=>({ ...p, val: Math.max(minRT, Math.min(maxRT, p.val)) }))
-      .filter(p=>{ if(seen.has(p.val)) return false; seen.add(p.val); return true; });
-
-    valid.forEach(preset=>{
-      const qb=document.createElement('button');
-      qb.className='btn-quick';
-      qb.innerHTML=`<div style="font-size:10px;color:var(--text-dim)">${preset.label}</div><div style="font-size:13px;font-weight:700;color:var(--gold)">${preset.val}</div>`;
-      qb.onclick=()=>{
-        // 高亮选中
-        raiseRow.querySelectorAll('.btn-quick').forEach(b=>b.classList.remove('selected'));
-        qb.classList.add('selected');
-        resolveHero('raise', preset.val);
-      };
-      raiseRow.appendChild(qb);
-    });
-
-    // 自定义金额按钮
-    const customWrap = document.createElement('div');
-    customWrap.className = 'btn-quick-custom-wrap';
-    customWrap.style.cssText = 'flex:1.2; display:flex; flex-direction:column; gap:3px; min-width:0;';
-    customWrap.innerHTML = `
-      <div style="font-size:10px;color:var(--text-dim);text-align:center;">自定义</div>
-      <div style="display:flex;gap:3px;align-items:center;">
-        <input type="number" id="custom-raise-input"
-          min="${minRT}" max="${maxRT}" step="${BB}"
-          placeholder="${minRT}"
-          style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);
-          border-radius:6px;color:#fff;font-size:13px;font-weight:700;padding:5px 6px;
-          text-align:center;-webkit-appearance:none;outline:none;" />
-        <button id="custom-raise-btn"
-          style="padding:5px 8px;background:var(--btn-raise);border:none;border-radius:6px;
-          color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">确定</button>
-      </div>`;
-    raiseRow.appendChild(customWrap);
-    document.getElementById('custom-raise-btn').onclick = () => {
-      const inp = document.getElementById('custom-raise-input');
-      let v = Math.round(parseInt(inp.value)||minRT);
-      v = Math.max(minRT, Math.min(maxRT, v));
-      raiseRow.querySelectorAll('.btn-quick').forEach(b=>b.classList.remove('selected'));
-      resolveHero('raise', v);
-    };
-    // 按回车也触发确定
-    document.getElementById('custom-raise-input').onkeydown = (e) => {
-      if(e.key === 'Enter') document.getElementById('custom-raise-btn').click();
-    };
-
-    // All-in 快捷按钮（放最后）
-    const aib=document.createElement('button');
-    aib.className='btn-quick';
-    aib.style.borderColor='rgba(142,68,173,.6)';
-    aib.innerHTML=`<div style="font-size:10px;color:var(--text-dim)">全下</div><div style="font-size:13px;font-weight:700;color:#c39bd3">${maxRT}</div>`;
-    aib.onclick=()=>{ resolveHero('allin',0); };
-    raiseRow.appendChild(aib);
-  }
-}
-
-function resolveHero(action, raiseTotal){
-  if(!heroResolve) return;
-  const fn=heroResolve;
-  heroResolve=null;
-  fn({action, raiseTotal});
-}
-
-/* ===== 日志 ===== */
-function addLog(text, cls=''){
-  const el=document.getElementById('message-log');
-  const d=document.createElement('div');
-  d.className='msg-item'+(cls?' '+cls:'');
-  d.textContent=text;
-  el.appendChild(d);
-  while(el.children.length>4) el.removeChild(el.firstChild);
-}
-
-/* ===== 牌桌工具 ===== */
-function nextSeat(from){
-  const n=G.players.length;
-  let idx=(from+1)%n;
-  for(let i=0;i<n;i++){
-    if(!G.players[idx].eliminated) return idx;
-    idx=(idx+1)%n;
-  }
-  return from;
-}
-
-/* ===== AI决策 ===== */
-function estimateStr(cards){
-  if(!cards||cards.length<2) return 0.3;
-  if(cards.length===2){
-    const[a,b]=cards.map(c=>rv(c.r)).sort((x,y)=>y-x);
-    let s=(a+b)/28;
-    if(a===b)s+=0.3;
-    if(a>=12||b>=12)s+=0.1;
-    return Math.min(1,s);
-  }
-  const res=evalHand(cards);
-  if(!res)return 0.3;
-  const tier=res.score[0];
-  return Math.min(1,0.05+tier*0.12+res.score[1]/100);
-}
-
-function decideAI(idx){
-  const p=G.players[idx];
-  const callAmt=G.lastBet-p.bet;
-  const potOdds=G.pot>0?callAmt/(G.pot+callAmt):0;
-  const str=estimateStr([...p.hand,...G.community]);
-  const r=Math.random();
-  if(callAmt<=0){
-    if(str>0.68&&r<0.55){
-      const bet=Math.min(p.chips,Math.max(BB,(G.pot*(0.5+r*0.4))|0));
-      return{action:'raise',raiseTotal:p.bet+bet};
-    }
-    if(str>0.42&&r<0.22) return{action:'raise',raiseTotal:p.bet+Math.min(p.chips,Math.max(BB,(G.pot*0.4)|0))};
-    return{action:'check',raiseTotal:0};
-  }
-  if(str>potOdds+0.18||(str>0.5&&callAmt<=p.chips)){
-    if(str>0.72&&r<0.3&&p.chips>callAmt){
-      const rt=Math.min(p.chips+p.bet,G.lastBet+Math.max(G.minRaise,(G.pot*0.6)|0));
-      if(rt>G.lastBet) return{action:'raise',raiseTotal:rt};
-    }
-    if(callAmt>=p.chips) return{action:'allin',raiseTotal:0};
-    return{action:'call',raiseTotal:0};
-  }
-  if(r<0.12&&str>0.35){
-    const rt=Math.min(p.chips+p.bet,G.lastBet+Math.max(G.minRaise,(G.pot*0.55)|0));
-    if(rt>G.lastBet) return{action:'raise',raiseTotal:rt};
-  }
-  if(callAmt<=0) return{action:'check',raiseTotal:0};
-  return{action:'fold',raiseTotal:0};
-}
-
-/* ===== 执行行动 ===== */
-function applyAction(idx, action, raiseTotal){
-  const p=G.players[idx];
-  const callAmt=G.lastBet-p.bet;
-  if(action==='fold'){
-    p.folded=true;
-    addLog(`${p.name} 弃牌`);
-    return {raised:false};
-  } else if(action==='check'){
-    addLog(`${p.name} 过牌`);
-    return {raised:false};
-  } else if(action==='call'){
-    const pay=Math.min(callAmt,p.chips);
-    p.chips-=pay; p.bet+=pay; G.pot+=pay;
-    if(p.chips===0){p.allIn=true;addLog(`${p.name} 跟注全下 ${p.bet}`);}
-    else addLog(`${p.name} 跟注 ${p.bet}`);
-    _triggerChipAnim(idx);
-    return {raised:false};
-  } else if(action==='raise'){
-    const extra=raiseTotal-p.bet;
-    const pay=Math.min(extra,p.chips);
-    p.chips-=pay; G.pot+=pay;
-    const newBet=p.bet+pay;
-    G.minRaise=Math.max(BB,newBet-G.lastBet);
-    G.lastBet=newBet; p.bet=newBet;
-    if(p.chips===0){p.allIn=true;addLog(`${p.name} 加注全下至 ${p.bet}`);}
-    else addLog(`${p.name} 加注至 ${p.bet}`);
-    _triggerChipAnim(idx);
-    return {raised:true, raiserIdx:idx};
-  } else if(action==='allin'){
-    const pay=p.chips;
-    const wasHigher=p.bet+pay>G.lastBet;
-    p.bet+=pay; G.pot+=pay; p.chips=0; p.allIn=true;
-    if(wasHigher){
-      G.minRaise=Math.max(BB,p.bet-G.lastBet);
-      G.lastBet=p.bet;
-    }
-    addLog(`${p.name} 全下 ${p.bet}`);
-    _triggerChipAnim(idx);
-    return {raised:wasHigher, raiserIdx:idx};
-  }
-  return {raised:false};
-}
-
-// 触发飞币动画：先记录旧值，再渲染带动画的筹码层
-function _triggerChipAnim(idx){
-  _prevBets[idx] = _prevBets[idx] || 0;
-  // 延迟一帧让 DOM 刷新，再触发动画
-  requestAnimationFrame(() => renderBetsLayer(idx));
-  _prevBets[idx] = G.players[idx].bet;
-}
-
-/* ====================================================
-   策略分析引擎
-   ==================================================== */
-
-/* ---- 蒙特卡洛胜率模拟 ---- */
-function monteCarloWinRate(heroHand, community, numOpponents, iterations=800){
-  const known = [...heroHand, ...community];
-  const knownSet = new Set(known.map(c=>c.r+c.s));
-  const deck = makeDeck().filter(c=>!knownSet.has(c.r+c.s));
-
-  let wins=0, ties=0;
-  const needed = 5 - community.length; // 还需要发的公共牌数
-
-  for(let i=0;i<iterations;i++){
-    const d = shuffle(deck);
-    let ptr = 0;
-    // 补全公共牌
-    const board = [...community];
-    for(let j=0;j<needed;j++) board.push(d[ptr++]);
-    // 发对手手牌
-    const opponents = [];
-    for(let o=0;o<numOpponents;o++){
-      opponents.push([d[ptr++],d[ptr++]]);
-    }
-    const heroScore = evalHand([...heroHand,...board]).score;
-    let heroWins = true, heroTies = false;
-    for(const op of opponents){
-      const opScore = evalHand([...op,...board]).score;
-      const cmp = cmpScore(heroScore, opScore);
-      if(cmp < 0){ heroWins=false; heroTies=false; break; }
-      if(cmp === 0){ heroWins=false; heroTies=true; }
-    }
-    if(heroWins) wins++;
-    else if(heroTies) ties++;
-  }
-  return { winRate: wins/iterations, tieRate: ties/iterations, total: (wins+ties)/iterations };
-}
-
-/* ---- 位置分析 ---- */
-function getPositionInfo(){
-  const n = G.players.length;
-  const alive = G.players.filter(p=>!p.eliminated).length;
-  const dealer = G.dealer;
-  // 相对庄家距离
-  let dist = 0;
-  let idx = dealer;
-  while(idx !== 0){
-    idx = (idx+1)%n;
-    if(!G.players[idx].eliminated) dist++;
-    if(dist > alive) break;
-  }
-  const ratio = dist / alive;
-  if(ratio <= 0.25) return {name:'早位', short:'EP', color:'#e05050', desc:'需要更强的手牌才能进入底池'};
-  if(ratio <= 0.6)  return {name:'中位', short:'MP', color:'#e0a020', desc:'手牌要求中等，可以适当参与'};
-  if(ratio <= 0.85) return {name:'截止位', short:'CO', color:'#40b080', desc:'位置较好，可以放宽进入底池的手牌范围'};
-  return {name:'庄家/晚位', short:'BTN', color:'#4090d0', desc:'最佳位置，信息优势最大'};
-}
-
-/* ---- GTO 建议计算 ---- */
-function getGTOAdvice(winRate, potOdds, callAmt, heroChips, pot, round){
-  const ev_call = winRate * (pot + callAmt) - (1-winRate) * callAmt;
-  const ev_fold = 0;
-  const sprs = heroChips / Math.max(pot, BB); // 筹码底池比
-
-  const advice = [];
-
-  if(callAmt <= 0){
-    // 可以过牌的情况
-    if(winRate > 0.65){
-      const betSize = Math.round(pot * (0.5 + (winRate-0.65)));
-      advice.push({action:'下注', freq: Math.round(winRate*85), recommended:true,
-        reason:`胜率${(winRate*100).toFixed(0)}%，价值下注建议 ${betSize} 积分`});
-      advice.push({action:'过牌', freq: Math.round((1-winRate)*85+15), recommended:false, reason:'保护范围，偶尔慢打'});
-    } else if(winRate > 0.45){
-      advice.push({action:'过牌', freq:65, recommended:true, reason:'胜率中等，过牌保护范围'});
-      advice.push({action:'下注', freq:35, recommended:false, reason:'半诈唬或价值'});
-    } else {
-      advice.push({action:'过牌', freq:80, recommended:true, reason:'胜率较低，避免投入更多'});
-      advice.push({action:'下注(诈唬)', freq:20, recommended:false, reason:'偶尔诈唬保持不可预测性'});
-    }
-  } else {
-    // 需要跟注的情况
-    const equity = winRate;
-    if(equity > potOdds + 0.15 && ev_call > 0){
-      const raiseFreq = winRate > 0.65 ? Math.round(winRate*50) : 15;
-      advice.push({action:'加注', freq:raiseFreq, recommended:winRate>0.68,
-        reason:`强牌，EV=${ev_call>0?'+':''}${ev_call.toFixed(0)}，价值加注`});
-      advice.push({action:'跟注', freq:Math.round((winRate-potOdds)*100), recommended:winRate<=0.68,
-        reason:`胜率${(equity*100).toFixed(0)}% > 底池赔率${(potOdds*100).toFixed(0)}%`});
-    } else if(equity > potOdds - 0.05){
-      advice.push({action:'跟注', freq:55, recommended:true,
-        reason:`胜率接近赔率，期望值 ${ev_call.toFixed(0)}，勉强跟注`});
-      advice.push({action:'弃牌', freq:45, recommended:false, reason:'边缘牌力，可以放弃'});
-    } else {
-      advice.push({action:'弃牌', freq:75, recommended:true,
-        reason:`底池赔率${(potOdds*100).toFixed(0)}% > 胜率${(equity*100).toFixed(0)}%，负期望`});
-      if(winRate > 0.25){
-        advice.push({action:'加注(诈唬)', freq:25, recommended:false, reason:'偶尔诈唬，保持不可预测'});
-      }
-    }
-  }
-
-  return { advice, ev_call: ev_call.toFixed(1) };
-}
-
-/* ---- 复盘记录 ---- */
-const reviewLog = []; // [{round, action, winRate, optimal, comment, ev}]
-
-function recordDecision(round, action, winRate, potOdds, callAmt, pot){
-  const { advice } = getGTOAdvice(winRate, potOdds, callAmt, G.players[0].chips, pot, round);
-  const topAction = advice.find(a=>a.recommended)?.action || advice[0]?.action;
-  const actionMap = {'fold':'弃牌','check':'过牌','call':'跟注','raise':'加注','allin':'全下'};
-  const actCN = actionMap[action] || action;
-
-  // 判断决策质量
-  let quality = 'ok', comment = '';
-  const ev = winRate * (pot + Math.max(callAmt,0)) - (1-winRate) * Math.max(callAmt,0);
-
-  if(action==='fold'){
-    if(winRate > potOdds + 0.15){
-      quality='bad'; comment=`弃牌可能是错误的，胜率${(winRate*100).toFixed(0)}%远高于底池赔率${(potOdds*100).toFixed(0)}%`;
-    } else if(winRate > potOdds){
-      quality='warn'; comment=`胜率略高于底池赔率，这手可以考虑跟注`;
-    } else {
-      quality='ok'; comment=`弃牌正确，负期望局面`;
-    }
-  } else if(action==='check'||action==='call'){
-    if(winRate > 0.65 && callAmt <= 0){
-      quality='warn'; comment=`强牌选择过牌，可考虑价值下注`;
-    } else if(ev > 0){
-      quality='ok'; comment=`期望值为正 +${ev.toFixed(0)}，决策合理`;
-    } else {
-      quality='warn'; comment=`期望值为负 ${ev.toFixed(0)}，需谨慎`;
-    }
-  } else if(action==='raise'||action==='allin'){
-    // 翻牌圈/转牌圈：顶对这类一对牌胜率通常 25-40%，满池或大下注属于价值下注而非诈唬
-    // 用底池赔率 + EV 综合判断，而非单纯胜率
-    const isPostFlop = (round==='flop'||round==='turn'||round==='river');
-    if(winRate > 0.55){
-      quality='ok'; comment=`强牌加注，价值下注正确`;
-    } else if(ev > 0){
-      // EV 为正，不管胜率多少，主动下注都是合理的
-      quality='ok'; comment=`期望值为正，主动下注正确（胜率${(winRate*100).toFixed(0)}%，EV+${ev.toFixed(0)}）`;
-    } else if(isPostFlop && winRate > 0.25){
-      // 翻牌后胜率 25%+ 加注：可能是顶对/强听牌下注，属于价值/半诈唬范畴
-      quality='warn'; comment=`胜率${(winRate*100).toFixed(0)}%，翻牌后主动下注可以，注意对手的跟注范围`;
-    } else if(winRate > 0.2){
-      quality='warn'; comment=`牌力偏弱加注，若为半诈唬（有听牌可能）则合理`;
-    } else {
-      quality='warn'; comment=`胜率较低（${(winRate*100).toFixed(0)}%），纯诈唬需对手范围较宽`;
-    }
-  }
-
-  reviewLog.push({
-    round: ROUND_LABEL[round]||round,
-    action: actCN,
-    winRate,
-    potOdds,
-    quality,
-    comment,
-    ev: ev.toFixed(0)
-  });
-}
-
-/* ---- 渲染策略面板 ---- */
-function updateStrategyPanel(){
-  if(!G || !document.getElementById('strategy-panel').classList.contains('open')) return;
-  const hero = G.players[0];
-  if(!hero || hero.eliminated || hero.folded) return;
-
-  const numOpp = G.players.filter(p=>!p.folded&&!p.eliminated&&!p.isHero).length;
-  if(numOpp < 1) return;
-
-  // 胜率模拟（快速，800次）
-  const sim = monteCarloWinRate(hero.hand, G.community, numOpp, 800);
-  const winRate = sim.winRate;
-  const callAmt = Math.max(0, G.lastBet - hero.bet);
-  const potOdds = G.pot > 0 ? callAmt / (G.pot + callAmt) : 0;
-  const pos = getPositionInfo();
-  const { advice, ev_call } = getGTOAdvice(winRate, potOdds, callAmt, hero.chips, G.pot, G.round);
-
-  // 更新面板标签
-  document.getElementById('sp-hand-label').textContent = `手牌 #${G.handNum} · ${ROUND_LABEL[G.round]||''}`;
-
-  const body = document.getElementById('sp-body');
-  const pct = Math.round(winRate*100);
-  const tiePct = Math.round(sim.tieRate*100);
-  const circ = 2 * Math.PI * 26; // r=26
-  const offset = circ * (1 - winRate);
-  const ringColor = winRate>0.6?'#40c070':winRate>0.4?'#e0a020':'#e05050';
-
-  body.innerHTML = `
-    <!-- 胜率 -->
-    <div class="sp-section">
-      <div class="sp-section-title">胜率估算（蒙特卡洛）</div>
-      <div class="winrate-ring-wrap">
-        <div class="winrate-ring">
-          <svg width="64" height="64" viewBox="0 0 64 64">
-            <circle class="ring-bg" cx="32" cy="32" r="26"/>
-            <circle class="ring-val" cx="32" cy="32" r="26"
-              style="stroke:${ringColor};stroke-dasharray:${circ.toFixed(1)};stroke-dashoffset:${offset.toFixed(1)}"/>
-          </svg>
-          <div class="ring-text" style="color:${ringColor}">${pct}%</div>
-        </div>
-        <div class="winrate-meta">
-          <div class="wm-label">对阵 ${numOpp} 名对手</div>
-          <div class="wm-val">${pct}% 胜率</div>
-          <div class="wm-sub">${tiePct>0?'平局 '+tiePct+'%  ·  ':''}当前 ${handName(evalHand([...hero.hand,...G.community]).score)}</div>
+    <!-- 玩家信息卡 -->
+    <div class="home-player-card" id="home-player-card">
+      <div class="no-player" id="home-no-player" onclick="showPlayerModal()">
+        👤 点击创建或选择玩家
+      </div>
+      <div class="home-player-row" id="home-player-row" style="display:none">
+        <div class="home-avatar" id="home-avatar">W</div>
+        <div class="home-player-detail">
+          <div class="home-player-name" id="home-player-name">-</div>
+          <div class="home-player-level" id="home-player-level">🌱 新手</div>
+          <div class="home-player-score" id="home-player-score">0 积分</div>
         </div>
       </div>
     </div>
 
-    <!-- 底池赔率 -->
-    <div class="sp-section">
-      <div class="sp-section-title">底池赔率</div>
-      <div class="odds-bar-wrap">
-        <div class="odds-label-row">
-          <span style="color:var(--gold)">你的胜率 ${pct}%</span>
-          <span style="color:var(--text-dim)">底池赔率 ${(potOdds*100).toFixed(0)}%</span>
-        </div>
-        <div class="odds-bar" style="position:relative;height:10px;">
-          <div class="odds-bar-fill ${winRate>potOdds?'good':'bad'}" style="width:${pct}%;height:100%;position:absolute;left:0;top:0;"></div>
-          <div style="position:absolute;top:0;bottom:0;left:${(potOdds*100).toFixed(0)}%;width:2px;background:#fff;opacity:.5;"></div>
-        </div>
-        <div class="odds-verdict" style="color:${winRate>potOdds+0.05?'#40c070':winRate>potOdds-0.05?'#e0a020':'#e05050'}">
-          ${callAmt<=0 ? '⟳ 无需跟注' : winRate>potOdds+0.05 ? '✓ 跟注期望值为正' : winRate>potOdds-0.05 ? '~ 边界情况' : '✗ 跟注期望值为负'}
-          ${callAmt>0 ? ` · 期望值 ${ev_call>0?'+':''}${ev_call}` : ''}
-        </div>
+    <!-- 功能入口 -->
+    <div class="home-cards-grid">
+      <div class="home-card featured" onclick="switchTab('scenario')">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">情景实战</div>
+        <div class="card-desc">GTO梯度评分，100道精选场景，提升实战决策能力</div>
+      </div>
+      <div class="home-card" onclick="switchTab('train')">
+        <div class="card-icon">📚</div>
+        <div class="card-title">练习模式</div>
+        <div class="card-desc">12个专项，120道题，巩固基础理论</div>
+      </div>
+      <div class="home-card" onclick="switchTab('game')">
+        <div class="card-icon">🎮</div>
+        <div class="card-title">自由游戏</div>
+        <div class="card-desc">AI对战，实战练习，支持策略分析</div>
       </div>
     </div>
+  </div>
 
-    <!-- GTO 建议 -->
-    <div class="sp-section">
-      <div class="sp-section-title">GTO 建议行动</div>
-      <div class="gto-cards">
-        ${advice.map(a=>`
-          <div class="gto-card${a.recommended?' recommended':''}">
-            <div>
-              <div class="gc-action">${a.recommended?'★ ':''}${a.action}</div>
-              <div style="font-size:10px;color:var(--text-dim);margin-top:1px">${a.reason}</div>
-            </div>
-            <div class="gc-freq">${a.freq}%</div>
-          </div>`).join('')}
+  <!-- 情景实战页 -->
+  <div class="page" id="page-scenario">
+
+    <!-- 筛选区 -->
+    <div id="sc-filter-wrap">
+      <div class="section-card" style="margin-bottom:12px;">
+        <h3 style="margin-bottom:4px;">🎯 情景实战</h3>
+        <p style="font-size:13px;color:var(--text-dim)">根据GTO理论打分（0–100分梯度评分），每次最多20题</p>
       </div>
-    </div>
 
-    <!-- 位置 -->
-    <div class="sp-section">
-      <div class="sp-section-title">位置分析</div>
-      <div style="display:flex;align-items:flex-start;gap:8px">
-        <div class="position-badge">
-          <div class="pb-dot" style="background:${pos.color}"></div>
-          ${pos.name}（${pos.short}）
-        </div>
-        <div style="font-size:11px;color:var(--text-dim);line-height:1.5">${pos.desc}</div>
-      </div>
-    </div>
-
-    <!-- 本手复盘（如果有） -->
-    ${reviewLog.length>0 ? `
-    <div class="sp-section">
-      <div class="sp-section-title">本手复盘</div>
-      <div class="review-list">
-        ${reviewLog.slice(-5).map(r=>`
-          <div class="review-item ${r.quality}">
-            <div class="ri-round">${r.round}</div>
-            <div class="ri-action">你选择了：${r.action}</div>
-            <div class="ri-comment">${r.comment}</div>
-            <div class="ri-ev ${parseFloat(r.ev)>=0?'pos':'neg'}">胜率 ${(r.winRate*100).toFixed(0)}%  ·  期望值 ${parseFloat(r.ev)>=0?'+':''}${r.ev}</div>
-          </div>`).join('')}
-      </div>
-    </div>` : ''}
-  `;
-}
-
-/* ---- 面板收起/展开 ---- */
-let _strategyPanelOpen = false;
-function _strategyPanelSetup(){
-  const panel = document.getElementById('strategy-panel');
-  const btn = document.getElementById('sp-toggle-btn');
-
-  function applyState(open){
-    _strategyPanelOpen = open;
-    panel.classList.toggle('open', open);
-    btn.textContent = open ? '⟩' : '⟨';
-    const panelW = isMobileLS() ? '200px' : '280px';
-    btn.style.right = open ? panelW : '0';
-    if(open && G && heroResolve) updateStrategyPanel();
-  }
-
-  btn.addEventListener('click', ()=>{ applyState(!_strategyPanelOpen); });
-
-  // 手机横屏时默认收起，桌面默认展开
-  const isMobileLS = ()=> window.innerHeight <= 500 && window.innerWidth > window.innerHeight;
-  setTimeout(()=>{ if(!_strategyPanelOpen) applyState(!isMobileLS()); }, 300);
-}
-_strategyPanelSetup();
-
-function closeStrategyPanel(){
-  const panel = document.getElementById('strategy-panel');
-  const btn = document.getElementById('sp-toggle-btn');
-  _strategyPanelOpen = false;
-  panel.classList.remove('open');
-  btn.textContent = '⟨';
-  btn.style.right = '0';
-}
-function openStrategyPanel(){
-  const panel = document.getElementById('strategy-panel');
-  const btn = document.getElementById('sp-toggle-btn');
-  _strategyPanelOpen = true;
-  panel.classList.add('open');
-  btn.textContent = '⟩';
-  const panelW = isMobileLS() ? '200px' : '280px';
-  btn.style.right = panelW;
-}
-
-/* ===== 核心：一轮下注（async） ===== */
-// firstIdx: 第一个行动的玩家索引
-async function bettingRound(firstIdx) {
-  const n = G.players.length;
-
-  // 构建行动队列
-  // 从 firstIdx 开始顺时针，收集所有能行动的人
-  function buildQueue(start) {
-    const q = [];
-    let idx = start;
-    for(let i = 0; i < n; i++) {
-      const p = G.players[idx];
-      if(!p.folded && !p.allIn && !p.eliminated) q.push(idx);
-      idx = (idx+1)%n;
-    }
-    return q;
-  }
-
-  let queue = buildQueue(firstIdx);
-
-  while(queue.length > 0) {
-    // 检查是否只剩一人未弃牌
-    const active = G.players.filter(p=>!p.folded&&!p.eliminated);
-    if(active.length <= 1) return;
-
-    const idx = queue.shift();
-    const p = G.players[idx];
-
-    // 跳过已弃牌/全下/出局的
-    if(p.folded || p.allIn || p.eliminated) continue;
-
-    // 设置当前行动者
-    activeIdx = idx;
-    renderAll();
-
-    let action, raiseTotal;
-
-    if(p.isHero) {
-      // 更新策略面板
-      updateStrategyPanel();
-      // 等待玩家点击按钮
-      const callAmtNow = Math.max(0, G.lastBet - p.bet);
-      const potOddsNow = G.pot>0 ? callAmtNow/(G.pot+callAmtNow) : 0;
-      const winRateNow = monteCarloWinRate(p.hand, G.community,
-        G.players.filter(q=>!q.folded&&!q.eliminated&&!q.isHero).length, 600).winRate;
-      const result = await new Promise(resolve => {
-        heroResolve = resolve;
-        renderActions(); // 显示按钮
-      });
-      action = result.action;
-      raiseTotal = result.raiseTotal;
-      // 记录本次决策到复盘
-      recordDecision(G.round, action, winRateNow, potOddsNow, callAmtNow, G.pot);
-    } else {
-      // AI 思考延迟
-      await sleep(400 + Math.random()*600);
-      // 再次检查是否已结束（防止游戏在AI思考时被重置）
-      if(!G || G.ended) return;
-      const act = decideAI(idx);
-      action = act.action;
-      raiseTotal = act.raiseTotal;
-    }
-
-    const result = applyAction(idx, action, raiseTotal);
-    activeIdx = -1;
-    renderAll();
-
-    // 如果有人加注，重建队列（从加注者后面开始，不含加注者）
-    if(result.raised) {
-      const nextStart = (result.raiserIdx + 1) % n;
-      queue = buildQueue(nextStart).filter(i => i !== result.raiserIdx);
-    }
-
-    // 短暂暂停
-    await sleep(100);
-  }
-
-  activeIdx = -1;
-  renderAll();
-}
-
-/* ===== 下一轮 ===== */
-async function nextRound() {
-  G.round = ({preflop:'flop',flop:'turn',turn:'river',river:'showdown'})[G.round];
-  if(G.round==='showdown'){ await endHand(true); return; }
-
-  // 发公共牌
-  G.deck.pop(); // burn
-  if(G.round==='flop') for(let i=0;i<3;i++) G.community.push(G.deck.pop());
-  else G.community.push(G.deck.pop());
-
-  // 重置每人的本轮下注
-  for(const p of G.players) if(!p.eliminated) p.bet=0;
-  G.lastBet=0; G.minRaise=BB;
-  // 清空筹码记录，下一轮重新触发飞入动画
-  for(const k in _prevBets) delete _prevBets[k];
-
-  renderAll();
-  await sleep(300);
-
-  // 翻牌/转牌/河牌：从庄家后第一个活着的人开始
-  const firstIdx = nextSeat(G.dealer);
-  const active = G.players.filter(p=>!p.folded&&!p.allIn&&!p.eliminated);
-  if(active.length>1) await bettingRound(firstIdx);
-
-  await nextRound();
-}
-
-/* ===== 结算 ===== */
-async function endHand(showdown){
-  activeIdx=-1;
-  heroResolve=null;
-
-  const eligible = G.players.filter(p=>!p.folded&&!p.eliminated);
-
-  // 清空上一手的摊牌标记
-  G.players.forEach(p=>{ p._isWinner=false; p._handName=''; });
-  G.showdown = false;
-
-  if(!showdown || eligible.length===1){
-    // 只剩一人不用摊牌
-    const winner = eligible[0] || G.players.filter(p=>!p.eliminated)[0];
-    winner.chips += G.pot;
-    winner._isWinner = true;
-    addLog(`${winner.name} 赢得底池 ${G.pot}！`,'gold');
-    // 底部结算条
-    document.getElementById('rb-winner-text').textContent = `🏆 ${winner.name} 赢得 ${G.pot} 积分`;
-    document.getElementById('rb-detail-text').textContent = '其他玩家全部弃牌';
-    renderAll();
-    document.getElementById('result-bar').style.display='flex';
-    document.getElementById('action-area').classList.remove('hidden');
-    document.getElementById('action-area').classList.add('invisible');
-  } else {
-    // 摊牌：先亮牌（渲染），再延迟展示结果
-    const all7 = p => [...p.hand,...G.community];
-    const evaled = eligible.map(p=>{
-      const e=evalHand(all7(p));
-      return{player:p, score:e.score, bestCards:e.cards, handName:handName(e.score), win:0};
-    });
-    evaled.sort((a,b)=>cmpScore(b.score,a.score));
-    const topScore = evaled[0].score;
-    const winners = evaled.filter(e=>cmpScore(e.score,topScore)===0);
-    const share = Math.floor(G.pot/winners.length);
-    winners.forEach(w=>{w.player.chips+=share;w.win=share;});
-
-    // 给每个玩家标记牌型和赢家状态
-    evaled.forEach(e=>{
-      e.player._handName = e.handName;
-      e.player._isWinner = e.win > 0;
-    });
-    G.showdown = true;
-    renderAll();
-
-    // 日志
-    winners.forEach(w=>addLog(`${w.player.name} 赢 ${w.win}（${w.handName}）`,'gold'));
-
-    // 底部结算条
-    const winNames = winners.map(w=>`${w.player.name}（${w.handName}）`).join('、');
-    document.getElementById('rb-winner-text').textContent = `🏆 ${winNames} 赢得 ${G.pot} 积分`;
-    const details = evaled.filter(e=>!e.player._isWinner).map(e=>`${e.player.name}: ${e.handName}`).join('  ·  ');
-    document.getElementById('rb-detail-text').textContent = details;
-    document.getElementById('result-bar').style.display='flex';
-    document.getElementById('action-area').classList.remove('hidden');
-    document.getElementById('action-area').classList.add('invisible');
-  }
-
-  // 处理出局
-  for(const p of G.players){
-    if(!p.eliminated && p.chips<=0){
-      p.eliminated=true;
-      addLog(`${p.name} 出局！`,'red');
-    }
-  }
-
-  // 结算后刷新策略面板（展示本手复盘）
-  showReviewInPanel();
-}
-
-/* ===== 结算后复盘展示 ===== */
-function showReviewInPanel(){
-  const panel = document.getElementById('strategy-panel');
-  const btn   = document.getElementById('sp-toggle-btn');
-
-  // 如果面板没开，强制打开
-  if(!_strategyPanelOpen){ openStrategyPanel(); }
-
-  const body = document.getElementById('sp-body');
-  const hero = G.players[0];
-  document.getElementById('sp-hand-label').textContent = `手牌 #${G.handNum} · 复盘`;
-
-  // ── 底牌 HTML ──
-  const heroCardHtml = (hero.hand||[]).map(c=>{
-    if(!c) return '';
-    const isRed = c.s==='♥'||c.s==='♦';
-    return `<span style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
-      width:26px;height:38px;background:#fff;border-radius:4px;border:1px solid #ccc;
-      font-size:9px;font-weight:700;line-height:1.1;color:${isRed?'#d32f2f':'#111'}">
-      <span>${c.r}</span><span style="font-size:11px">${c.s}</span></span>`;
-  }).join('');
-
-  // ── 公共牌 HTML ──
-  const commCardHtml = (G.community||[]).map(c=>{
-    if(!c) return '';
-    const isRed = c.s==='♥'||c.s==='♦';
-    return `<span style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
-      width:22px;height:32px;background:#fff;border-radius:3px;border:1px solid #ccc;
-      font-size:8px;font-weight:700;line-height:1.1;color:${isRed?'#d32f2f':'#111'}">
-      <span>${c.r}</span><span style="font-size:10px">${c.s}</span></span>`;
-  }).join('');
-
-  // ── 英雄最终牌型 ──
-  let heroHandName = '';
-  if(hero.hand && hero.hand.length>0 && G.community && G.community.length>=3){
-    try{ heroHandName = handName(evalHand([...hero.hand,...G.community]).score); }catch(e){}
-  }
-
-  // ── 胜负结果 ──
-  const heroWon = hero._isWinner;
-  const resultText = heroWon ? '🏆 赢得本手' : (hero.folded ? '弃牌出局' : '摊牌落败');
-  const resultColor = heroWon ? '#f0c040' : '#a09080';
-
-  // ── 无决策情况 ──
-  if(reviewLog.length === 0){
-    body.innerHTML = `
-      <div class="sp-section">
-        <div class="sp-section-title">手牌信息</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0">
-          <div style="display:flex;gap:4px">${heroCardHtml}</div>
-          <span style="color:var(--text-dim);font-size:11px">vs</span>
-          <div style="display:flex;gap:3px">${commCardHtml}</div>
-        </div>
-        ${heroHandName?`<div style="font-size:11px;color:var(--gold);margin-top:2px">${heroHandName}</div>`:''}
-        <div style="font-size:12px;font-weight:600;color:${resultColor};margin-top:4px">${resultText}</div>
-      </div>
-      <div class="sp-empty" style="padding:12px 0">本手牌未轮到你行动<br>（其他玩家提前弃牌）</div>
-    `;
-    return;
-  }
-
-  // ── 评分计算 ──
-  const goodCount = reviewLog.filter(r=>r.quality==='ok').length;
-  const warnCount = reviewLog.filter(r=>r.quality==='warn').length;
-  const badCount  = reviewLog.filter(r=>r.quality==='bad').length;
-  const score = Math.round(((goodCount*2 + warnCount*1) / (reviewLog.length*2)) * 100);
-  const scoreColor = score>=80?'#40c070':score>=60?'#e0a020':'#e05050';
-  const grade = score>=90?'S':score>=80?'A':score>=65?'B':score>=50?'C':'D';
-  const gradeDesc = score>=90?'出色，教科书级别打法':score>=80?'优秀，决策整体合理':
-                   score>=65?'良好，部分细节可优化':score>=50?'一般，存在明显失误':'需要改进，多处决策欠佳';
-
-  // ── 生成综合改进建议 ──
-  const tips = [];
-  const foldErrors = reviewLog.filter(r=>r.action==='弃牌'&&r.quality!=='ok');
-  const missedBets  = reviewLog.filter(r=>r.comment.includes('强牌选择过牌'));
-  const looseCall   = reviewLog.filter(r=>r.quality==='warn'&&(r.action==='跟注'||r.action==='过牌')&&r.comment.includes('负期望'));
-  const bluffs      = reviewLog.filter(r=>r.quality==='warn'&&r.action==='加注'&&r.winRate<0.22&&r.comment.includes('诈唬'));
-
-  if(foldErrors.length>0)
-    tips.push(`💡 <b>弃牌时机</b>：有 ${foldErrors.length} 次弃牌时胜率高于底池赔率，可以考虑跟注`);
-  if(missedBets.length>0)
-    tips.push(`💡 <b>价值下注</b>：持有强牌时应主动下注，不要放弃价值`);
-  if(looseCall.length>0)
-    tips.push(`💡 <b>跟注纪律</b>：有 ${looseCall.length} 次负期望跟注，注意底池赔率`);
-  if(bluffs.length>0)
-    tips.push(`💡 <b>诈唬频率</b>：弱牌加注风险较高，确保对手在合理范围内会弃牌`);
-  if(tips.length===0 && score>=80)
-    tips.push(`✅ 本手决策质量不错，继续保持`);
-  if(tips.length===0 && score<80)
-    tips.push(`💡 多关注底池赔率与胜率的对比，用期望值指导行动`);
-
-  body.innerHTML = `
-    <!-- 手牌信息 -->
-    <div class="sp-section">
-      <div class="sp-section-title">手牌信息</div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 0">
-        <div style="display:flex;gap:4px">${heroCardHtml}</div>
-        ${G.community.length>0?`<span style="color:var(--text-dim);font-size:10px">公共牌</span>
-        <div style="display:flex;gap:2px">${commCardHtml}</div>`:''}
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
-        ${heroHandName?`<span style="font-size:11px;color:var(--gold)">${heroHandName}</span>`:'<span></span>'}
-        <span style="font-size:12px;font-weight:700;color:${resultColor}">${resultText}</span>
-      </div>
-    </div>
-
-    <!-- 总评分 -->
-    <div class="sp-section">
-      <div class="sp-section-title">本手总评</div>
-      <div style="display:flex;align-items:center;gap:10px;padding:6px 0">
-        <div style="width:52px;height:52px;background:rgba(255,255,255,.04);border-radius:10px;
-          display:flex;align-items:center;justify-content:center;flex-direction:column;
-          border:2px solid ${scoreColor};flex-shrink:0">
-          <span style="font-size:22px;font-weight:900;color:${scoreColor};line-height:1">${grade}</span>
-          <span style="font-size:9px;color:${scoreColor};opacity:.7">${score}分</span>
-        </div>
-        <div style="flex:1">
-          <div style="font-size:12px;color:var(--text);font-weight:600">${gradeDesc}</div>
-          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.5">
-            ✓ 正确 <b style="color:#40c070">${goodCount}</b>&nbsp;&nbsp;
-            ⚠ 待改进 <b style="color:#e0a020">${warnCount}</b>&nbsp;&nbsp;
-            ✗ 错误 <b style="color:#e05050">${badCount}</b>
+      <div class="section-card">
+        <div class="sc-filter-group">
+          <div class="sc-section-title">街道</div>
+          <div class="sc-filter-chips">
+            <div class="sc-chip active" data-group="street" data-val="all">全部</div>
+            <div class="sc-chip" data-group="street" data-val="preflop">翻牌前</div>
+            <div class="sc-chip" data-group="street" data-val="flop">翻牌圈</div>
+            <div class="sc-chip" data-group="street" data-val="turn">转牌</div>
+            <div class="sc-chip" data-group="street" data-val="river">河牌</div>
           </div>
         </div>
+        <div class="sc-filter-group">
+          <div class="sc-section-title">位置</div>
+          <div class="sc-filter-chips">
+            <div class="sc-chip active" data-group="pos" data-val="all">全部</div>
+            <div class="sc-chip" data-group="pos" data-val="ip">有利位置 IP</div>
+            <div class="sc-chip" data-group="pos" data-val="oop">不利位置 OOP</div>
+          </div>
+        </div>
+        <div class="sc-filter-group" style="margin-bottom:16px;">
+          <div class="sc-section-title">底池类型</div>
+          <div class="sc-filter-chips">
+            <div class="sc-chip active" data-group="pot" data-val="all">全部</div>
+            <div class="sc-chip" data-group="pot" data-val="srp">SRP底池</div>
+            <div class="sc-chip" data-group="pot" data-val="3bet">3-bet底池</div>
+            <div class="sc-chip" data-group="pot" data-val="4bet">4-bet底池</div>
+          </div>
+        </div>
+
+        <div class="sc-filter-desc" id="sc-count-desc">共 100 道题可选</div>
+        <button class="sc-start-btn" onclick="mStartSession()">🎲 开始训练</button>
       </div>
     </div>
 
-    <!-- 逐步复盘 -->
-    <div class="sp-section">
-      <div class="sp-section-title">逐步复盘（${reviewLog.length}次决策）</div>
-      <div class="review-list">
-        ${reviewLog.map((r,i)=>{
-          const icon = r.quality==='ok'?'✓':r.quality==='warn'?'⚠':'✗';
-          const evNum = parseFloat(r.ev);
-          return `<div class="review-item ${r.quality}">
-            <div class="ri-round">第${i+1}步 · ${r.round}</div>
-            <div class="ri-action">${icon} 你选择：<b>${r.action}</b></div>
-            <div class="ri-comment">${r.comment}</div>
-            <div class="ri-ev ${evNum>=0?'pos':'neg'}">
-              胜率 ${(r.winRate*100).toFixed(0)}%
-              ${r.potOdds>0?` · 赔率 ${(r.potOdds*100).toFixed(0)}%`:''}
-              · EV ${evNum>=0?'+':''}${r.ev}
+    <!-- 题目区 -->
+    <div id="sc-q-wrap">
+      <!-- 进度 -->
+      <div class="sc-progress-text" id="sc-prog-text">第 1 / 20 题</div>
+      <div class="sc-progress-bar-wrap">
+        <div class="sc-progress-fill" id="sc-prog-bar" style="width:0%"></div>
+      </div>
+
+      <!-- 题目卡片 -->
+      <div class="sc-q-card">
+        <div class="sc-tags" id="sc-tags"></div>
+        <div class="sc-q-title" id="sc-q-title"></div>
+        <div class="sc-cards-row">
+          <div class="sc-cards-group">
+            <div class="sc-cards-label">你的手牌</div>
+            <div class="sc-cards-display" id="sc-hero-cards"></div>
+          </div>
+          <div class="sc-cards-group" id="sc-board-group">
+            <div class="sc-cards-label">公牌</div>
+            <div class="sc-cards-display" id="sc-board-cards"></div>
+          </div>
+        </div>
+        <div class="sc-info-grid" id="sc-info-grid"></div>
+      </div>
+
+      <!-- 问题 + 选项 -->
+      <div class="sc-question" id="sc-question-text"></div>
+      <div class="sc-options" id="sc-options"></div>
+
+      <!-- 顶部退出 -->
+      <div style="text-align:center;margin-bottom:16px;">
+        <button onclick="mResetSession()" style="background:none;border:none;color:var(--text-dim);font-size:13px;cursor:pointer;padding:8px 16px;">✕ 结束训练</button>
+      </div>
+    </div>
+
+    <!-- 结果区 -->
+    <div id="sc-result-wrap">
+      <div class="sc-progress-text" id="sc-result-prog"></div>
+      <div class="sc-progress-bar-wrap">
+        <div class="sc-progress-fill" id="sc-result-prog-bar" style="width:0%"></div>
+      </div>
+
+      <!-- 得分卡 -->
+      <div class="sc-result-card">
+        <div class="sc-result-header">
+          <div class="sc-score-big" id="sc-score-big">75</div>
+          <div class="sc-result-meta">
+            <div class="sc-score-bar-wrap">
+              <div class="sc-bar-fill" id="sc-bar-fill" style="width:75%"></div>
             </div>
-          </div>`;
-        }).join('')}
+            <div class="sc-deviation" id="sc-deviation">✅ 接近最优解</div>
+          </div>
+        </div>
+        <!-- 各选项评分 -->
+        <div class="sc-all-scores-title">各选项评分对比</div>
+        <div id="sc-all-scores"></div>
+      </div>
+
+      <!-- GTO解析 -->
+      <div class="section-card">
+        <div class="sc-explain-box" style="margin-bottom:10px;">
+          <div class="sc-explain-label">GTO 解析</div>
+          <div class="sc-explain-text" id="sc-explain-text"></div>
+        </div>
+        <div class="sc-keypoint-box">
+          <div class="sc-keypoint-text" id="sc-keypoint-text"></div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="sc-action-row">
+        <button class="sc-next-btn" id="sc-next-btn" onclick="mNextQuestion()">下一题 →</button>
+        <button class="sc-end-btn" onclick="mResetSession()">结束</button>
       </div>
     </div>
 
-    <!-- 改进建议 -->
-    <div class="sp-section">
-      <div class="sp-section-title">改进建议</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        ${tips.map(t=>`
-          <div style="font-size:11px;color:var(--text);line-height:1.6;
-            padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.03);
-            border-left:3px solid rgba(240,192,64,.4)">${t}</div>
-        `).join('')}
+    <!-- 总结区 -->
+    <div id="sc-summary-wrap">
+      <div class="section-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">训练完成</div>
+        <div class="sc-grade" id="sc-sum-grade">🥇 优秀水平</div>
+        <div class="sc-bonus-text" id="sc-sum-bonus">+50 积分</div>
+      </div>
+      <div class="sc-summary-stats">
+        <div class="sc-stat-cell">
+          <div class="sc-stat-num" id="sc-sum-avg">0</div>
+          <div class="sc-stat-label">平均得分</div>
+        </div>
+        <div class="sc-stat-cell">
+          <div class="sc-stat-num" id="sc-sum-total">0</div>
+          <div class="sc-stat-label">完成题目</div>
+        </div>
+        <div class="sc-stat-cell">
+          <div class="sc-stat-num" id="sc-sum-gto">0%</div>
+          <div class="sc-stat-label">GTO最优率</div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="sc-review-title">题目回顾</div>
+        <div id="sc-review-list"></div>
+      </div>
+      <div class="sc-summary-btns">
+        <button class="sc-again-btn" onclick="mResetSession()">🔄 再来一轮</button>
+        <button class="sc-home-btn" onclick="switchTab('home')">🏠 主页</button>
       </div>
     </div>
-  `;
+  </div>
+
+  <!-- 练习模式页 -->
+  <div class="page" id="page-train">
+    <div class="train-header">
+      <h2>📚 练习模式</h2>
+      <p>选择专项，系统性提升每个方面</p>
+    </div>
+    <div class="topic-grid" id="topic-grid">
+      <!-- JS动态渲染 -->
+    </div>
+  </div>
+
+  <!-- 自由游戏页 -->
+  <div class="page" id="page-game">
+    <div class="game-landscape-hint">
+      <div class="hint-icon">🎮</div>
+      <h3>自由游戏</h3>
+      <p>自由游戏为完整桌面版牌局体验，<br>建议在电脑或横屏模式下使用，<br>获得最佳游戏体验。</p>
+      <button class="game-launch-btn" onclick="openDesktopGame()">🖥️ 打开电脑版</button>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:12px;">或横屏后点击此按钮体验手机游戏</p>
+      <button class="game-launch-btn" style="background:rgba(255,255,255,.1);color:var(--text);border:1px solid rgba(255,255,255,.15);" onclick="openMobileGame()">📱 手机横屏游戏</button>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- 底部Tab -->
+<nav id="bottom-nav">
+  <div class="tab-item active" data-tab="home" onclick="switchTab('home')">
+    <div class="tab-icon">🏠</div>
+    <div class="tab-label">主页</div>
+  </div>
+  <div class="tab-item" data-tab="scenario" onclick="switchTab('scenario')">
+    <div class="tab-icon">🎯</div>
+    <div class="tab-label">情景实战</div>
+  </div>
+  <div class="tab-item" data-tab="train" onclick="switchTab('train')">
+    <div class="tab-icon">📚</div>
+    <div class="tab-label">练习</div>
+  </div>
+  <div class="tab-item" data-tab="game" onclick="switchTab('game')">
+    <div class="tab-icon">🎮</div>
+    <div class="tab-label">游戏</div>
+  </div>
+</nav>
+
+<!-- 玩家选择弹窗 -->
+<div id="player-modal">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">选择玩家</div>
+    <div id="player-list"></div>
+    <div class="new-player-input-row" id="new-player-row">
+      <input class="new-player-input" id="new-player-name" placeholder="输入玩家名字" maxlength="12" />
+      <button class="new-player-confirm" onclick="confirmCreatePlayer()">创建</button>
+    </div>
+    <button class="new-player-btn" onclick="toggleNewPlayerInput()">+ 新建玩家</button>
+  </div>
+</div>
+
+<script>
+/* ===================================================
+   题库数据
+   =================================================== */
+const SCENARIO_DATA = [
+
+/* ==================== 翻牌前 (20题) ==================== */
+
+// P01
+{id:"P01",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"srp",
+ title:"CO开池手牌选择",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:100,pot:0,
+   heroCards:["K♦","Q♣"],boardCards:[],
+   villainAction:"UTG/HJ均弃牌，轮到你"
+ },
+ question:"CO位，前面全弃，你的 K♦Q♣ 怎么做？",
+ options:[
+   {label:"弃牌",score:10,tag:"fold"},
+   {label:"加注 2.5BB",score:100,tag:"raise_std",star:true},
+   {label:"加注 4BB",score:70,tag:"raise_big"},
+   {label:"全下（100BB）",score:5,tag:"allin"}
+ ],
+ explain:"KQo 在 CO 属于前18%开牌范围，是标准开注手牌。CO 标准开注尺寸 2.5BB（6人桌）。加注到 4BB 尺寸偏大，会减少隐含赔率优势。弃牌直接浪费手牌价值。全下是灾难——KQo 不满足翻前全下范围（需要 TT+/AQs+）。",
+ keyPoint:"CO 开牌范围约25-27%，KQo 中等偏强，标准2.5BB开注即可。"},
+
+// P02
+{id:"P02",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"SB面对BTN开池 — A9o",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:100,pot:0,
+   heroCards:["A♥","9♠"],boardCards:[],
+   villainAction:"BTN 加注 2.5BB，BB 弃牌，轮到你"
+ },
+ question:"BTN 开池，BB 弃牌，你 SB 手持 A♥9♠ 怎么做？",
+ options:[
+   {label:"弃牌",score:40,tag:"fold"},
+   {label:"跟注（call 2BB）",score:30,tag:"call"},
+   {label:"3-bet 至 9BB",score:100,tag:"3bet_std",star:true},
+   {label:"3-bet 至 15BB",score:60,tag:"3bet_big"}
+ ],
+ explain:"A9o 在 SB 对 BTN 开池是 GTO 高频3-bet手牌：① SB 翻后永远OOP，call后很难盈利；② A9o 有A高牌摊牌价值，适合作为3-bet bluff/semi-bluff；③ BTN 开牌范围宽（约40%），A9o 对其有相当权益。跟注是 SB 最差选项，翻后全程OOP面对位置劣势。",
+ keyPoint:"SB的策略是 fold 或 3-bet，尽量避免 call（OOP被动位置）。"},
+
+// P03
+{id:"P03",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"4bet",
+ title:"BB面对BTN 4-bet — AJo",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:100,pot:0,
+   heroCards:["A♠","J♦"],boardCards:[],
+   villainAction:"BTN 开池2.5BB，你3-bet至10BB，BTN 4-bet至26BB，轮到你"
+ },
+ question:"BTN 4-bet 后，你的 A♠J♦ 怎么办？",
+ options:[
+   {label:"弃牌",score:95,tag:"fold",star:true},
+   {label:"跟注（call 16BB）",score:40,tag:"call"},
+   {label:"5-bet 全下",score:20,tag:"5bet"}
+ ],
+ explain:"面对 BTN 4-bet，AJo 的正确处理是弃牌。BTN 4-bet 范围极紧（TT+/AQs+，加上部分bluff），AJo 对这个范围权益约35-40%，且翻后OOP底池极大，后续决策复杂。5-bet全下：AJo 不够强，被 call 时权益不足。跟注偶尔可以，但不是主策略。",
+ keyPoint:"4-bet范围 = 极强牌+少量bluff，AJo面对时通常是dominated，主动弃牌是正解。"},
+
+// P04
+{id:"P04",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"3bet",
+ title:"BTN面对BB 3-bet — 65s",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:100,pot:0,
+   heroCards:["6♠","5♠"],boardCards:[],
+   villainAction:"你开池2.5BB，SB弃牌，BB 3-bet至8BB，轮到你"
+ },
+ question:"BB 从大盲 3-bet，你手持 6♠5♠ 怎么做？",
+ options:[
+   {label:"弃牌",score:30,tag:"fold"},
+   {label:"跟注（call 5.5BB）",score:100,tag:"call",star:true},
+   {label:"4-bet 至 22BB",score:55,tag:"4bet"}
+ ],
+ explain:"65s 在 BTN 面对 BB 3-bet 是标准跟注：① BTN vs BB 全程IP（有利位置）；② 65s 隐含赔率极高——翻中顺子/同花听牌能赢大底池；③ 弃牌浪费手牌价值；④ 4-bet 过于激进，65s 没有足够摊牌价值支撑4bet。有位置+强隐含赔率=跟注正确。",
+ keyPoint:"适合call 3-bet的手牌：有位置+隐含赔率高（连张/同花）。"},
+
+// P05
+{id:"P05",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"BB面对CO开池 — 防守范围",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:100,pot:0,
+   heroCards:["7♣","6♦"],boardCards:[],
+   villainAction:"CO 加注 2.5BB，BTN/SB 均弃牌，轮到你"
+ },
+ question:"CO 开池，你在 BB 拿到 7♣6♦，怎么做？",
+ options:[
+   {label:"弃牌",score:35,tag:"fold"},
+   {label:"跟注（call 1.5BB）",score:100,tag:"call",star:true},
+   {label:"3-bet 至 9BB",score:55,tag:"3bet"}
+ ],
+ explain:"76o 在 BB 面对 CO 开池是标准跟注：① 你只需补 1.5BB 进入 5BB 的底池，底池赔率极好（call 1.5BB进5BB，需要30%权益，76o有足够权益）；② 76o 有连张价值，翻中时隐含赔率高；③ 3-bet 也偶尔出现（作为bluff），但跟注更常见。BB 可以宽范围防守，甚至到前40-50%的手牌。",
+ keyPoint:"BB防守范围极宽（40-50%），因为赔率好+已有投入，低连张也值得跟注。"},
+
+// P06
+{id:"P06",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"srp",
+ title:"BTN开池范围判断 — J4o",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:100,pot:0,
+   heroCards:["J♥","4♦"],boardCards:[],
+   villainAction:"CO/SB均弃牌，轮到你在BTN"
+ },
+ question:"BTN位，只剩BB，你的 J♥4♦ 怎么做？",
+ options:[
+   {label:"弃牌",score:100,tag:"fold",star:true},
+   {label:"加注 2.5BB",score:45,tag:"raise"},
+   {label:"加注 3.5BB",score:30,tag:"raise_big"}
+ ],
+ explain:"J4o 在 BTN 处于 GTO 开牌范围的边界——BTN 可以开约40-45%的手牌，J4o 大约在这个范围的临界点。GTO 通常对 J4o 持弃牌/加注混合策略，但偏向弃牌（特别是不同花的 J4）。加注也有一定合理性，但踢脚太弱（4），翻后处境复杂。边界手牌保守弃牌是稳健选择。",
+ keyPoint:"BTN虽然开牌范围宽，但J4o等弱手牌仍在弃牌/开注边界，同花版(J4s)开注价值更高。"},
+
+// P07
+{id:"P07",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"UTG开牌范围判断 — ATo",
+ setup:{
+   pos:"UTG（枪口位）",heroPos:"UTG",villainPos:"all",stack:100,pot:0,
+   heroCards:["A♣","T♠"],boardCards:[],
+   villainAction:"没人行动，轮到你在UTG（最早行动位）"
+ },
+ question:"UTG位，第一个行动，你的 A♣T♠ 怎么做？",
+ options:[
+   {label:"弃牌",score:45,tag:"fold"},
+   {label:"加注 2.5BB",score:100,tag:"raise",star:true},
+   {label:"加注 4BB",score:55,tag:"raise_big"},
+   {label:"全下（100BB）",score:5,tag:"allin"}
+ ],
+ explain:"ATo 在 UTG 处于开牌范围边界。UTG 开牌范围约13-15%（最紧位置），ATo 勉强在这个范围内（AJs/AJo更好）。标准开注 2.5BB 是正确的。但要注意：UTG 开牌后如果被3-bet，ATo 通常弃牌（不够强应对3-bet）。全下绝对不行。",
+ keyPoint:"UTG是全桌最紧的位置，开牌范围约13-15%，ATo处于边界，可开但被3-bet后要弃牌。"},
+
+// P08
+{id:"P08",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"3bet",
+ title:"CO面对BTN 3-bet — QQ",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BTN",stack:100,pot:0,
+   heroCards:["Q♥","Q♦"],boardCards:[],
+   villainAction:"你开池2.5BB，BTN 3-bet至9BB，SB/BB弃牌，轮到你"
+ },
+ question:"BTN 3-bet，你手持 Q♥Q♦ 怎么做？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 6.5BB）",score:70,tag:"call"},
+   {label:"4-bet 至 28BB",score:100,tag:"4bet",star:true},
+   {label:"全下（100BB）",score:80,tag:"allin"}
+ ],
+ explain:"QQ 是翻前超强牌，面对 BTN 3-bet 应该4-bet：① QQ 对 BTN 3-bet 范围（约10-12%）有显著权益优势；② 4-bet 标准尺寸约3倍（9×3=27-30BB）；③ 跟注可以，但4-bet更有力——你有强牌，应该建立大底池；④ 全下也可以，但标准4-bet更平衡（给对手5-bet的机会暴露更强牌如KK/AA）。弃牌是严重失误。",
+ keyPoint:"QQ/KK/AA面对3-bet一定要4-bet，不要贪图'慢打'而错失价值。"},
+
+// P09
+{id:"P09",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"SB开池单挑BB — K8s",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BB",stack:100,pot:0,
+   heroCards:["K♠","8♠"],boardCards:[],
+   villainAction:"所有人弃牌，轮到你在SB"
+ },
+ question:"所有人弃牌，SB vs BB，你手持 K♠8♠ 怎么做？",
+ options:[
+   {label:"弃牌",score:10,tag:"fold"},
+   {label:"加注 2.5BB",score:75,tag:"raise"},
+   {label:"加注 3BB",score:100,tag:"raise_std",star:true},
+   {label:"全下（100BB）",score:5,tag:"allin"}
+ ],
+ explain:"SB 单挑 BB 时，应该用更宽的范围进攻（约65-70%手牌），K8s 是强开牌。SB vs BB 单挑时开注尺寸通常选 3BB（比全桌游戏的 2.5BB 稍大），因为 BB 只需补 2BB 就能跟注，赔率很好，稍大的注可以减少 BB 的跟注频率。K8s 同花价值高，完全应该开注。",
+ keyPoint:"SB单挑BB时开注尺寸略大（3BB），范围可以达到65%+，K8s是标准开注手牌。"},
+
+// P10
+{id:"P10",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"srp",
+ title:"BTN面对HJ开池是否squeeze — TT",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"HJ",stack:100,pot:0,
+   heroCards:["T♦","T♣"],boardCards:[],
+   villainAction:"HJ 开池2.5BB，CO 跟注，轮到你在BTN"
+ },
+ question:"HJ 开池，CO 跟注，你在 BTN 手持 T♦T♣ 怎么做？",
+ options:[
+   {label:"弃牌",score:15,tag:"fold"},
+   {label:"跟注（call 2.5BB）",score:65,tag:"call"},
+   {label:"squeeze加注至10BB",score:100,tag:"squeeze",star:true},
+   {label:"squeeze加注至16BB",score:75,tag:"squeeze_big"}
+ ],
+ explain:"TT 在面对 HJ开+CO跟 的局面，Squeeze（挤压加注）是强选项：① Squeeze 可以孤立弱手牌，让 CO 弃牌（CO 是 cold call，范围相对弱）；② TT 对 HJ 开牌范围（约18-20%）有权益优势；③ 跟注也可以，但 squeeze 主动建立大底池，全程有位置优势；④ 标准 squeeze 约10-12BB（约4倍开注+每个跟注加2BB）。",
+ keyPoint:"面对开注+跟注时，Squeeze是有位置的强牌的好选项，可以孤立和建立大底池。"},
+
+// P11
+{id:"P11",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"BB面对CO开池的3-bet bluff — A5s",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:100,pot:0,
+   heroCards:["A♥","5♥"],boardCards:[],
+   villainAction:"CO开池2.5BB，BTN/SB弃牌，轮到你"
+ },
+ question:"CO开池，你BB手持 A♥5♥，怎么做？",
+ options:[
+   {label:"弃牌",score:20,tag:"fold"},
+   {label:"跟注（call 1.5BB）",score:55,tag:"call"},
+   {label:"3-bet 至 9BB",score:100,tag:"3bet",star:true},
+   {label:"3-bet 至 14BB",score:65,tag:"3bet_big"}
+ ],
+ explain:"A5s 是 GTO 中 BB 对 CO 的经典 3-bet 手牌（bluff/semi-bluff）：① A5s 阻断对手 Ax 手牌（有 A 就减少了对手有 AA/AK 的可能）；② 5s 同花，有成同花的可能；③ 即使被4-bet，A5s 是标准弃牌（摊牌价值不够）；④ 跟注 OOP 不如3-bet主动。这是 GTO 中 BB 典型的 3-bet bluff 手牌选择逻辑。",
+ keyPoint:"GTO中选择3-bet bluff要看阻断效果(blocker)，A5s/A4s/A3s是BB常用的3-bet bluff手牌。"},
+
+// P12
+{id:"P12",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"srp",
+ title:"HJ面对UTG开池 — AKo",
+ setup:{
+   pos:"HJ（后中位）",heroPos:"HJ",villainPos:"UTG",stack:100,pot:0,
+   heroCards:["A♦","K♣"],boardCards:[],
+   villainAction:"UTG加注2.5BB，轮到你在HJ"
+ },
+ question:"UTG 开池，你在 HJ 手持 A♦K♣ 怎么做？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 2.5BB）",score:35,tag:"call"},
+   {label:"3-bet 至 9BB",score:100,tag:"3bet",star:true},
+   {label:"3-bet 至 12BB",score:80,tag:"3bet_big"}
+ ],
+ explain:"AKo 是翻前第三强手牌（仅次于AA/KK），面对任何位置开注都应该3-bet：① AKo 对 UTG 范围（13-15%）权益约55-60%；② 3-bet建立大底池，增加价值；③ 标准 3-bet 约3.5倍（2.5×3.5=约9BB）；④ 跟注是弱化手牌价值，AKo 不应该跟注 call；⑤ 3-bet到12BB稍大但也可接受。AKo永远3-bet！",
+ keyPoint:"AKo是翻前顶级强牌，对任何开注都应该3-bet，绝不平跟。"},
+
+// P13
+{id:"P13",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"3bet",
+ title:"BTN跟注BB 3-bet — 98s",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:100,pot:0,
+   heroCards:["9♦","8♦"],boardCards:[],
+   villainAction:"你开池2.5BB，SB弃牌，BB 3-bet至9BB，轮到你"
+ },
+ question:"BB 3-bet，你BTN手持 9♦8♦（同花连张）怎么做？",
+ options:[
+   {label:"弃牌",score:30,tag:"fold"},
+   {label:"跟注（call 6.5BB）",score:100,tag:"call",star:true},
+   {label:"4-bet 至 26BB",score:40,tag:"4bet"}
+ ],
+ explain:"98s 在 BTN 面对 BB 3-bet 是标准跟注手牌：① BTN vs BB 翻后全程IP，位置优势巨大；② 98s 同花连张，翻中率高，隐含赔率极强（能赢大底池）；③ 4-bet 过激，98s 摊牌价值不够支撑4bet战场；④ 弃牌则放弃了有利位置+连张价值的组合。这是教科书级别的call 3-bet手牌。",
+ keyPoint:"同花连张(suited connectors)在有利位置面对3-bet时几乎总是跟注，隐含赔率+位置是核心价值。"},
+
+// P14
+{id:"P14",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"BB防守面对BTN开池 — T9o",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:100,pot:0,
+   heroCards:["T♠","9♣"],boardCards:[],
+   villainAction:"CO/SB弃牌，BTN加注2.5BB，轮到你"
+ },
+ question:"BTN 开池，你BB手持 T♠9♣ 怎么做？",
+ options:[
+   {label:"弃牌",score:30,tag:"fold"},
+   {label:"跟注（call 1.5BB）",score:100,tag:"call",star:true},
+   {label:"3-bet 至 9BB",score:60,tag:"3bet"}
+ ],
+ explain:"T9o 在 BB 面对 BTN 开池是标准跟注：① 赔率极好：只需补1.5BB进入5BB底池；② T9o 连张有翻中价值；③ BTN vs BB 是 BB 最宽防守的对局，BB 可以跟注到前40-50%手牌；④ 3-bet 偶尔出现（作为bluff），但跟注更标准；⑤ 弃牌放弃了赔率+连张价值。BTN 是最宽开牌位置，BB 需要宽范围防守。",
+ keyPoint:"BB防守BTN开牌时范围最宽，T9o是标准跟注手牌，充分利用有利的底池赔率。"},
+
+// P15
+{id:"P15",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"srp",
+ title:"CO面对UTG开池 — JTs",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"UTG",stack:100,pot:0,
+   heroCards:["J♦","T♦"],boardCards:[],
+   villainAction:"UTG加注2.5BB，HJ弃牌，轮到你在CO"
+ },
+ question:"UTG 开池，HJ 弃牌，你CO手持 J♦T♦ 怎么做？",
+ options:[
+   {label:"弃牌",score:40,tag:"fold"},
+   {label:"跟注（call 2.5BB）",score:100,tag:"call",star:true},
+   {label:"3-bet 至 9BB",score:65,tag:"3bet"}
+ ],
+ explain:"JTs 是经典的投机手牌（speculative hand），面对 UTG 开池在 CO 跟注是正确选择：① JTs 隐含赔率极高，翻中顺子/同花时能赢大底池；② CO 在 BTN/SB/BB 之前，有相对有利的后位；③ 3-bet 也有道理（JTs 有block，有一定摊牌价值），但跟注更标准；④ 弃牌浪费了JTs的连张+同花价值。",
+ keyPoint:"JTs/QJs等高同花连张面对早位开池，在后位跟注是经典操作，等翻牌发挥。"},
+
+// P16
+{id:"P16",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"3bet",
+ title:"BB 3-bet后面对4-bet — KQs",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:100,pot:0,
+   heroCards:["K♦","Q♦"],boardCards:[],
+   villainAction:"BTN开池2.5BB，你3-bet至9BB，BTN 4-bet至26BB，轮到你"
+ },
+ question:"BTN 4-bet 后，你的 K♦Q♦ 怎么做？",
+ options:[
+   {label:"弃牌",score:75,tag:"fold",star:true},
+   {label:"跟注（call 17BB）",score:60,tag:"call"},
+   {label:"5-bet 全下",score:35,tag:"5bet"}
+ ],
+ explain:"KQs 面对 4-bet 的处理是弃牌/跟注边界：① BTN 4-bet 范围极紧（TT+/AQs+，部分bluff），KQs 对这个范围权益约40%；② 弃牌是GTO的主要选择，但跟注也有合理性（KQs 是同花，有翻牌潜力）；③ 5-bet 不合适，KQs 没有足够价值支撑5bet；④ 总体来说，KQs 是4-bet后跟注/弃牌的边界手牌，两者都有支持，GTO略倾向弃牌。",
+ keyPoint:"KQs面对4-bet是弃牌/跟注边界，同花连牌性让它偶尔可以跟注，但不推荐5-bet。"},
+
+// P17
+{id:"P17",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"srp",
+ title:"BTN开池 — 22小对子",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:100,pot:0,
+   heroCards:["2♠","2♦"],boardCards:[],
+   villainAction:"CO/SB弃牌，轮到你在BTN"
+ },
+ question:"BTN位，只剩BB，你手持 2♠2♦（最小对子）怎么做？",
+ options:[
+   {label:"弃牌",score:10,tag:"fold"},
+   {label:"加注 2.5BB",score:100,tag:"raise",star:true},
+   {label:"加注 4BB",score:50,tag:"raise_big"},
+   {label:"全下（100BB）",score:3,tag:"allin"}
+ ],
+ explain:"22 在 BTN 单挑 BB 时是标准开注手牌：① BTN 开牌范围约40-45%，22 处于这个范围内；② BTN 全程IP，翻中暗三条时隐含赔率极高（能赢大底池）；③ 即使没翻中，有时A高可以在底池小时取胜；④ 全下绝对不行——22 vs BB call range权益只有约50%，风险极大。开注后打小底池是关键。",
+ keyPoint:"小对子在有利位置标准开注，价值在于翻中暗三条的隐含赔率，控制底池大小。"},
+
+// P18
+{id:"P18",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"SB面对HJ开池 — QJs",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"HJ",stack:100,pot:0,
+   heroCards:["Q♣","J♣"],boardCards:[],
+   villainAction:"HJ加注2.5BB，CO/BTN均弃牌，BB弃牌，轮到你"
+ },
+ question:"HJ开池，后面都弃牌，你SB手持 Q♣J♣ 怎么做？",
+ options:[
+   {label:"弃牌",score:25,tag:"fold"},
+   {label:"跟注（call 2BB）",score:30,tag:"call"},
+   {label:"3-bet 至 9BB",score:100,tag:"3bet",star:true},
+   {label:"3-bet 至 13BB",score:70,tag:"3bet_big"}
+ ],
+ explain:"QJs 是 SB 面对 HJ 开池的经典 3-bet 手牌：① SB 翻后总是OOP，call 被动不利；② QJs 有强摊牌价值+同花潜力，是半诈唬3-bet的理想手牌；③ HJ 开牌范围约18-20%，QJs 对这个范围有不错权益；④ 跟注 SB OOP 是最差选择；⑤ 标准3-bet至9BB，略大也可以。",
+ keyPoint:"QJs在SB是高价值3-bet手牌，兼具半诈唬属性和强摊牌价值，避免OOP被动跟注。"},
+
+// P19
+{id:"P19",street:"preflop",streetLabel:"翻牌前",posType:"ip",potType:"srp",
+ title:"CO面对BB 3-bet — 77",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:100,pot:0,
+   heroCards:["7♥","7♦"],boardCards:[],
+   villainAction:"你开池2.5BB，BTN/SB弃牌，BB 3-bet至9BB，轮到你"
+ },
+ question:"BB 3-bet，你CO手持 7♥7♦ 怎么做？",
+ options:[
+   {label:"弃牌",score:35,tag:"fold"},
+   {label:"跟注（call 6.5BB）",score:100,tag:"call",star:true},
+   {label:"4-bet 至 27BB",score:55,tag:"4bet"}
+ ],
+ explain:"77 面对 BB 3-bet，跟注是 GTO 主要策略：① 77 对 BB 3-bet 范围（约8-10%）权益约45-50%，有翻中三条的隐含赔率；② CO 翻后 IP（有利位置），跟注后有位置优势；③ 4-bet 也有道理，但77更适合打翻牌后的隐含赔率（翻中三条时价值极高）；④ 弃牌放弃了三条的隐含赔率+位置价值。77-TT 通常是 call 范围。",
+ keyPoint:"中等对子(77-TT)面对3-bet通常选择跟注，等待翻中三条的隐含赔率，而非4-bet暴露实力。"},
+
+// P20
+{id:"P20",street:"preflop",streetLabel:"翻牌前",posType:"oop",potType:"srp",
+ title:"BB面对多人limpers的选择 — AQo",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"all",stack:100,pot:0,
+   heroCards:["A♠","Q♣"],boardCards:[],
+   villainAction:"UTG limp，HJ limp，CO limp，BTN弃牌，SB跟注，轮到你在BB"
+ },
+ question:"三人 limp 进来+SB 跟注，你 BB 手持 A♠Q♣ 怎么做？",
+ options:[
+   {label:"过牌（免费看翻牌）",score:15,tag:"check"},
+   {label:"加注至 8BB",score:75,tag:"raise"},
+   {label:"加注至 12BB",score:100,tag:"raise_big",star:true},
+   {label:"加注至 20BB（过大）",score:40,tag:"raise_huge"}
+ ],
+ explain:"面对多人 limp 底池，AQo 应该大注孤立：① AQo 是强牌，多人底池对强牌不利（被人击中的概率升高）；② 加注目的：清场，减少对手数量；③ 面对3个limper+SB，加注尺寸要大——约每个limp加2-3BB，标准约12BB；④ 过牌免费看牌看似安全，但让弱牌廉价进来，翻后很难处理多人底池；⑤ 8BB稍小，12BB更合适，20BB过大。",
+ keyPoint:"面对多个limper，强牌应该大注清场，尺寸=标准开注+每个limp加2BB，减少多人底池风险。"},
+
+/* ==================== 翻牌圈 (35题) ==================== */
+
+// F01
+{id:"F01",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，K72彩虹干板，顶对顶踢",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:96.75,pot:6.5,
+   heroCards:["A♠","K♣"],boardCards:["K♥","7♦","2♣"],
+   villainAction:"BB 过牌（check）"
+ },
+ question:"干板K72，你有顶对顶踢(TPTK)，对手过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:50,tag:"check"},
+   {label:"下注 1/3底池（约2BB）",score:100,tag:"bet_third",star:true},
+   {label:"下注 1/2底池（约3BB）",score:85,tag:"bet_half"},
+   {label:"下注 3/4底池（约5BB）",score:60,tag:"bet_three_q"},
+   {label:"下注全下",score:15,tag:"allin"}
+ ],
+ explain:"K72 彩虹干板上，BTN 有强范围优势（你的范围包含更多Kx和坚果牌），GTO推荐高频小注(1/3底池)：① 小注可以用全范围施压，包括弱牌和强牌都下注，形成平衡范围；② 对手在干板上鲜有强牌，小注已足够让其付出赔率；③ 大注不必要——干板不需要驱赶对手，对手范围里强牌少。过牌也有道理（慢打），但小注是GTO首选。",
+ keyPoint:"有范围优势的干板→高频小注(1/3)，全范围施压，不需要大注驱赶。"},
+
+// F02
+{id:"F02",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，K72干板，AQ空气",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:89.5,pot:21,
+   heroCards:["A♠","Q♦"],boardCards:["K♠","7♣","2♦"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"你3-bet底池，K72干板，AQ无对无听牌，先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:90,tag:"check",star:true},
+   {label:"下注 1/3底池（约7BB）",score:70,tag:"bet_third"},
+   {label:"下注 3/4底池（约16BB）",score:30,tag:"bet_three_q"},
+   {label:"下注全下",score:10,tag:"allin"}
+ ],
+ explain:"同样是K72干板，但你是OOP的BB方。BTN call了3-bet，其范围包含大量Kx手牌（KQ/KJ/KTs等），你的范围优势减弱。AQ在这里是纯空气，下注被加注进退两难。GTO推荐过牌为主：① AQ没有对子，没有听牌；② BB 3-bet范围中强牌(KK/AA/QQ)应该下注，但AQ这样的空气应该过牌；③ 小注(1/3)偶尔可以，但过牌是主策略。",
+ keyPoint:"OOP 3-bet后C-bet频率比IP低得多，空气牌(无对无听牌)应该过牌而不是自动C-bet。"},
+
+// F03
+{id:"F03",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"3bet",
+ title:"BTN在3-bet底池，JT9顺子湿板，AK高牌",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:89.5,pot:21,
+   heroCards:["A♥","K♠"],boardCards:["J♠","T♥","9♦"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"BB 3-bet底池，JT9顺子连张板，你有AK高牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:95,tag:"check",star:true},
+   {label:"下注 1/3底池（约7BB）",score:40,tag:"bet_third"},
+   {label:"下注 3/4底池（约16BB）",score:20,tag:"bet_three_q"},
+   {label:"下注全下",score:5,tag:"allin"}
+ ],
+ explain:"JT9是扑克中最危险的板面之一，对BB 3-bet范围极为有利（BB 3-bet包含QQ/JJ/TT/KQs，在这里直接击中）。AK在JT9上只有约20%权益。应该过牌：① AK下注被加注无路可走；② 这块板面BB有范围和坚果优势；③ 即使AK是IP，也要尊重对手的板面优势；④ 过牌后如果BB大注，考虑弃牌。",
+ keyPoint:"不是所有IP情况都要C-bet，当对手有明显的范围/坚果优势时，IP也应该保守过牌。"},
+
+// F04
+{id:"F04",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs CO，854同花听牌板，强双听牌",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:96.5,pot:7,
+   heroCards:["9♣","7♣"],boardCards:["8♣","5♠","4♣"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"你有超强双听牌（同花+顺子），OOP先行动，怎么做？",
+ options:[
+   {label:"过牌（check）",score:45,tag:"check"},
+   {label:"下注 1/3底池（约2.5BB）",score:70,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:55,tag:"allin"}
+ ],
+ explain:"97cc在854cc板面是超强双听牌（顺子+同花），权益约54%，实际已经略微领先！GTO推荐中等注(2/3底池)半诈唬：① 权益超过50%，可以当价值下注而非纯诈唬；② 半诈唬下注：被call后仍有大量出张牌（15-17张）；③ 中大注比小注更好——有充足权益支撑；④ 全下稍激进，但也合理（权益足够被call）。强听牌应该主动，不要被动过牌等牌。",
+ keyPoint:"强双听牌(权益>50%)应该半诈唬中等注，主动建立大底池，不要被动等翻中。"},
+
+// F05
+{id:"F05",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，A♦8♦3♥彩虹板，AA顶三条",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:95,pot:8,
+   heroCards:["A♠","A♣"],boardCards:["A♦","8♥","3♠"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"翻牌打中三条(三个A)，对手过牌，怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:80,tag:"check",star:true},
+   {label:"下注 1/4底池（约2BB）",score:75,tag:"bet_quarter"},
+   {label:"下注 1/2底池（约4BB）",score:60,tag:"bet_half"},
+   {label:"下注全下",score:20,tag:"allin"}
+ ],
+ explain:"翻牌三条AA是极强牌，但A83是相对干燥的板面，对手很少有强跟注手牌。GTO通常在这里过牌慢打：① 过牌让对手翻后有机会建立牌力（如两对、听牌），让他们有理由投入筹码；② 过牌后若被下注，可以跟注/加注；③ 下注小额也可以（诱导跟注）；④ 大注/全下会让弱牌都弃牌，损失价值。极强牌在干燥板面=过牌慢打取价值。",
+ keyPoint:"极强牌(三条/顺子/同花)在干板上通常选择过牌慢打，给对手建立牌力的机会。"},
+
+// F06
+{id:"F06",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"3bet",
+ title:"SB 3-bet底池，A♠K♦Q♣顶对齐板，KQ二对",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:88,pot:22,
+   heroCards:["K♥","Q♠"],boardCards:["A♠","K♦","Q♣"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"3-bet底池AKQ齐板，你打中两对(KQ)，先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:40,tag:"check"},
+   {label:"下注 1/3底池（约7BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底池（约15BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:85,tag:"allin"}
+ ],
+ explain:"AKQ这个板面对两个范围都有很多强牌，但你有KQ两对是强牌。3-bet底池OOP面对AKQ，应该中大注：① KQ两对在这里是强牌，对手有AK/AA/KK/QQ都能跟注；② AKQ板面你的范围包含很多强牌（AK/AQ/KQ/AA/KK/QQ），下注有credibility；③ 下注建立底池，避免让对手免费看转牌（对手可能有Jx听顺）；④ 全下稍微激进，2/3更平衡。",
+ keyPoint:"3-bet底池中击中强两对+，应该中大注取价值，不要因为是OOP就保守。"},
+
+// F07
+{id:"F07",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"CO vs BB，7♠6♦2♣低干板，54s听牌",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:96,pot:7,
+   heroCards:["5♥","4♥"],boardCards:["7♠","6♦","2♣"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"低干板762，你有双开顺子听牌(54，需3或8完成)，怎么做？",
+ options:[
+   {label:"过牌（check）",score:60,tag:"check"},
+   {label:"下注 1/3底池（约2.5BB）",score:100,tag:"bet_third",star:true},
+   {label:"下注 2/3底池（约5BB）",score:75,tag:"bet_two_third"},
+   {label:"下注全下",score:20,tag:"allin"}
+ ],
+ explain:"54在762板面有双开顺子听牌，IP情况下GTO推荐小注半诈唬：① 小注(1/3)风险小，被加注损失不多；② 有8张出张牌（四个3+四个8），击中顺子后价值极高；③ 低板面(762)对CO开牌范围相对有利，可以high frequency下注；④ 中注也可以，全下过激（单听牌全下不合算）。小注半诈唬是低板面IP的常见GTO选择。",
+ keyPoint:"低连张板面+有听牌+IP=小注半诈唬，用小风险维持主动权。"},
+
+// F08
+{id:"F08",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs BTN，Q♠J♠T♥三连张板，面对C-bet如何应对",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:95,pot:7,
+   heroCards:["9♦","8♦"],boardCards:["Q♠","J♠","T♥"],
+   villainAction:"BTN 下注 1/3底池（约2.5BB）"
+ },
+ question:"QJT连张板，你有97 的顺子听牌(需K或8)，面对BTN小注如何应对？",
+ options:[
+   {label:"弃牌",score:10,tag:"fold"},
+   {label:"跟注（call 2.5BB）",score:70,tag:"call"},
+   {label:"加注至 10BB",score:100,tag:"raise",star:true},
+   {label:"加注至 18BB",score:75,tag:"raise_big"}
+ ],
+ explain:"98在QJT板面有双开顺子听牌（需K或8），面对BTN小注，加注(check-raise)是强选项：① 98在QJT有强权益（约32%顺子+同花潜力）；② 加注半诈唬：如果被fold则直接赢底池；③ QJT板面你的范围里有强牌（顺子KJ/9T等），加注有credibility；④ 跟注可以，但加注更有进攻性，能折叠对手的弱价值牌；⑤ 弃牌浪费了强听牌价值。",
+ keyPoint:"面对小注的check-raise半诈唬：有强听牌+板面能代表强牌=加注是强选项。"},
+
+// F09
+{id:"F09",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs SB，A♥3♦2♠低板，A4o顶对",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"SB",stack:96,pot:7.5,
+   heroCards:["A♦","4♠"],boardCards:["A♥","3♦","2♠"],
+   villainAction:"SB 过牌，轮到你"
+ },
+ question:"A32低板，你有顶对弱踢(A4)，对手过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:60,tag:"check"},
+   {label:"下注 1/3底池（约2.5BB）",score:100,tag:"bet_third",star:true},
+   {label:"下注 2/3底池（约5BB）",score:70,tag:"bet_two_third"},
+   {label:"下注全下",score:15,tag:"allin"}
+ ],
+ explain:"A32低板，A4顶对弱踢，GTO推荐小注：① A32是BTN相对有利的板面（你的范围有更多A3s/A2s等）；② A4是中等强度手牌，可以小注取价值；③ 小注也保护手牌（驱赶53/46等顺子听牌付出代价）；④ 大注不必要，A4弱踢面对check-raise比较尴尬；⑤ 过牌也有道理（慢打），但小注更主动。",
+ keyPoint:"顶对弱踢在低板面选择小注，既取价值也做保护，避免大注后面对再加注的困境。"},
+
+// F10
+{id:"F10",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"SB vs BTN，K♦Q♥J♣高连张板，TT过牌还是下注",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:95,pot:7.5,
+   heroCards:["T♥","T♦"],boardCards:["K♦","Q♥","J♣"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"KQJ高连张板，你有中对TT（有顺子听牌：需A完成Broadway），OOP怎么做？",
+ options:[
+   {label:"过牌（check）",score:90,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:50,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:25,tag:"bet_two_third"},
+   {label:"下注全下",score:5,tag:"allin"}
+ ],
+ explain:"KQJ高连张板对BTN开牌范围极为不利（BTN范围有大量KQ/KJ/QJ/AJ等击中手牌）。TT在这里虽然有顺子听牌（需要A），但同时：① TT被KQJ板上的任何对子都压制；② OOP下注被加注无路可走；③ KQJ是BTN的强板，过牌更合理；④ 过牌后如果BTN下注，可以根据尺寸决定是否用顺子听牌跟注。",
+ keyPoint:"KQJ等高连张板对开牌方(CO/BTN)有利，OOP非坚果手牌应以过牌为主。"},
+
+// F11
+{id:"F11",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"3bet",
+ title:"CO在3-bet底池，2♠2♦7♣板，面对BB check-raise",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:85,pot:22,
+   heroCards:["A♣","Q♣"],boardCards:["2♠","2♦","7♣"],
+   villainAction:"BB 过牌，你下注1/3（约7BB），BB check-raise至22BB，轮到你"
+ },
+ question:"3-bet底池低板，你C-bet后被check-raise，AQ空气怎么应对？",
+ options:[
+   {label:"弃牌",score:100,tag:"fold",star:true},
+   {label:"跟注（call 15BB）",score:25,tag:"call"},
+   {label:"3-bet加注（继续诈唬）",score:10,tag:"3bet"}
+ ],
+ explain:"面对check-raise，AQ空气应该干净弃牌：① BB在3-bet底池中check-raise是极强信号，通常代表2x(三条)或77（满堂彩），很少是纯诈唬；② AQ在这里只有6个出张牌（四个A+两个Q待降），权益约12%；③ 跟注进入大底池，转牌后还要面对BB继续施压；④ 继续3-bet纯粹是送钱；⑤ 弃牌保留剩余筹码是正确选择。",
+ keyPoint:"面对3-bet底池的check-raise，是极强信号，空气牌无条件弃牌，不要犹豫。"},
+
+// F12
+{id:"F12",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs CO，9♦8♠4♥中连张板，JJ过对",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"CO",stack:95,pot:8,
+   heroCards:["J♠","J♣"],boardCards:["9♦","8♠","4♥"],
+   villainAction:"CO 过牌，轮到你"
+ },
+ question:"984中连张板，你有JJ过对，CO过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:35,tag:"check"},
+   {label:"下注 1/3底池（约3BB）",score:85,tag:"bet_third"},
+   {label:"下注 1/2底池（约4BB）",score:100,tag:"bet_half",star:true},
+   {label:"下注 3/4底池（约6BB）",score:70,tag:"bet_three_q"}
+ ],
+ explain:"984中连张板，JJ是相对强的过对，需要保护：① 984板面有大量顺子听牌（JT/T7/76/65等），JJ需要让听牌付出代价；② 中等注(1/2底池)是平衡选择：有足够价值，也能驱赶听牌；③ 过牌让听牌免费看转牌，风险较高；④ 大注稍微过度，JJ不是坚果；⑤ 1/3也可以，1/2更好——需要保护的中等强度手牌。",
+ keyPoint:"在有大量顺子听牌的湿板上，中等对子需要用中等注来保护，不能让听牌廉价看后续。"},
+
+// F13
+{id:"F13",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs BTN，5♣4♠3♦超低干板，面对BTN下注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:96,pot:7,
+   heroCards:["A♥","A♦"],boardCards:["5♣","4♠","3♦"],
+   villainAction:"BTN 下注 1/3底池（约2.5BB）"
+ },
+ question:"超低连张板543，你有AA，面对BTN小注如何应对？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 2.5BB）",score:55,tag:"call"},
+   {label:"加注至 9BB",score:100,tag:"raise",star:true},
+   {label:"加注至 18BB",score:70,tag:"raise_big"}
+ ],
+ explain:"AA在543板面面对小注，加注是强选项：① AA在543板面有一定风险（板面对手可能有67/A2/62等听牌/完成手牌）；② 加注保护AA，驱赶对手的顺子听牌付出更高代价；③ 543是BB防守范围有优势的板面（BB call范围有更多小牌），AA加注有credibility；④ 跟注也可以，但加注更主动且有保护价值；⑤ 标准加注约3倍小注（约9BB）。",
+ keyPoint:"强牌在连张低板上需要主动加注保护，驱赶顺子听牌，不要让对手廉价看后续街。"},
+
+// F14
+{id:"F14",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，A♠K♣5♦板，KJo二踢",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:95,pot:7,
+   heroCards:["K♦","J♠"],boardCards:["A♠","K♣","5♦"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"AK5板，你有KJ（二对K，踢J），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:65,tag:"check"},
+   {label:"下注 1/3底池（约2.5BB）",score:100,tag:"bet_third",star:true},
+   {label:"下注 2/3底池（约5BB）",score:60,tag:"bet_two_third"},
+   {label:"下注全下",score:10,tag:"allin"}
+ ],
+ explain:"AK5板面，KJ有一对K，但踢脚是J（不是顶踢），同时板面有A（对手可能有Ax手牌）。GTO推荐小注：① KJ是中等价值手牌，需要小注取价值；② 同时AK5板对BTN有利（BTN开牌有大量Ax），小注可以用整个范围施压；③ 大注不必要——KJ不是顶级强牌，面对加注比较尴尬；④ 过牌也可以（慢打中等牌），但小注更合适。",
+ keyPoint:"中等价值牌(对子+弱踢)在有利板面选择小注，既取价值也控制底池，避免大注被加注困境。"},
+
+// F15
+{id:"F15",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，T♥8♠6♦中连张板，面对BTN下注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:87,pot:22,
+   heroCards:["J♦","9♦"],boardCards:["T♥","8♠","6♦"],
+   villainAction:"BTN 下注 2/3底池（约15BB）"
+ },
+ question:"3-bet底池，T86连张板，你有J9(顺子已完成)，面对BTN大注怎么应对？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 15BB）",score:40,tag:"call"},
+   {label:"加注至 45BB",score:100,tag:"raise",star:true},
+   {label:"全下（约87BB）",score:90,tag:"allin"}
+ ],
+ explain:"J9在T86板面打成了顺子（6-7-8-9-T，不对——J9在T86是：J-T-9-8，需要7完成J高顺子，还没完成）。等等：手牌J9，公牌T86，J9+T86 = 顺子牌：9-T-J，加上8和6，J9+T86构成8-9-T-J，只需要7或Q完成顺子，还是听牌状态。跟注最差选择，加注(raise)用强听牌semi-bluff：有8个出张+可能fold对手。加注至45BB（约2倍跟注+底池），目的是取价值或fold对手。",
+ keyPoint:"有强听牌(双开顺子/强同花)面对下注时，加注semi-bluff优于跟注被动。"},
+
+// F16
+{id:"F16",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"CO vs BB，2♦2♣8♠低对子板，无关手牌",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:96,pot:7,
+   heroCards:["K♠","Q♦"],boardCards:["2♦","2♣","8♠"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"222板（板面配对），你有KQ高牌，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:65,tag:"check"},
+   {label:"下注 1/3底池（约2.5BB）",score:100,tag:"bet_third",star:true},
+   {label:"下注 2/3底池（约5BB）",score:55,tag:"bet_two_third"},
+   {label:"下注全下",score:10,tag:"allin"}
+ ],
+ explain:"板面配对(22x)是IP C-bet的好机会：① 配对板面对手很少有三条（除非他有2x），大多数情况双方都没有击中；② IP方用整个范围小注施压，BB很难有继续的强牌；③ KQ有6张翻中机会（三个K+三个Q）作为底牌；④ 大注不必要——配对板对双方都是空气板，小注即可保持压力；⑤ 这是经典的'干/配对板IP小注'策略。",
+ keyPoint:"配对板面(22x/33x等)是IP全范围小注的好机会，双方都很少击中，小注施压效率高。"},
+
+// F17
+{id:"F17",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"SB vs CO，Q♦J♠9♣三连张板，面对CO下注",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"CO",stack:95,pot:8,
+   heroCards:["T♠","8♣"],boardCards:["Q♦","J♠","9♣"],
+   villainAction:"CO 下注 1/2底池（约4BB）"
+ },
+ question:"QJ9三连张板，你有T8（已完成顺子QJT98），面对CO中注怎么应对？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 4BB）",score:45,tag:"call"},
+   {label:"加注至 15BB",score:100,tag:"raise",star:true},
+   {label:"全下（约95BB）",score:70,tag:"allin"}
+ ],
+ explain:"T8在QJ9板面打成了顺子（Q-J-T-9-8），这是强牌！面对CO的下注：加注是正确选择：① T8做成顺子是强价值手牌，需要取value；② QJ9板面有大量同花听牌（CO可能有♣或♠同花听牌），顺子有被击败的风险，不应该慢打；③ 加注让对手的听牌付出赔率；④ 跟注等对手在有利的情况下完成听牌是被动选择；⑤ 全下在深筹码时稍激进，但也可以。",
+ keyPoint:"完成顺子在有大量同花听牌的板面，不能慢打——应该立即加注取价值，防止对手免费看后续。"},
+
+// F18
+{id:"F18",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"3bet",
+ title:"BTN在3-bet底池，6♠6♦3♠板，AKo面对BB过牌",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:88,pot:22,
+   heroCards:["A♣","K♠"],boardCards:["6♠","6♦","3♠"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"3-bet底池663板，你有AK空气，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:85,tag:"check",star:true},
+   {label:"下注 1/3底池（约7BB）",score:60,tag:"bet_third"},
+   {label:"下注 3/4底池（约16BB）",score:30,tag:"bet_three_q"},
+   {label:"下注全下",score:8,tag:"allin"}
+ ],
+ explain:"3-bet底池，663是低配对板，情况较特殊：① 663板对BB的范围相对有利（BB call 3-bet有66/33等小对子），BB可能check-call；② AK在这里没有对子，下注被check-raise进退两难；③ 但BTN也有KK/AA等强牌可以下注，所以偶尔下注(1/3)也可以；④ GTO在这里倾向过牌：AK不够强，且BB可能有暗三条；⑤ 过牌保留转牌机会（可能打中A或K）。",
+ keyPoint:"3-bet底池中的低对子板，call方(BB)有更多这类小牌，C-bet方需要谨慎，空气牌优先过牌。"},
+
+// F19
+{id:"F19",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs CO，A♦7♥4♣板，面对CO大注的应对",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:94,pot:7,
+   heroCards:["A♥","9♦"],boardCards:["A♦","7♥","4♣"],
+   villainAction:"CO 下注 3/4底池（约5BB）"
+ },
+ question:"A74彩虹干板，你有A9（顶对弱踢），面对CO大注怎么应对？",
+ options:[
+   {label:"弃牌",score:10,tag:"fold"},
+   {label:"跟注（call 5BB）",score:100,tag:"call",star:true},
+   {label:"加注至 18BB",score:55,tag:"raise"}
+ ],
+ explain:"A9有顶对A，踢脚9，面对CO 3/4大注，跟注是正确选择：① A9有足够的摊牌价值（顶对），跟注合理；② 弃牌是严重过折，放弃了顶对价值；③ 加注也可以考虑，但A9踢脚不是顶踢（会被A更大踢脚压制），加注被4-bet很难处理；④ CO在A74用大注下注，可能有AK/AQ/AA等，A9跟注是标准操作；⑤ 跟注后看转牌，若转牌出现更大踢脚（K/Q/J），考虑过牌/弃牌。",
+ keyPoint:"顶对弱踢面对对手大注时，跟注是标准操作，不要过折，也不要加注暴露自己的弱踢。"},
+
+// F20
+{id:"F20",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs SB，3♣2♠2♦超低干板，KK翻前强牌",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"SB",stack:95,pot:8,
+   heroCards:["K♥","K♦"],boardCards:["3♣","2♠","2♦"],
+   villainAction:"SB 过牌，轮到你"
+ },
+ question:"322超低板，你有KK，SB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:55,tag:"check"},
+   {label:"下注 1/4底池（约2BB）",score:70,tag:"bet_quarter"},
+   {label:"下注 1/3底池（约2.5BB）",score:100,tag:"bet_third",star:true},
+   {label:"下注 3/4底池（约6BB）",score:40,tag:"bet_three_q"}
+ ],
+ explain:"322是极低干板，KK在这里是超强手牌（基本就是最强的了）。GTO推荐小注：① 322对双方都是空气板，SB鲜少有击中手牌；② 小注(1/3)可以诱导对手跟注（如果大注对手都弃牌反而损失价值）；③ 慢打(过牌)也有一定道理，但KK面对空板过牌可能让对手免费发展；④ 大注会让所有弱牌都弃牌，损失价值；⑤ 这种超干板用小注诱导是标准策略。",
+ keyPoint:"极强牌在空气板上用小注诱导比慢打或大注更好，平衡取价值和让对手继续参与。"},
+
+// F21 - F35 保持相同质量
+{id:"F21",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"CO vs BB，T♠9♦8♣双色连张板，持有QQ",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:95,pot:7,
+   heroCards:["Q♣","Q♠"],boardCards:["T♠","9♦","8♣"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"T98双色连张板，你有QQ（顺子风险板），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:45,tag:"check"},
+   {label:"下注 1/3底池（约2.5BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:40,tag:"allin"}
+ ],
+ explain:"T98连张板对QQ有一定风险（J7/QJ/76等有顺子），但QQ仍是强牌。GTO推荐中注：① QQ在T98是过对（超过板面最高牌），是强牌但有被击打的风险；② 中注(2/3)目的是让听牌付出代价，同时取价值；③ 过牌给所有听牌免费看牌，风险太大；④ 全下也可以，但在深筹码时有点激进；⑤ 小注不够让顺子听牌付出应有的代价。",
+ keyPoint:"强牌在湿板上用中等注保护+取价值，不要用小注让听牌廉价看后续。"},
+
+{id:"F22",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs BTN，A♣K♦3♠高干板，没有击中",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:96,pot:7,
+   heroCards:["Q♥","J♦"],boardCards:["A♣","K♦","3♠"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"AK3高干板，你有QJ（无对，只有同花听牌雏形），OOP怎么做？",
+ options:[
+   {label:"过牌（check）",score:100,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:35,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:15,tag:"bet_two_third"}
+ ],
+ explain:"AK3高干板对BTN开牌范围极为不利——BTN有大量AK/AQ/KK/AA等，你有QJ完全没有击中，也没有听牌。GTO：直接过牌：① QJ在这里没有对子，没有听牌，权益极低；② 下注被加注无路可走；③ AK3是BTN的强板，BB方应该避免主动投入；④ 过牌后若BTN下注，根据尺寸决定是否弃牌（QJ没有足够权益支持多次付出代价）。",
+ keyPoint:"在对方有明显范围优势的高牌板上，OOP无牌时直接过牌，不要浪费筹码。"},
+
+{id:"F23",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，8♠7♦6♠低连张有同花听牌，AT高牌",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:95,pot:7,
+   heroCards:["A♠","T♠"],boardCards:["8♠","7♦","6♠"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"876低连张板（有♠同花），你有AT♠（后门同花听牌），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:55,tag:"check"},
+   {label:"下注 1/3底池（约2.5BB）",score:100,tag:"bet_third",star:true},
+   {label:"下注 2/3底池（约5BB）",score:70,tag:"bet_two_third"},
+   {label:"下注全下",score:10,tag:"allin"}
+ ],
+ explain:"AT有A高+后门同花听牌+后门顺子可能，在876低板上IP：① 低连张板对BTN开牌有一定有利面（BTN有更多高牌，BB有更多小牌）；② AT有2个后门机会（转牌同花+顺子），实际权益比表面看起来高；③ 小注(1/3)是标准IP C-bet，用全范围施压；④ 过牌也可以，但小注更主动且AT有一定潜力；⑤ 被check-raise后可以用后门听牌决定是否继续。",
+ keyPoint:"有后门听牌的高牌在低板面IP可以用小注C-bet，后门权益+位置价值支撑主动行动。"},
+
+{id:"F24",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"3bet",
+ title:"SB 3-bet底池，A♠A♦K♣极强板，持有AA暗四条",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:85,pot:22,
+   heroCards:["A♥","A♣"],boardCards:["A♠","A♦","K♣"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"板面已有两个A，你又有两个A（理论上四条A），怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:100,tag:"check",star:true},
+   {label:"下注 1/3底池（约7BB）",score:55,tag:"bet_third"},
+   {label:"下注 2/3底池（约15BB）",score:30,tag:"bet_two_third"}
+ ],
+ explain:"四条A是游戏中几乎不可能被击败的手牌（只有极罕见的同花顺才能击败）。这里应该过牌慢打：① 过牌给对手任何手牌都可以继续（KK满堂彩、Kx对子都会跟注）；② 下注会让弱牌都弃牌，大幅降低赢取价值的机会；③ 过牌后若BTN下注，慢慢加注/跟注诱导对手多投入；④ 这是慢打的极端案例——越强的牌在空板上越要慢打。",
+ keyPoint:"坚果牌（四条/皇家同花顺）在任何情况都应该慢打，目标是让对手多投入筹码。"},
+
+{id:"F25",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，Q♦J♣T♠高连张板，面对BB下注",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:95,pot:7,
+   heroCards:["K♣","9♦"],boardCards:["Q♦","J♣","T♠"],
+   villainAction:"BB 下注 2/3底池（约4.5BB）"
+ },
+ question:"QJT高连张板，你有K9（顺子听牌：K完成Broadway），面对BB大注怎么应对？",
+ options:[
+   {label:"弃牌",score:20,tag:"fold"},
+   {label:"跟注（call 4.5BB）",score:100,tag:"call",star:true},
+   {label:"加注至 18BB",score:65,tag:"raise"}
+ ],
+ explain:"K9在QJT板面有顺子听牌（只需K即可完成A-K-Q-J-T Broadway顺子），这是超强听牌：① K顺子只有4张（四个K），但QJT Broadway是坚果顺子！被完成后几乎不可能输；② 跟注保留权益，转牌K出来再取价值；③ 加注也有道理（K听牌+能代表Q/J的强牌），但跟注更标准；④ 弃牌是严重过折，放弃了极强的听牌价值。",
+ keyPoint:"坚果顺子听牌(Broadway听牌)面对下注一定要继续，跟注或加注都可以，绝不弃牌。"},
+
+{id:"F26",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs CO，J♠7♦4♥中低干板，中对88",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:96,pot:7,
+   heroCards:["8♦","8♣"],boardCards:["J♠","7♦","4♥"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"J74中低干板，你有88（二对J，中对在板面中），OOP怎么做？",
+ options:[
+   {label:"过牌（check）",score:85,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:55,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:30,tag:"bet_two_third"}
+ ],
+ explain:"88在J74板面是中对（低于J），是弱中等手牌。OOP处理：过牌为主：① 88没有击中板面（只有77/44是暗三条区），88只是中对；② 下注被加注（对手有J/AJ等）很尴尬；③ 过牌后：若CO下注，根据尺寸决定（小注跟注，大注考虑弃牌）；④ 88主要的价值是摊牌价值，OOP下注建大底池不划算。控制底池，发挥摊牌价值。",
+ keyPoint:"中对(低于板面最高牌)在OOP时应过牌，控制底池，用摊牌价值而非主动投入。"},
+
+{id:"F27",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"3bet",
+ title:"BTN 3-bet底池，9♦8♠7♥低连张板，顶对A9",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:87,pot:22,
+   heroCards:["A♦","9♠"],boardCards:["9♦","8♠","7♥"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"3-bet底池987连张板，你有A9顶对，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:55,tag:"check"},
+   {label:"下注 1/3底池（约7BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底池（约15BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:70,tag:"allin"}
+ ],
+ explain:"987连张板对BB 3-bet范围有一定有利（BB有JT/T6/65等），但你有A9顶对。3-bet底池中应该中注：① 987板有大量顺子听牌（JT/T6/J6/65等），顶对需要让这些听牌付出代价；② 3-bet底池中强牌应该用较大尺寸取价值；③ 过牌给听牌免费看转牌，风险太高；④ 中注(2/3)是平衡选择——取价值+保护；⑤ 全下也可以（A9在这里不是弱牌）。",
+ keyPoint:"3-bet底池湿板上，顶对需要中等注来保护，不能被动过牌让听牌免费发展。"},
+
+{id:"F28",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs BTN，K♠Q♦J♥高三张板，面对BTN小注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:95,pot:7,
+   heroCards:["K♣","K♦"],boardCards:["K♠","Q♦","J♥"],
+   villainAction:"BTN 下注 1/3底池（约2.5BB）"
+ },
+ question:"KQJ板，你有KK打成三条，面对BTN小注怎么应对？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 2.5BB）",score:65,tag:"call"},
+   {label:"加注至 10BB",score:100,tag:"raise",star:true},
+   {label:"全下（约95BB）",score:80,tag:"allin"}
+ ],
+ explain:"三条KK是极强手牌，但KQJ板有一定风险（AT打成百老汇顺子会超过三条）。面对BTN小注应该加注：① 三条需要主动取价值，不要慢打；② KQJ板有大量顺子听牌（AT/T9/A9等），三条需要让这些付出代价；③ 加注(raise)取价值+保护三条；④ 跟注慢打让AT/T9等超值看转牌，风险较大；⑤ 全下也可以，但加注稍微更平衡（给对手有价值跟注的机会）。",
+ keyPoint:"三条在有顺子风险的板面应该立即加注，不能慢打——让顺子听牌廉价看后续是错误。"},
+
+{id:"F29",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，A♥2♦3♣低干板，AA顶三条慢打？",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:95,pot:7,
+   heroCards:["A♠","A♣"],boardCards:["A♥","2♦","3♣"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"A23低板，你有AA（三条），BB过牌，这次怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:90,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:40,tag:"bet_two_third"},
+   {label:"下注全下",score:10,tag:"allin"}
+ ],
+ explain:"A23低板，三条AA，这次和F28不同——A23是低干板，对手范围里鲜有强手牌（不像KQJ对手可能有AJ/AT）。A23上BB的跟注范围很弱，强制下注只会让弱牌弃牌。GTO：过牌慢打：① 等转牌对手可能建立牌力（如转牌来4，45完成顺子的话会跟注；来K/Q对手可能建立一对）；② 干板立即下注让对手大量弃牌，损失价值；③ 过牌后若BB下注，加注榨取价值。慢打的精髓在于让对手建立牌力后再下注。",
+ keyPoint:"三条在低干板慢打，和在湿板立即下注，是两种不同情况——根据对手跟注动机来决定。"},
+
+{id:"F30",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，A♦K♣Q♠三高牌板，持有AK满堂彩",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:82,pot:22,
+   heroCards:["A♠","K♥"],boardCards:["A♦","K♣","Q♠"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"3-bet底池AKQ板，你打成两对(AK)，OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:50,tag:"check"},
+   {label:"下注 1/3底池（约7BB）",score:70,tag:"bet_third"},
+   {label:"下注 2/3底池（约15BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:85,tag:"allin"}
+ ],
+ explain:"AK两对在AKQ板面是强牌。3-bet底池OOP，中大注是正确选择：① AK两对在AKQ板面对BTN范围有优势，BTN call 3-bet有大量QQ/JJ/KQ等；② AKQ板面危险——JT完成了顺子，需要保护；③ 中注取价值+保护；④ AKQ是高行动板，双方都有强牌，建大底池合理；⑤ 全下也有道理（AK两对足够强），2/3更平衡；⑥ 过牌只在超级强（四条/顺子）时才考虑。",
+ keyPoint:"3-bet底池强两对在高行动板上应该中大注取价值，不能保守——对手也有强牌愿意付钱。"},
+
+{id:"F31",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"CO vs SB，5♦4♣3♠超低板，67s顺子",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"SB",stack:96,pot:8,
+   heroCards:["6♠","7♠"],boardCards:["5♦","4♣","3♠"],
+   villainAction:"SB 过牌，轮到你"
+ },
+ question:"543超低顺子板，你有67完成了顺子(3-4-5-6-7)，SB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:65,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:55,tag:"bet_two_third"},
+   {label:"下注全下",score:20,tag:"allin"}
+ ],
+ explain:"67在543板面完成了顺子，但这是极低板面，SB的范围在低板上命中率低，很少有跟注动机。GTO在这里两可：慢打(过牌)或小注都合理：① 过牌慢打：让SB在转牌建立一些牌力后再榨取；② 小注诱导：用小注让SB可能有的中对/听牌继续；③ 但这里不是F28(KQJ)的情况——低板SB跟注范围窄，大注只会让所有手牌弃牌；④ 全下灾难性——对手根本没有跟注理由。",
+ keyPoint:"顺子在超低板慢打或小注，因为对手在低板范围窄，需要给对手建立牌力的机会。"},
+
+{id:"F32",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs BTN，J♥T♣4♦中等连张板，QQ过对",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:95,pot:7,
+   heroCards:["Q♠","Q♦"],boardCards:["J♥","T♣","4♦"],
+   villainAction:"轮到你先行动（OOP）"
+ },
+ question:"JT4中等连张板，你有QQ（过对，超过板面），OOP怎么做？",
+ options:[
+   {label:"过牌（check）",score:70,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:45,tag:"bet_two_third"},
+   {label:"下注全下",score:10,tag:"allin"}
+ ],
+ explain:"QQ在JT4板面是过对（超过J和T）。OOP处理微妙：① JT4是中等连张板，对BTN的开牌范围（有大量JT/KJ/QJ等）相对有利；② OOP下注被check-raise需要面对进退两难；③ 过牌控制底池，保留摊牌价值；④ 若BTN下注，根据尺寸跟注/加注；⑤ 小注(1/3)也是GTO选项之一，但过牌控制底池更保守合理；⑥ QQ在这里不是坚果，JT等击中板面的手牌能轻松压制。",
+ keyPoint:"过对(高于板面但非坚果)在湿板OOP时，倾向过牌控制底池，不要在危险板面主动建大底池。"},
+
+{id:"F33",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，A♠A♦2♣板面两个A，持有A2暗满堂彩",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:96,pot:7,
+   heroCards:["A♥","2♠"],boardCards:["A♠","A♦","2♣"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"AA2板，你有A2（已打成满堂彩 AAAA2→不对，A2+AA2=AAA22满堂彩），BB过牌怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:100,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:50,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:30,tag:"bet_two_third"}
+ ],
+ explain:"A2在AA2板面打成了满堂彩(AAA22)，是极强手牌（仅次于四条）。AA2板面应该慢打：① 对手在AA2上几乎没有牌力（很少有人有A，2x也少），下注会让所有弱牌弃牌；② 过牌让对手在转牌/河牌发展一些手牌再取价值；③ 下注后对手能继续的手牌极少（可能只有2x三条等稀有情况）；④ 慢打的精髓：板面越干，对手越没牌，越要让对手慢慢建立牌力。",
+ keyPoint:"在极干/对手几乎没有手牌的板面，满堂彩/四条务必慢打，等对手建立牌力再榨取。"},
+
+{id:"F34",street:"flop",streetLabel:"翻牌圈",posType:"ip",potType:"srp",
+ title:"BTN vs BB，6♣5♦4♠超低连张板，AKo高牌诈唬",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:96,pot:7,
+   heroCards:["A♦","K♥"],boardCards:["6♣","5♦","4♠"],
+   villainAction:"BB 过牌，轮到你"
+ },
+ question:"654超低连张板，你有AK空气(但有后门听牌)，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:65,tag:"check",star:true},
+   {label:"下注 1/3底池（约2.5BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底池（约5BB）",score:40,tag:"bet_two_third"},
+   {label:"下注全下",score:5,tag:"allin"}
+ ],
+ explain:"AK在654板面是纯空气，但情况有些特殊：① 654低连张板对BB的范围有利（BB call有更多小牌如43/73/86等），BB可能击中了这块板面；② AK在低板面没有实际权益；③ 但BTN的范围在低板面C-bet有一定道理（范围施压）；④ GTO在这里两可：过牌保留筹码，小注(1/3)也是GTO的一部分（范围下注）；⑤ 大注/全下是严重失误。小注或过牌都可以，稍微偏过牌。",
+ keyPoint:"低连张板对防守方(BB)有利，进攻方(BTN)的空气牌用小注或过牌，大注诈唬效率低。"},
+
+{id:"F35",street:"flop",streetLabel:"翻牌圈",posType:"oop",potType:"srp",
+ title:"BB vs BTN，7♣6♥5♦低连张板，面对BTN小注+决定是否check-raise",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:95,pot:7,
+   heroCards:["8♦","7♠"],boardCards:["7♣","6♥","5♦"],
+   villainAction:"BTN 下注 1/3底池（约2.5BB）"
+ },
+ question:"765低连张板，你有87(顶对+顺子听牌需4完成)，面对BTN小注怎么应对？",
+ options:[
+   {label:"弃牌",score:5,tag:"fold"},
+   {label:"跟注（call 2.5BB）",score:70,tag:"call"},
+   {label:"加注至 10BB",score:100,tag:"raise",star:true},
+   {label:"全下（约95BB）",score:55,tag:"allin"}
+ ],
+ explain:"87在765板面有顶对7（不算高）+顺子听牌（需要4完成87654，或者更好！87+765已经有76-5-4的顺子雏形：8-7-6-5，还差一张4！）。面对BTN小注，加注(check-raise)是强选项：① 顶对+顺子听牌有强权益；② 765板是BB有利的板面（BB call范围有更多小牌），加注有credibility；③ 小注C/R成功率较高；④ 加注榨取对手的弱C-bet，也让对手强牌付出代价；⑤ 跟注也可以，但加注更有进攻性。",
+ keyPoint:"在有利板面(低连张/BB优势板)持有顶对+听牌，check-raise是强力武器，不要被动跟注。"}
+,
+
+{id:"T01",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，K726→转牌3s，持有QJo空气",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:90,pot:15,
+   heroCards:["Q♣","J♠"],boardCards:["K♥","7♦","2♣","3♠"],
+   villainAction:"翻牌BTN下注被call，转牌BB过牌"
+ },
+ question:"K726→转牌3，空白转牌，你有QJ空气，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:85,tag:"check",star:true},
+   {label:"下注 1/3底池（约5BB）",score:50,tag:"bet_third"},
+   {label:"下注 2/3底池（约10BB）",score:30,tag:"bet_two_third"},
+   {label:"下注全下",score:5,tag:"allin"}
+ ],
+ explain:"翻牌已经下注一次，转牌又是空白（3不改变板面结构），QJ是纯空气。GTO在这里倾向过牌：① 两条街诈唬需要更多筹码承诺，QJ没有出张牌；② 转牌过牌保留两条路：若BB过牌，河牌可以考虑；若BB下注，根据尺寸决定；③ 偶尔下注也可以（范围平衡），但不是主要选择；④ 大注/全下是浪费筹码。转牌空白+纯空气=保守过牌。",
+ keyPoint:"两条街诈唬要考虑叙事一致性和筹码承诺，空气牌在空白转牌上保守过牌更合理。"},
+
+{id:"T02",street:"turn",streetLabel:"转牌",posType:"ip",potType:"3bet",
+ title:"BTN在3-bet底池，A843→转牌K，击中顶对",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:72,pot:38,
+   heroCards:["K♠","Q♦"],boardCards:["A♦","8♥","4♠","K♣"],
+   villainAction:"翻牌双方过牌，转牌BB过牌"
+ },
+ question:"3-bet底池，翻牌check-check，转牌K出来你打中顶对，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:30,tag:"check"},
+   {label:"下注 1/3底池（约13BB）",score:60,tag:"bet_third"},
+   {label:"下注 2/3底池（约25BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:80,tag:"allin"}
+ ],
+ explain:"3-bet底池转牌打中顶对K，中大注是正确选择：① 3-bet底池中，翻牌两方过牌说明翻牌板面对双方都不理想；② 转牌K对BB的call range有利（BB有KQ/KJ等），BB会用Ax类手牌跟注；③ KQ是顶对顶踢，强价值牌，应该用大尺寸榨取；④ 过牌慢打损失大量价值；⑤ 中注(2/3)或全下都合理，全下在筹码偏浅时更好。",
+ keyPoint:"3-bet底池中转牌打中顶对，应该立即中大注取价值，翻牌过牌的转牌大注有更强叙事。"},
+
+{id:"T03",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"BB vs CO，J953→转牌6，面对CO继续下注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:86,pot:22,
+   heroCards:["T♥","8♦"],boardCards:["J♦","9♥","5♠","6♣"],
+   villainAction:"翻牌CO小注，BB跟注，转牌CO下注2/3底注（约15BB）"
+ },
+ question:"J956，你有T8（双开顺子，翻牌需7或Q），转牌6来了（你现在需要7完成），面对大注怎么应对？",
+ options:[
+   {label:"弃牌",score:20,tag:"fold"},
+   {label:"跟注（call 15BB）",score:100,tag:"call",star:true},
+   {label:"加注至 45BB",score:70,tag:"raise"},
+   {label:"全下",score:50,tag:"allin"}
+ ],
+ explain:"T8在J956板面仍有顺子听牌（需要7完成T高顺子J-T-9-8-7），底池赔率计算：需要15BB进入约52BB底池，需要约29%权益。顺子听牌有约18%（8张出张），加上隐含赔率（击中后还能赢更多），权益足够：① 跟注是正确的；② 加注半诈唬也合理（有权益支撑+能fold对手弱牌）；③ 弃牌是过折，放弃了有价值的听牌；④ 全下在深筹码时稍激进。",
+ keyPoint:"有8张出张的单开顺子听牌，用底池赔率计算后有足够权益跟注，加上隐含赔率更合算。"},
+
+{id:"T04",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"SB vs BTN，Q87→转牌A，顶对变二踢",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:88,pot:18,
+   heroCards:["Q♦","J♠"],boardCards:["Q♥","8♣","7♦","A♠"],
+   villainAction:"翻牌SB小注，BTN跟注，转牌BTN过牌，轮到你"
+ },
+ question:"Q87→转牌A，你原本有QJ顶对，A出来你变成二对Q，如何继续？",
+ options:[
+   {label:"过牌（check）",score:100,tag:"check",star:true},
+   {label:"下注 1/3底注（约6BB）",score:50,tag:"bet_third"},
+   {label:"下注 2/3底注（约12BB）",score:25,tag:"bet_two_third"}
+ ],
+ explain:"A的出现让局面改变：① 你原本是QJ顶对，现在A超越了Q，你变成了'二踢'（板面最大牌是A，你没有A）；② BTN call翻牌下注，转牌A出现后过牌——这可能意味着BTN有Ax（慢打顶对），也可能是弱牌；③ 你的QJ在A板面价值下降，大注取value不合适；④ 过牌控制底池，等摊牌解决；⑤ 若BTN下注，根据尺寸决定（小注call，大注fold）。",
+ keyPoint:"转牌出现超越你手牌的大牌时，重新评估手牌价值，中等手牌应该过牌控制底池。"},
+
+{id:"T05",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"CO vs BB，A73→转牌9，同花转牌，AA三条",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:88,pot:18,
+   heroCards:["A♥","A♦"],boardCards:["A♠","7♣","3♦","9♦"],
+   villainAction:"翻牌CO下注被call，转牌BB过牌"
+ },
+ question:"A739，转牌出了第4张♦（同花板），你有AA三条，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:70,tag:"check",star:true},
+   {label:"下注 1/3底注（约6BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约12BB）",score:45,tag:"bet_two_third"},
+   {label:"下注全下",score:20,tag:"allin"}
+ ],
+ explain:"转牌来了同花牌（♦），这改变了局面：① 同花牌来了，BB可能有同花（翻牌跟注了你的下注，同花听牌是合理解释）；② 三条AA在没有同花威胁时是强牌，但♦同花完成了，任何♦同花都超过你的三条；③ GTO：过牌探测——看BB是否真的有同花；④ 若BB过牌，转牌继续主动，若BB大注，考虑弃牌（对手可能有♦同花）；⑤ 下注（1/3）也可以，但过牌更谨慎合理。",
+ keyPoint:"转牌完成了对手可能的听牌时，谨慎减少投入——过牌探测比盲目主动更合理。"},
+
+{id:"T06",street:"turn",streetLabel:"转牌",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，A54→转牌J，BB持有JJ打成三条",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:78,pot:28,
+   heroCards:["J♦","J♣"],boardCards:["A♥","5♦","4♣","J♠"],
+   villainAction:"翻牌BB过牌，BTN下注，BB跟注，转牌J来了，轮到你"
+ },
+ question:"3-bet底池A54→转牌J，你打成三条JJJ，OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:75,tag:"check",star:true},
+   {label:"下注 1/3底注（约9BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约19BB）",score:55,tag:"bet_two_third"},
+   {label:"下注全下",score:40,tag:"allin"}
+ ],
+ explain:"三条JJJ是强牌，但转牌过牌慢打更好：① BTN翻牌下注，BB跟注，转牌BB先行动——过牌让BTN继续施压（他可能有AK/AQ/AJ等，下注后你加注榨取更多）；② 直接下注可能让BTN的弱牌弃牌，浪费价值；③ 过牌-加注策略：若BTN继续下注，加注取更多价值；④ 板面比较干（A54+J），三条这时候慢打更好；⑤ 不过下注也有道理（A54J板有同花/顺子可能需要保护）。",
+ keyPoint:"三条在不太危险的板面，OOP可以过牌-加注诱捕，取比直接下注更多的价值。"},
+
+{id:"T07",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，T96→转牌8，顺子完成！",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:88,pot:18,
+   heroCards:["J♦","7♠"],boardCards:["T♠","9♣","6♦","8♥"],
+   villainAction:"翻牌BTN下注被call，转牌8来了，BB过牌"
+ },
+ question:"T968，你的J7完成了顺子(J-T-9-8-7)，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:45,tag:"check"},
+   {label:"下注 1/3底注（约6BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约12BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:75,tag:"allin"}
+ ],
+ explain:"J7在T968板面完成了顺子，但这里不宜慢打：① T968是高度连张板，BB可能有同花听牌（尤其是同花牌多时）；② 顺子在有同花威胁的板面需要主动施压；③ 中注(2/3)取价值+让同花听牌付出代价；④ 过牌虽然慢打，但让所有同花听牌和听牌免费看河牌，风险大；⑤ 全下也合理，但2/3更平衡（给有价值的手牌跟注机会）。",
+ keyPoint:"顺子在有同花威胁的湿板转牌上，应该中大注取价值+保护，不要慢打让同花击败你。"},
+
+{id:"T08",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，A83→转牌A，面对BTN下注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:88,pot:18,
+   heroCards:["A♣","2♦"],boardCards:["A♠","8♥","3♦","A♦"],
+   villainAction:"翻牌BB过牌，BTN下注，BB跟注，转牌A来了，BTN继续下注2/3（约12BB）"
+ },
+ question:"A83→转牌A（板面两个A），你有A2(三条)，面对BTN继续大注怎么应对？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 12BB）",score:50,tag:"call"},
+   {label:"加注至 35BB",score:100,tag:"raise",star:true},
+   {label:"全下（约88BB）",score:85,tag:"allin"}
+ ],
+ explain:"A2有三条AA（手牌A加上板面两个A），这是极强手牌！面对BTN两条街大注：① 三条AA只输给四条A或A满堂彩（A+8对或A+3对），概率极小；② 加注是取价值的正确选择；③ 跟注慢打损失价值——你是极强牌，应该建大底池；④ BTN两条街大注说明他有Ax或强牌，愿意投入更多；⑤ 加注至35BB或全下都正确，全下在筹码偏浅时更好。",
+ keyPoint:"持有三条/坚果牌面对对手持续施压时，应该加注/全下而不是跟注，让对手多投入。"},
+
+{id:"T09",street:"turn",streetLabel:"转牌",posType:"ip",potType:"3bet",
+ title:"CO在3-bet底池，KQ8→转牌5，持有AKo",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:80,pot:30,
+   heroCards:["A♣","K♦"],boardCards:["K♠","Q♥","8♦","5♣"],
+   villainAction:"翻牌CO下注被call，转牌BB过牌"
+ },
+ question:"3-bet底池KQ85，你有AK顶对顶踢，转牌空白，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:45,tag:"check"},
+   {label:"下注 1/3底注（约10BB）",score:70,tag:"bet_third"},
+   {label:"下注 2/3底注（约20BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:80,tag:"allin"}
+ ],
+ explain:"AK在KQ85板面是顶对顶踢，在3-bet底池中是强value牌：① AK对手BB的call 3-bet范围有大量KQ/KJ/QQ/JJ等，愿意付出代价；② 转牌空白（5），AK价值没有变化；③ 3-bet底池中应该用较大尺寸建大底池；④ 中注(2/3)是标准选择，可以榨取BB的第二强牌；⑤ 过牌虽然防守性，但在3-bet底池放弃主动权代价太高。",
+ keyPoint:"3-bet底池中顶对顶踢面对空白转牌，继续中大注取价值，不要因为板面无变化而保守。"},
+
+{id:"T10",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"SB vs BTN，762→转牌K，面对BTN大注",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:88,pot:20,
+   heroCards:["6♠","6♣"],boardCards:["7♦","6♥","2♣","K♠"],
+   villainAction:"翻牌SB check，BTN下注，SB跟注，转牌K来了，BTN大注3/4底注（约15BB）"
+ },
+ question:"762→转牌K，你有66（翻牌三条），面对BTN继续大注怎么应对？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 15BB）",score:70,tag:"call"},
+   {label:"加注至 45BB",score:100,tag:"raise",star:true},
+   {label:"全下（约88BB）",score:90,tag:"allin"}
+ ],
+ explain:"66在762板面是三条（翻牌时已经打中），K出现后三条依然是强牌：① 三条只输给顺子/同花/更高三条/葫芦/四条；② BTN的范围里有KK（可能打成三条K），但概率极低；③ 加注是正确选择——三条需要主动取value；④ 跟注慢打转牌K的到来（BTN可能有AK/KQ等愿意投入），但加注更有力；⑤ 全下也合理（三条足够强），加注至45BB给对手一个痛苦的决定。",
+ keyPoint:"三条在转牌面对大注时，应该加注（raise or re-raise），主动建大底池取最大价值。"},
+
+{id:"T11",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，Q53→转牌Q，持有A5o（打成两对）",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:88,pot:18,
+   heroCards:["A♦","5♣"],boardCards:["Q♠","5♦","3♣","Q♥"],
+   villainAction:"翻牌BTN下注被call，转牌Q来了，BB过牌"
+ },
+ question:"Q53→转牌Q（板面配对Q），你有A5（55和QQ两对），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:80,tag:"check",star:true},
+   {label:"下注 1/3底注（约6BB）",score:60,tag:"bet_third"},
+   {label:"下注 2/3底注（约12BB）",score:40,tag:"bet_two_third"}
+ ],
+ explain:"A5在Q53Q板面有两对（55+QQ），但这是弱两对：① 板面Q配对，对手可能有Qx（三条Q）会超过你的两对；② A5的两对在这里价值不确定，不知道对手是否有Q；③ BB翻牌跟注后转牌过牌，可能是弱牌或者是有Q在慢打；④ 过牌控制底池，保留摊牌价值更合理；⑤ 若对手下注，根据尺寸决定（小注跟，大注fold可能因为对手有三条Q）。",
+ keyPoint:"板面配对转牌时，若你的手牌不包含该牌，要警惕对手可能有三条，控制底池更安全。"},
+
+{id:"T12",street:"turn",streetLabel:"转牌",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，J72→转牌T，持有QQ",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:80,pot:28,
+   heroCards:["Q♦","Q♠"],boardCards:["J♣","7♠","2♦","T♥"],
+   villainAction:"翻牌BB下注被call，转牌T来了，轮到你先行动"
+ },
+ question:"J72→转牌T（J7T出现，形成连张），你有QQ，OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:85,tag:"check",star:true},
+   {label:"下注 1/3底注（约9BB）",score:55,tag:"bet_third"},
+   {label:"下注 2/3底注（约19BB）",score:35,tag:"bet_two_third"},
+   {label:"下注全下",score:15,tag:"allin"}
+ ],
+ explain:"QQ在J7T→转牌T的板面变得危险了：① 转牌T出现后，板面变成JT72，有大量顺子听牌（KQ/98/Q9等）；② QQ是过对，不是坚果——比QQ更强的手牌（JJ/TT三条/顺子等）已经超过你；③ 3-bet底池中BTN的范围有KQ/AJ等，可能有大量顺子听牌；④ OOP下注被加注非常尴尬；⑤ 过牌控制底池，若BTN下注根据尺寸决定（小注call，大注考虑fold）。",
+ keyPoint:"中等手牌(过对)面对危险转牌(增加连张)，应该过牌控制底池，不要在转牌上过度投入。"},
+
+{id:"T13",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"CO vs BB，A84→转牌J，后门同花完成！",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:88,pot:20,
+   heroCards:["K♠","Q♠"],boardCards:["A♠","8♠","4♦","J♠"],
+   villainAction:"翻牌CO小注被call，转牌J♠来了，BB过牌"
+ },
+ question:"A84→转牌J♠（同花完成！），你KQ♠完成了同花，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:55,tag:"check"},
+   {label:"下注 1/3底注（约7BB）",score:70,tag:"bet_third"},
+   {label:"下注 2/3底注（约13BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:80,tag:"allin"}
+ ],
+ explain:"KQ♠完成了♠同花（K高同花），是强牌！中大注是正确选择：① KQ同花是强牌，只输给A高同花，但A高同花概率不高；② 同花的价值在于对手可能有Ax/两对等强牌愿意付出代价；③ 中注(2/3)取价值；④ 过牌虽然慢打，但这里BB过牌——转牌河牌都过牌后底池太小；⑤ 全下也可以，但2/3给对手一个付钱的机会。同花打成后不要太保守。",
+ keyPoint:"完成非坚果同花时，用中大注取价值，不要慢打错失机会，但也要警惕可能的更高同花。"},
+
+{id:"T14",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，K93→转牌2，持有K9两对",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:88,pot:18,
+   heroCards:["K♦","9♣"],boardCards:["K♠","9♦","3♥","2♣"],
+ villainAction:"翻牌BB过牌，BTN下注，BB跟注，转牌BB先行动"
+ },
+ question:"K932，你有K9两对，转牌OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:55,tag:"check"},
+   {label:"下注 1/3底注（约6BB）",score:80,tag:"bet_third"},
+   {label:"下注 2/3底注（约12BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:65,tag:"allin"}
+ ],
+ explain:"K9两对是强牌，K932干板，中大注是正确选择：① 两对在这里是强牌，对手BTN的范围有Kx/9x等愿意跟注；② K932是相对干燥的板面，主动下注取价值合理；③ 中注(2/3)平衡取价值和避免对手fold；④ 过牌虽然诱导，但BTN可能在转牌check-through（如果他翻牌下注是范围C-bet），失去价值机会；⑤ OOP两对应该主动——不要总是过牌等被动。",
+ keyPoint:"两对在相对干燥的板面，OOP应该主动下注取价值，不要总依赖过牌-加注。"},
+
+{id:"T15",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，886→转牌7，持有88四条！",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:90,pot:16,
+   heroCards:["8♥","8♦"],boardCards:["8♠","8♣","6♦","7♣"],
+   villainAction:"翻牌BTN下注被call，转牌7来了，BB过牌"
+ },
+ question:"8867，你有88（四条8888！），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:100,tag:"check",star:true},
+   {label:"下注 1/3底注（约5BB）",score:60,tag:"bet_third"},
+   {label:"下注 2/3底注（约11BB）",score:35,tag:"bet_two_third"},
+   {label:"下注全下",score:20,tag:"allin"}
+ ],
+ explain:"四条8888是游戏中最强的手牌之一，几乎不可能输。这时候应该慢打：① 板面8867对BB的范围几乎是空气板（极少有手牌能击中或者有理由继续），下注只会让所有手牌弃牌；② 过牌让BB在河牌可能下注（任何对，任何高牌，任何bluff都可能在河牌下注）；③ 下注后BB很少有跟注理由，浪费了慢打机会；④ 这是教科书级别的慢打案例。",
+ keyPoint:"四条等坚果牌面对空气对手，务必慢打，等河牌让对手下注或建立手牌后再取价值。"},
+
+{id:"T16",street:"turn",streetLabel:"转牌",posType:"oop",potType:"3bet",
+ title:"SB 3-bet底池，AQJ→转牌K，Broadway完成！",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:78,pot:28,
+   heroCards:["T♦","J♦"],boardCards:["A♠","Q♣","J♥","K♦"],
+   villainAction:"翻牌BB过牌，BTN下注，SB跟注，转牌K来了，轮到你"
+ },
+ question:"AQJ→转牌K，你的TJ完成了Broadway顺子(A-K-Q-J-T)！OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）诱导",score:85,tag:"check",star:true},
+   {label:"下注 1/3底注（约9BB）",score:60,tag:"bet_third"},
+   {label:"下注 2/3底注（约19BB）",score:50,tag:"bet_two_third"},
+   {label:"下注全下",score:40,tag:"allin"}
+ ],
+ explain:"Broadway顺子是坚果顺子（最高顺子），几乎不可能被击败。OOP诱导过牌是最佳选择：① BTN翻牌下注，说明他有一定手牌（AQ/AK/AA/KK等），K出来后他可能有两对/三条等强手牌；② 过牌让BTN继续施压，你在河牌再加注诱捕；③ 直接下注可能让BTN弃牌弱价值牌，浪费机会；④ OOP过牌-加注是坚果牌的经典打法：让对手建立底池，再全部榨取。",
+ keyPoint:"坚果牌(Broadway/顶同花)在OOP时，过牌诱导比直接下注更有价值，等河牌全部榨取。"},
+
+{id:"T17",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"BTN vs CO，T74→转牌3，持有ATo顶对",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"CO",stack:88,pot:18,
+   heroCards:["A♣","T♦"],boardCards:["T♠","7♥","4♦","3♣"],
+   villainAction:"翻牌两方过牌，转牌CO过牌，轮到你"
+ },
+ question:"T743，翻牌过牌，转牌CO过牌，你有AT顶对，怎么做？",
+ options:[
+   {label:"过牌（check）",score:35,tag:"check"},
+   {label:"下注 1/3底注（约6BB）",score:85,tag:"bet_third"},
+   {label:"下注 2/3底注（约12BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:55,tag:"allin"}
+ ],
+ explain:"翻牌两方过牌后，转牌双方继续过牌——说明双方在翻牌上都不太强。但你有AT顶对：① 翻牌过牌，转牌继续下注的行为更有credibility（你可以代表后来打中的强牌）；② AT是顶对顶踢，在T743板面是强牌；③ 两方翻牌过牌后，转牌CO继续过牌，说明CO可能手牌偏弱；④ 此时主动中大注取价值是正确的；⑤ 过牌再次放弃主动权，可能在河牌面对CO的下注进退两难。",
+ keyPoint:"翻牌双方过牌后，转牌持有强牌应该主动出击，check-check后的下注叙事更强。"},
+
+{id:"T18",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，Q82→转牌2（板面配对），弱两对决策",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:88,pot:20,
+   heroCards:["Q♠","8♦"],boardCards:["Q♦","8♣","3♠","2♥"],
+   villainAction:"翻牌BB下注被call，转牌2来了，BB先行动"
+ },
+ question:"Q832，你有Q8强两对(顶对+第二对)，转牌配对，OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:45,tag:"check"},
+   {label:"下注 1/3底注（约7BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底注（约13BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:70,tag:"allin"}
+ ],
+ explain:"Q8强两对在Q832（转牌2配对），中大注是正确选择：① Q8两对是强牌，此时接近葫芦（只差Q8+22的满堂彩，但更重要的是两对已经很强）；② 虽然板面转牌配对（2出来），但2对你的Q8两对影响不大；③ 中大注取价值，BTN的跟注范围有Qx/8x等愿意继续；④ 过牌控制底池过于保守，两对应该主动建大底池；⑤ 全下在筹码偏浅时也合适。",
+ keyPoint:"强两对(顶对+第二对)在相对安全的板面，应该用中大注持续取价值，保持主动性。"},
+
+{id:"T19",street:"turn",streetLabel:"转牌",posType:"ip",potType:"3bet",
+ title:"BTN 3-bet底池，A83→转牌Q，持有QQ打成三条",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:78,pot:28,
+   heroCards:["Q♠","Q♣"],boardCards:["A♦","8♣","3♥","Q♥"],
+   villainAction:"翻牌BTN下注被call，转牌BB过牌"
+ },
+ question:"A83→转牌Q，你的QQ打成了三条QQQ，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）慢打",score:60,tag:"check"},
+   {label:"下注 1/3底注（约9BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底注（约19BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:80,tag:"allin"}
+ ],
+ explain:"QQ在A83→Q板面打成三条，但A的存在让情况不那么简单：① 板面有A，BB可能有Ax（AK/AQ等，AQ此时有两对A和Q）；② 三条QQQ是强牌，但Ax类手牌会跟注；③ 中大注取价值+让AQ等付出代价（虽然AQ有两对，但打不过三条）；④ 过牌慢打也合理（诱导BB继续），但失去一条街价值；⑤ 3-bet底池中筹码相对偏浅，中大注更高效。",
+ keyPoint:"三条在有A的板面不需要慢打，因为Ax手牌有足够理由跟注，主动中大注更高效。"},
+
+{id:"T20",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"BB vs CO，J64→转牌A，面对CO大注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:86,pot:22,
+   heroCards:["J♠","J♣"],boardCards:["J♦","6♥","4♣","A♣"],
+   villainAction:"翻牌BB check，CO下注，BB跟注，转牌A来了，CO下注2/3（约15BB）"
+ },
+ question:"J64→转牌A，你有JJ三条，但A出现，CO继续大注，怎么应对？",
+ options:[
+   {label:"弃牌",score:5,tag:"fold"},
+   {label:"跟注（call 15BB）",score:80,tag:"call"},
+   {label:"加注至 45BB",score:100,tag:"raise",star:true},
+   {label:"全下（约86BB）",score:85,tag:"allin"}
+ ],
+ explain:"JJ三条是强牌，A出来后CO继续大注：① A的出现确实给CO的Ax手牌了一对，但三条JJJ超过任何只有Ax一对的手牌；② CO两条街大注，可能有AK/AJ等（AJ此时打成葫芦JJJ+A，超过你的三条！）。等等——如果CO有AJ，他有JJJ+A...不对，你有两个J，所以CO不能有AJ；③ CO最强的手牌是AK一对，而你有三条——加注是正确的；④ 跟注也可以，但加注更主动取价值。",
+ keyPoint:"在你持有三条的情况下，对手不可能持有相同三条，大注继续是三条的正确打法。"},
+
+{id:"T21",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，T52→转牌8，双开听牌未中变空气",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:86,pot:20,
+   heroCards:["9♠","6♦"],boardCards:["T♥","5♣","2♦","8♠"],
+   villainAction:"翻牌BTN下注被call，转牌8来了，BB过牌"
+ },
+ question:"T528，你的96翻牌有双开顺子听牌（需7或J），转牌8来了(不是你的出张)，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:90,tag:"check",star:true},
+   {label:"下注 1/3底注（约7BB）",score:45,tag:"bet_third"},
+   {label:"下注 2/3底注（约13BB）",score:25,tag:"bet_two_third"}
+ ],
+ explain:"96在T52板面有双开听牌（需J或7），转牌8来了（不帮助96的听牌），96现在仍然是听牌但转牌变成空白：① 两条街下注已经花了一些筹码，转牌继续下注（没有权益增加）代价更高；② 96在T528需要J或7，仍有8张出张，但一条听牌是否值得转牌继续施压？③ GTO：保守过牌——转牌空气诈唬代价太高，等河牌出张再决定；④ 偶尔下注(1/3)可以，但不是主要策略。",
+ keyPoint:"翻牌下注后转牌空白+纯听牌，保守过牌等河牌，避免浪费筹码在无权益改善的转牌。"},
+
+{id:"T22",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，A76→转牌4，持有A3 Ace+顺子听牌",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:88,pot:20,
+   heroCards:["A♠","3♦"],boardCards:["A♦","7♣","6♦","4♠"],
+   villainAction:"翻牌BB过牌，BTN下注，BB跟注，转牌4来了，轮到你"
+ },
+ question:"A764，你有A3（顶对+顺子听牌：3-4-5-6-7需要5完成，不对——A3+A764 = A+3，板面4-6-7-A，需要5完成5-6-7+3-4-5顺子），先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:70,tag:"check",star:true},
+   {label:"下注 1/3底注（约7BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约13BB）",score:45,tag:"bet_two_third"}
+ ],
+ explain:"A3在A764板面有顶对A（弱踢3）+可能的顺子听牌（3+4+5+6+7需要5，有8张出张）。但OOP转牌面对这个局面，保守为主：① 顶对弱踢（踢脚3），不是强顶对；② 虽然有顺子听牌，但转牌主动下注让BTN加注时比较被动；③ 过牌控制底池，保留摊牌价值+听牌可能；④ 若BTN过牌，河牌再决定；若BTN下注，根据尺寸决定（小注call，大注fold）。",
+ keyPoint:"顶对弱踢在有听牌的板面，OOP优先过牌控制底池，不要在两方都有不确定牌力时主动建大底池。"},
+
+{id:"T23",street:"turn",streetLabel:"转牌",posType:"ip",potType:"3bet",
+ title:"CO 3-bet底池，Q73→转牌J，面对BB过牌下注机会",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:80,pot:28,
+   heroCards:["A♦","J♣"],boardCards:["Q♠","7♦","3♣","J♥"],
+   villainAction:"翻牌两方均过牌，转牌J来了，BB过牌，轮到你"
+ },
+ question:"3-bet底池Q73→转牌J，翻牌双方过牌，你打中J中对，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:30,tag:"check"},
+   {label:"下注 1/3底注（约9BB）",score:70,tag:"bet_third"},
+   {label:"下注 2/3底注（约19BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:65,tag:"allin"}
+ ],
+ explain:"AJ在Q73→J板面打中中对J，3-bet底池中应该中大注：① 翻牌双方过牌，说明翻牌Q73对双方都不完美；② 转牌J出来你打中中对，且有A踢脚（较强）；③ 3-bet底池翻牌过牌后，转牌中大注叙事合理（可以代表QQ/JJ/AQ等翻牌慢打的手牌）；④ 中注(2/3)是标准取价值；⑤ 过牌浪费了打中手牌的价值——翻牌已经过牌，转牌不主动出击的话，河牌叙事就更弱了。",
+ keyPoint:"3-bet底池翻牌check-check后，转牌打中手牌应立即中大注，叙事性更强且取价值。"},
+
+{id:"T24",street:"turn",streetLabel:"转牌",posType:"oop",potType:"srp",
+ title:"SB vs CO，K85→转牌5（板面配对），持有K5已经打成两对",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"CO",stack:86,pot:20,
+   heroCards:["K♣","5♦"],boardCards:["K♠","8♦","5♣","5♥"],
+   villainAction:"翻牌SB check，CO下注，SB跟注，转牌5来了，轮到你"
+ },
+ question:"K855，你有K5（已打成KKK55...不对，K+5+板面K855=K55满堂彩！），OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）慢打诱导",score:80,tag:"check",star:true},
+   {label:"下注 1/3底注（约7BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约13BB）",score:55,tag:"bet_two_third"},
+   {label:"下注全下",score:40,tag:"allin"}
+ ],
+ explain:"K5在K855板面有满堂彩（KK+555）！这是极强手牌。OOP慢打过牌是最佳选择：① CO翻牌下注，说明他有一定手牌；② 转牌5出来，板面变成K855，CO可能有K8两对/K5两对（但他没有5因为你有）/88三条等——这些手牌都愿意继续投入；③ 过牌诱导CO继续下注，让他在河牌继续施压；④ 直接下注可能让CO的弱手牌弃牌，浪费价值；⑤ 过牌-加注河牌是满堂彩的最佳取价值路线。",
+ keyPoint:"满堂彩/四条等超强牌，在对手有足够投入欲望的情况下，过牌诱导比主动下注取价值更多。"},
+
+{id:"T25",street:"turn",streetLabel:"转牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，A96→转牌T，持有KJo街头诈唬",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:84,pot:22,
+   heroCards:["K♦","J♠"],boardCards:["A♠","9♣","6♦","T♥"],
+   villainAction:"翻牌BTN下注被call，转牌T来了，BB过牌"
+ },
+ question:"A96T，转牌T来了，你有KJ（连张+听牌：KJ+A9T6，需要Q完成AKQ-J-T顺子！），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:40,tag:"check"},
+   {label:"下注 1/3底注（约7BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约15BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下",score:55,tag:"allin"}
+ ],
+ explain:"KJ在A96T板面有顺子听牌（需Q完成Broadway：A-K-Q-J-T）！这是坚果顺子听牌！中大注是正确选择：① KJ有4张Q作为出张牌，完成后是坚果顺子；② 中大注半诈唬：有权益支撑+叙事合理（可以代表有A的手牌）；③ 即使被call，Q出来赢大底池；④ 过牌太保守——有坚果顺子听牌应该主动建大底池；⑤ 大注或全下也有道理，2/3是平衡选择。",
+ keyPoint:"坚果顺子听牌(Broadway听牌/坚果同花听牌)应该半诈唬中大注，完成后几乎必赢，值得大注投入。"},
+
+/* ==================== 河牌 (20题) ==================== */
+
+{id:"R01",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，J95T→河牌2，顺子听牌未中",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:55,pot:45,
+   heroCards:["8♣","7♣"],boardCards:["J♣","9♦","5♠","T♥","2♦"],
+   villainAction:"三条街BTN主动，河牌BB过牌"
+ },
+ question:"河牌2（空白），你有87（顺子听牌未中，纯空气），BB过牌，是否诈唬？",
+ options:[
+   {label:"过牌（check）",score:60,tag:"check"},
+   {label:"下注 1/3底注（约15BB）",score:55,tag:"bet_third"},
+   {label:"下注 2/3底注（约30BB）",score:90,tag:"bet_two_third",star:true},
+   {label:"下注全下（55BB）",score:70,tag:"allin"}
+ ],
+ explain:"87是翻牌顺子听牌，河牌未击中，现在是纯空气。GTO推荐中大注诈唬：① 叙事合理：你在J95T板面代表强牌（顺子完成），2是空白牌，叙事没有破坏；② BB在J95T上三条街都被压，河牌再次过牌，说明他可能是中等手牌；③ 小注诈唬效率低：诈唬应该让对手难以跟注，小注赔率太好；④ 中大注(2/3)是诈唬的GTO标准尺寸；⑤ 全下在筹码相对浅时也合理。",
+ keyPoint:"河牌诈唬的尺寸比是否诈唬更重要——中大注诈唬，而不是小注赌运气。"},
+
+{id:"R02",street:"river",streetLabel:"河牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，Q832→河牌2，顶对弱踢决策",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:70,pot:30,
+   heroCards:["Q♠","J♦"],boardCards:["Q♥","8♦","3♠","7♣","2♠"],
+   villainAction:"三条街未见大动作，河牌轮到你先行动"
+ },
+ question:"Q8372，你有QJ顶对弱踢（J不是顶踢），OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:90,tag:"check",star:true},
+   {label:"下注 1/3底注（约10BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约20BB）",score:30,tag:"bet_two_third"},
+   {label:"下注全下",score:10,tag:"allin"}
+ ],
+ explain:"QJ顶对弱踢，Q8372板面河牌，OOP先行动应该过牌诱导：① QJ是边界手牌——有摊牌价值但不强（AQ/KQ都超过你）；② 主动下注被加注时，弃牌损失价值，call对手范围很强；③ 过牌后：若BTN过牌，直接摊牌赢弱牌；若BTN小注，可以call；若BTN大注，考虑fold（对手可能有AQ/KQ/三条）；④ 控制底池是弱中等手牌的标准处理。",
+ keyPoint:"弱中等手牌(顶对弱踢)的河牌处理：过牌控制底池，利用摊牌价值，避免大注面对困境。"},
+
+{id:"R03",street:"river",streetLabel:"河牌",posType:"ip",potType:"3bet",
+ title:"BTN在3-bet底池，AKT J→河牌Q，Broadway完成！",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:35,pot:65,
+   heroCards:["Q♠","T♦"],boardCards:["A♦","K♥","7♣","T♠","Q♥"],
+   villainAction:"三条街都有行动，河牌Q出来，BB过牌"
+ },
+ question:"AKTQJ完成板，你有QT（两对），河牌Q，BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:20,tag:"check"},
+   {label:"下注 1/3底注（约22BB）",score:60,tag:"bet_third"},
+   {label:"下注 2/3底注（约43BB）",score:85,tag:"bet_two_third"},
+   {label:"下注全下（35BB）",score:100,tag:"allin",star:true}
+ ],
+ explain:"AKQJT板面，任何人持有K或J都完成了Broadway顺子！你有QT两对，但这块板面是完整的Broadway板：① 持有任何单张J（JX）的人都有顺子；② 持有任何单张K（KX）的人也有顺子！③ 你的QT两对在这块板面实际上有一定风险（对手可能有JX或KX）；④ 但筹码已经偏浅（35BB进65BB底池），弃牌是错的；⑤ 选择：投入全下或中大注，建大底池测试对手——若对手有顺子，他必然加注；若对手弃牌，你赢底池。全下更干净。",
+ keyPoint:"在完整顺子板面，要意识到任何持有关键单张的人都有顺子，要准确评估自己的实际牌力。"},
+
+{id:"R04",street:"river",streetLabel:"河牌",posType:"oop",potType:"srp",
+ title:"BB vs CO，A843→河牌K，面对CO大注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:65,pot:35,
+   heroCards:["A♥","T♦"],boardCards:["A♠","8♣","4♦","3♠","K♥"],
+   villainAction:"河牌CO下注 全下（65BB）"
+ },
+ question:"A843K，你有AT（顶对弱踢），面对CO全下，是否跟注？",
+ options:[
+   {label:"弃牌",score:85,tag:"fold",star:true},
+   {label:"跟注（call 65BB）",score:25,tag:"call"}
+ ],
+ explain:"AT在A843K板面面对CO全下，弃牌是正确选择：① CO三条街最后全下，代表极强手牌（AK两对、AA/KK/88/44三条、A8/A4两对等）；② AT只有顶对弱踢（踢脚T），被AK两对/三条等轻松击败；③ 跟注需要胜率大于50%才值得，但AT对CO全下范围的权益远低于50%；④ 即使CO偶尔在诈唬，但付出全下（65BB进100BB底池）需要约35%权益，AT对CO全下范围可能不到25%；⑤ 干净弃牌保留筹码。",
+ keyPoint:"顶对弱踢面对河牌全下时，除非底池赔率极好(极大底池)，否则多数情况下应该弃牌。"},
+
+{id:"R05",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
+ title:"BTN vs SB，K74J→河牌9，持有KQ顶对是否大注？",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"SB",stack:65,pot:35,
+   heroCards:["K♠","Q♦"],boardCards:["K♦","7♣","4♠","J♥","9♦"],
+   villainAction:"SB过牌，三条街被动，河牌BB过牌"
+ },
+ question:"K74J9，你有KQ顶对顶踢，SB三条街被动过牌，河牌怎么做？",
+ options:[
+   {label:"过牌（check）",score:40,tag:"check"},
+   {label:"下注 1/3底注（约12BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底注（约23BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下（65BB）",score:70,tag:"allin"}
+ ],
+ explain:"KQ顶对顶踢，SB三条街被动（三次过牌），河牌应该中大注取价值：① SB三条街过牌，说明他手牌弱，但可能有中对/弱Kx等（会跟注小中注）；② KQ是强牌，值得中大注取价值；③ 河牌是最后机会取价值，不要保守；④ 中注(2/3)是平衡选择——让弱手牌如K9/K8/中对等能够跟注；⑤ 过牌放弃了整条街的价值，SB被动玩家不会主动下注弱牌。",
+ keyPoint:"面对三条街被动的玩家，河牌强手牌应该中大注取价值——对手不会主动，你必须下注。"},
+
+{id:"R06",street:"river",streetLabel:"河牌",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，Q97T→河牌6，面对BTN全下",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:40,pot:60,
+   heroCards:["J♠","8♦"],boardCards:["Q♦","9♣","7♠","T♥","6♣"],
+   villainAction:"河牌BTN全下（40BB）"
+ },
+ question:"Q97T6，你有J8（完成顺子J-T-9-8-7！），面对BTN全下，怎么应对？",
+ options:[
+   {label:"弃牌",score:0,tag:"fold"},
+   {label:"跟注（call 40BB）",score:100,tag:"call",star:true}
+ ],
+ explain:"J8在Q97T6板面完成了顺子（J-T-9-8-7），但注意这是非坚果顺子——板面Q97T6，持有J8=J高顺子，但持有KJ=K高顺子（K-Q-J-T-9）超过J高顺子！面对全下：① 首先确认：持有KJ的对手打成K高顺子，超过你；② 但BTN全下范围包括两对/三条/同花等弱手牌（在你的顺子面前也是输），概率很高；③ 底池赔率：40BB进100BB，需要40%权益；④ J高顺子对BTN全下范围有约55-60%权益，跟注正确。",
+ keyPoint:"非坚果顺子面对全下时，计算被更高顺子击败的概率，确认权益后再决定跟注/弃牌。"},
+
+{id:"R07",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
+ title:"CO vs BB，A53J→河牌T，同花未完成，是否诈唬",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:60,pot:40,
+   heroCards:["K♥","Q♥"],boardCards:["A♠","5♥","3♦","J♥","T♣"],
+   villainAction:"河牌BB过牌"
+ },
+ question:"A53JT，你有KQ♥（后门同花未完成，只有两张♥），河牌BB过牌，是否诈唬？",
+ options:[
+   {label:"过牌（check）",score:80,tag:"check",star:true},
+   {label:"下注 1/3底注（约13BB）",score:50,tag:"bet_third"},
+   {label:"下注 2/3底注（约27BB）",score:35,tag:"bet_two_third"},
+   {label:"下注全下",score:20,tag:"allin"}
+ ],
+ explain:"KQ在A53JT板面只有高牌（K和Q），没有对，没有听牌完成。河牌BB过牌：① KQ在这里没有摊牌价值（A53JT板面任何对子都超过KQ）；② 诈唬是可以的，但叙事不够强——你在A板面代表Ax，但KQ打不了Ax；③ 过牌是主要选择：让BB摊牌，如果BB也是高牌，KQ可能赢；④ 若下注诈唬，BB有任何对都会跟注（他在A53JT上有对，你在诈唬），效率不高；⑤ 过牌保守是正确的。",
+ keyPoint:"没有合理叙事的河牌诈唬效率低，纯高牌选择过牌摊牌，比无根据的诈唬更合理。"},
+
+{id:"R08",street:"river",streetLabel:"河牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，K87J→河牌A，原本顶对变次对，面对大注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:60,pot:40,
+   heroCards:["K♦","Q♠"],boardCards:["K♠","8♣","7♦","J♥","A♠"],
+   villainAction:"河牌BTN下注2/3（约27BB）"
+ },
+ question:"K87JA，A出来你的K从顶对变成了次对，面对BTN大注怎么应对？",
+ options:[
+   {label:"弃牌",score:80,tag:"fold",star:true},
+   {label:"跟注（call 27BB）",score:30,tag:"call"}
+ ],
+ explain:"KQ在K87J→A板面有一对K（次对），面对BTN 2/3大注：① A出来，任何有Ax的BTN手牌都超过了你的一对K（AK/AJ/A8等）；② BTN一直主动，河牌A出来继续下注，Ax类手牌是合理解读；③ 底池赔率：27BB进67BB，需要约40%权益，一对K对BTN大注范围的权益可能只有25-35%；④ 弃牌是正确的——河牌出现了超过你手牌的牌且对手继续大注，通常是可靠信号；⑤ 避免'不愿弃牌'的心理陷阱。",
+ keyPoint:"河牌出现超越你手牌的大牌(A超越K)，面对持续大注时应该倾向弃牌，不要情感附牌。"},
+
+{id:"R09",street:"river",streetLabel:"河牌",posType:"ip",potType:"3bet",
+ title:"BTN 3-bet底池，KQ8 T→河牌J，顶顺完成",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:38,pot:62,
+   heroCards:["A♠","J♦"],boardCards:["K♦","Q♣","8♥","T♠","J♠"],
+   villainAction:"河牌BB过牌"
+ },
+ question:"KQT8J，你有AJ（两对A和J），同时AJ+KQJT8=Broadway顺子！河牌BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:15,tag:"check"},
+   {label:"下注 1/3底注（约21BB）",score:50,tag:"bet_third"},
+   {label:"下注 2/3底注（约41BB）",score:85,tag:"bet_two_third"},
+   {label:"下注全下（38BB）",score:100,tag:"allin",star:true}
+ ],
+ explain:"AJ在KQJT8板面完成了Broadway顺子（A-K-Q-J-T），这是坚果顺子！河牌应该全下取最大价值：① Broadway是最高顺子，只输给同花（板面没有同花），实际上是坚果；② 3-bet底池，BB有大量KQ/KJ/QT等强两对/三条愿意跟注全下；③ 筹码偏浅（38BB），全下是自然选择；④ 过牌或小注会浪费坚果牌的价值；⑤ 全下！有坚果时不要保守。",
+ keyPoint:"持有坚果牌时，河牌应该用对手愿意跟注的最大尺寸下注，通常是全下或接近全下。"},
+
+{id:"R10",street:"river",streetLabel:"河牌",posType:"oop",potType:"srp",
+ title:"SB vs BTN，A76K→河牌3，同花完成！但只有中同花",
+ setup:{
+   pos:"SB（小盲）",heroPos:"SB",villainPos:"BTN",stack:60,pot:40,
+   heroCards:["J♠","9♠"],boardCards:["A♠","7♦","6♠","K♣","3♠"],
+   villainAction:"河牌轮到你先行动"
+ },
+ question:"A76K3（其中A/6/3是♠），你有J9♠完成了♠同花（J高），OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）诱导",score:70,tag:"check",star:true},
+   {label:"下注 1/3底注（约13BB）",score:60,tag:"bet_third"},
+   {label:"下注 2/3底注（约27BB）",score:65,tag:"bet_two_third"},
+   {label:"下注全下（60BB）",score:45,tag:"allin"}
+ ],
+ explain:"J9♠完成了♠同花（J高），但不是坚果——A高/K高/Q高同花都超过J高同花。OOP先行动：① J高同花不是坚果，主动下注被加注很难处理；② 过牌诱导：让BTN在不知道你有同花的情况下下注（如果他有A对/K对，会下注）；③ 过牌后若BTN下注，跟注；若BTN大注（可能有更高同花），考虑弃牌；④ 主动大注（全下）在J高同花上比较危险——被更高同花全加。过牌控制风险。",
+ keyPoint:"非坚果同花OOP时，过牌诱导比主动下注更安全，避免面对更高同花的加注。"},
+
+{id:"R11",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，97 2→河牌5，顺子听牌终于完成",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:58,pot:42,
+   heroCards:["8♦","6♣"],boardCards:["9♥","7♠","2♦","5♣","3♠"],
+   villainAction:"河牌BB过牌"
+ },
+ question:"97253，你有86（完成顺子5-6-7-8-9），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:25,tag:"check"},
+   {label:"下注 1/3底注（约14BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约28BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下（58BB）",score:80,tag:"allin"}
+ ],
+ explain:"86在97253板面完成了顺子（9-8-7-6-5），这是中等顺子（不是坚果——板面有A2345可能，但更重要的是这个顺子在该板面是否是最强的）。分析：97253板面，最强顺子是6高顺子（2-3-4-5-6）还是9高顺子（5-6-7-8-9）？持有86=5678910...不对，86+97253=9-8-7-6-5+3-2，最高顺子需要T+86才能打成T高，86=8和6，加上板面9-7-5-3-2，86打成9-8-7-6-5。中大注取价值是正确的，BB过牌说明他手牌不强，中注可以诱导跟注。",
+ keyPoint:"完成顺子河牌主动下注取价值，中等注(2/3)既能取价值也能诱导弱牌跟注。"},
+
+{id:"R12",street:"river",streetLabel:"河牌",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，AQ6 T→河牌K，持有AK两对",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:45,pot:55,
+   heroCards:["A♥","K♣"],boardCards:["A♠","Q♦","6♣","T♥","K♠"],
+   villainAction:"河牌轮到你先行动"
+ },
+ question:"AQ6TK，你有AK（两对A和K），OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）",score:55,tag:"check",star:true},
+   {label:"下注 1/3底注（约18BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约37BB）",score:75,tag:"bet_two_third"},
+   {label:"下注全下（45BB）",score:85,tag:"allin"}
+ ],
+ explain:"AK两对在AQ6TK板面是强牌，但板面有JK+QT等可能完成顺子的组合。3-bet底池OOP先行动：① AK两对是强牌，但AQ6TK板面，持有JK（J-Q-K-T-A？不对，JK需要AK-Q-J-T...持有J9=J-Q-K...）等手牌有不同结果；② 更重要的是：BTN 3-bet call有大量AQ/AK类手牌，AK两对是强牌有价值；③ 过牌诱导：让BTN对更多手牌（如AQ两对）下注，你加注取价值；④ 全下也是选项（筹码偏浅），但过牌诱导-加注策略取价值可能更多。两种选择都合理，过牌诱导稍好。",
+ keyPoint:"3-bet底池强两对OOP，过牌诱导和主动下注都是GTO选项，筹码偏浅时主动下注更高效。"},
+
+{id:"R13",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
+ title:"CO vs BB，Q73 A→河牌5，持有Q5打成两对",
+ setup:{
+   pos:"CO（关煞）",heroPos:"CO",villainPos:"BB",stack:62,pot:38,
+   heroCards:["Q♦","5♣"],boardCards:["Q♣","7♠","3♦","A♥","5♠"],
+   villainAction:"河牌BB过牌"
+ },
+ question:"Q73A5，你有Q5（两对Q和5），BB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:65,tag:"check",star:true},
+   {label:"下注 1/3底注（约13BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底注（约25BB）",score:55,tag:"bet_two_third"},
+   {label:"下注全下",score:20,tag:"allin"}
+ ],
+ explain:"Q5在Q73A5板面有两对（Q和5），但这是弱两对：① A出现在转牌，让板面有A，对手可能有Ax（AQ/A7等）打成了更强两对；② Q5两对的价值不确定，不知道对手是否有更好的两对；③ BB河牌过牌，可能是陷阱（慢打Ax两对/三条Q等）；④ 过牌是相对安全的选择：让BB摊牌，直接比大小；⑤ 小注诱导也可以，但Q5两对不够强，过牌更保守合理。",
+ keyPoint:"弱两对(非顶端)在有高牌的板面，河牌保守过牌摊牌，避免主动建大底池面对困境。"},
+
+{id:"R14",street:"river",streetLabel:"河牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，A84 J→河牌A，持有A4打成三条",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:55,pot:45,
+   heroCards:["A♣","4♦"],boardCards:["A♠","8♦","4♣","J♥","A♥"],
+   villainAction:"河牌轮到你先行动"
+ },
+ question:"A84JA（两个A在板面），你有A4（三条AAA），OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）诱导",score:80,tag:"check",star:true},
+   {label:"下注 1/3底注（约15BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约30BB）",score:50,tag:"bet_two_third"},
+   {label:"下注全下（55BB）",score:45,tag:"allin"}
+ ],
+ explain:"A4在A84JA板面有三条（AAA+44满堂彩？不对，A4+A84JA=AAA+JJ4，实际是AAA满堂彩+4：A-A-A-4-4？不，让我重新算：手牌A4，公牌A8 4 J A：你有三个A（手牌A+公牌两个A）和两个4（手牌4+公牌4），所以你有满堂彩AAA44！这是超强手牌。OOP先行动用过牌诱导：BTN在A84JA板面可能有AK/AQ/AJ等强手牌，过牌让他们在错误估计自己牌力时主动下注，再全下加注。",
+ keyPoint:"满堂彩在对手可能有强手牌的板面，过牌诱导是最佳策略，等对手以为自己领先时下注。"},
+
+{id:"R15",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
+ title:"BTN vs BB，K93 J→河牌T，面对BB大注",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:55,pot:45,
+   heroCards:["Q♣","T♦"],boardCards:["K♠","9♦","3♣","J♥","T♠"],
+   villainAction:"河牌BB大注全下（55BB）"
+ },
+ question:"K93JT，你有QT（一对T），面对BB全下，是否跟注？",
+ options:[
+   {label:"弃牌",score:90,tag:"fold",star:true},
+   {label:"跟注（call 55BB）",score:20,tag:"call"}
+ ],
+ explain:"QT在K93JT板面面对BB全下，弃牌是正确选择：① QT打成了一对T，但K93JT板面有大量更强手牌；② BB在这个板面全下，代表强手牌（KJ两对/JT两对/KK三条/完成顺子QJ/AQ等）；③ 底池赔率：55BB进100BB，需要约36%权益，一对T对BB全下范围权益可能只有15-20%；④ 即使有时BB在诈唬，但理性计算下弃牌是正确的；⑤ 'call因为底池赔率'的陷阱：底池赔率好不代表就该call，还需要实际权益支持。",
+ keyPoint:"河牌弱手牌面对全下时，冷静计算实际权益（而不只是底池赔率），不够权益则弃牌。"},
+
+{id:"R16",street:"river",streetLabel:"河牌",posType:"oop",potType:"3bet",
+ title:"BB 3-bet底池，AJ8 T→河牌Q，面对BTN大注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:42,pot:58,
+   heroCards:["A♦","J♠"],boardCards:["A♣","J♦","8♠","T♥","Q♦"],
+   villainAction:"河牌BTN下注2/3（约39BB）"
+ },
+ question:"AJ8TQ（Broadway板），你有AJ（两对），面对BTN大注怎么应对？",
+ options:[
+   {label:"弃牌",score:65,tag:"fold",star:true},
+   {label:"跟注（call 39BB）",score:45,tag:"call"},
+   {label:"加注全下",score:15,tag:"raise"}
+ ],
+ explain:"AJ两对在AJ8TQ完整Broadway板面对BTN 2/3大注：① AJ8TQ是完整顺子板（A-K-Q-J-T，持有K可以打成Broadway），任何持有K的手牌（KQ/KJ/K8等）都打成了顺子，并且超过你的两对；② BTN 3-bet call范围有大量KQ/KJs/KTs等，这些在河牌Q出来后全部打成顺子；③ 你的AJ两对在这里很可能落后；④ 底池赔率：39BB进97BB，需要40%权益；⑤ AJ两对对BTN大注范围权益约30-35%，弃牌是GTO的主要选择，虽然接近边界。",
+ keyPoint:"在有顺子/同花完成的危险河牌面对大注时，中等强度手牌（两对等）通常选择弃牌。"},
+
+{id:"R17",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
+ title:"BTN vs SB，7 6 5 8→河牌4，顺子完成！持有95",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"SB",stack:60,pot:40,
+   heroCards:["9♠","5♦"],boardCards:["7♣","6♠","5♣","8♦","4♣"],
+   villainAction:"河牌SB过牌"
+ },
+ question:"76584，你有95（顺子：4-5-6-7-8，你的9和5中5在板面）。等等，95+76584=9-8-7-6-5！你有9高顺子！SB过牌，怎么做？",
+ options:[
+   {label:"过牌（check）",score:30,tag:"check"},
+   {label:"下注 1/3底注（约13BB）",score:65,tag:"bet_third"},
+   {label:"下注 2/3底注（约27BB）",score:100,tag:"bet_two_third",star:true},
+   {label:"下注全下（60BB）",score:80,tag:"allin"}
+ ],
+ explain:"95在76584板面打成了9高顺子（9-8-7-6-5），但注意：持有T的对手有T高顺子（T-9-8-7-6）超过你的9高顺子！SB过牌，IP选择中大注：① 中注取价值，SB可能有较弱的手牌（两对/三条/低顺子如6543等）愿意跟注；② 中大注(2/3)平衡取价值；③ 过牌放弃河牌价值；④ 全下也合理，但2/3更平衡（给对手跟注机会）；⑤ 注意非坚果顺子：T高可以超过你。",
+ keyPoint:"完成非坚果顺子后，中大注取价值，同时意识到更高顺子可能存在（不要过度押注）。"},
+
+{id:"R18",street:"river",streetLabel:"河牌",posType:"oop",potType:"srp",
+ title:"BB vs CO，A4 7 2→河牌K，持有A7两对，面对CO大注",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"CO",stack:65,pot:35,
+   heroCards:["A♣","7♣"],boardCards:["A♠","4♦","7♠","2♣","K♦"],
+   villainAction:"河牌CO下注2/3（约23BB）"
+ },
+ question:"A472K，你有A7两对，面对CO大注怎么应对？",
+ options:[
+   {label:"弃牌",score:40,tag:"fold"},
+   {label:"跟注（call 23BB）",score:100,tag:"call",star:true},
+   {label:"加注至全下",score:30,tag:"raise"}
+ ],
+ explain:"A7两对面对CO 2/3大注：① A7两对是相当强的手牌——顶对A+第二对7；② CO的大注范围包括：强两对（AK/A7等）、三条（AA/77等）、顺子/同花（如A2345等），但也包括弱手牌诈唬；③ 底池赔率：23BB进58BB，需要约40%权益；④ A7两对对CO 2/3大注范围的权益约45-55%，跟注是合理的；⑤ 加注：如果CO有比你更强的两对，你处于落后；保守跟注而非全加更稳健；⑥ 弃牌过于保守，A7两对够强跟注。",
+ keyPoint:"顶对+第二对的强两对面对大注，计算底池赔率后确认权益足够，应该跟注而非弃牌。"},
+
+{id:"R19",street:"river",streetLabel:"河牌",posType:"ip",potType:"3bet",
+ title:"BTN 3-bet底池，Q72 4→河牌Q（板面配对），持有TT过对，面对BB下注",
+ setup:{
+   pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:50,pot:50,
+   heroCards:["T♠","T♦"],boardCards:["Q♠","7♦","2♣","4♥","Q♣"],
+   villainAction:"河牌BB下注1/3（约17BB）"
+ },
+ question:"Q72 4Q（Q配对），你有TT，面对BB小注怎么应对？",
+ options:[
+   {label:"弃牌",score:70,tag:"fold",star:true},
+   {label:"跟注（call 17BB）",score:40,tag:"call"},
+   {label:"加注至全下",score:5,tag:"raise"}
+ ],
+ explain:"TT在Q724Q（Q配对）板面面对BB小注：① Q在河牌配对，任何有Q的手牌（QK/QJ/QT等）打成了三条，超过你的TT；② 3-bet底池中BB的call范围有大量Qx手牌（QQ/KQ/AQ/QJ）；③ 虽然是小注（赔率好），但TT对有Q的手牌权益极低（约10-15%）；④ 底池赔率：17BB进67BB，需要25%权益，但TT对BB小注范围可能只有20%权益；⑤ 弃牌是正确选择——Q配对河牌对手小注，通常代表有Q（想要跟注），TT无力还击。",
+ keyPoint:"当河牌出现配对且你没有该牌时，面对对手下注要高度警惕三条，中等手牌倾向弃牌。"},
+
+{id:"R20",street:"river",streetLabel:"河牌",posType:"oop",potType:"srp",
+ title:"BB vs BTN，K87 2→河牌6，持有K6打成两对",
+ setup:{
+   pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:65,pot:35,
+   heroCards:["K♦","6♠"],boardCards:["K♠","8♥","7♦","2♣","6♦"],
+   villainAction:"河牌轮到你先行动"
+ },
+ question:"K872 6，你有K6（两对K和6），河牌出现了6，OOP先行动怎么做？",
+ options:[
+   {label:"过牌（check）诱导",score:60,tag:"check",star:true},
+   {label:"下注 1/3底注（约12BB）",score:75,tag:"bet_third"},
+   {label:"下注 2/3底注（约23BB）",score:85,tag:"bet_two_third"},
+   {label:"下注全下（65BB）",score:60,tag:"allin"}
+ ],
+ explain:"K6两对在K8726板面，河牌6出来，OOP先行动：① K6是强两对（顶对K+低对6），是不错的手牌；② 6出来是'好牌'——让你打成两对，同时也可能帮助了对手（87等有两对的手牌不受影响，但66等有三条）；③ 过牌诱导：让BTN有Kx或中对等强牌下注，你再跟注/加注；④ 主动下注也合理：K6两对可以中等注取价值；⑤ 两种策略都有道理，过牌诱导稍好（避免被强手牌加注的困境）；⑥ GTO：两可，过牌略更保守稳健。",
+ keyPoint:"强两对(顶对+低对)河牌过牌诱导vs主动下注都合理，OOP稍倾向过牌控制风险。"}
+
+];
+
+/* ===================================================
+   练习题库（简版）
+   =================================================== */
+const TOPICS = [
+  { id:'starting_hand', name:'起手牌', icon:'🃏', count:10 },
+  { id:'position',      name:'位置意识', icon:'📍', count:10 },
+  { id:'pot_odds',      name:'底池赔率', icon:'📐', count:10 },
+  { id:'preflop',       name:'翻牌前策略', icon:'🎯', count:10 },
+  { id:'postflop',      name:'翻牌后策略', icon:'🃏', count:10 },
+  { id:'bluff',         name:'诈唬技巧', icon:'🎭', count:10 },
+  { id:'hand_reading',  name:'手牌阅读', icon:'🔍', count:10 },
+  { id:'tournament',    name:'锦标赛策略', icon:'🏆', count:10 },
+  { id:'short_stack',   name:'短筹码策略', icon:'💸', count:10 },
+  { id:'gto',           name:'GTO基础', icon:'⚙️', count:10 },
+  { id:'bubble',        name:'冒泡期策略', icon:'🫧', count:10 },
+  { id:'profiling',     name:'对手识别', icon:'👁️', count:10 },
+];
+
+/* ===================================================
+   玩家数据（LocalStorage）
+   =================================================== */
+const LEVEL_NAMES = ['🌱 新手','🃏 学徒','🎯 进阶','🔥 高手','💎 精英','👑 宗师','🏆 传奇'];
+function getLevelName(score) {
+  if (score < 100) return LEVEL_NAMES[0];
+  if (score < 500) return LEVEL_NAMES[1];
+  if (score < 1500) return LEVEL_NAMES[2];
+  if (score < 4000) return LEVEL_NAMES[3];
+  if (score < 10000) return LEVEL_NAMES[4];
+  if (score < 30000) return LEVEL_NAMES[5];
+  return LEVEL_NAMES[6];
 }
 
-/* ===== 游戏结束 ===== */
-function gameOver(){
-  const hero=G.players[0];
-  addLog(hero.eliminated?'游戏结束，你出局了！':'恭喜你赢了！','gold');
+let currentPlayer = null;
+
+function loadPlayers() {
+  try { return JSON.parse(localStorage.getItem('poker_players') || '[]'); } catch { return []; }
 }
-
-/* ===== 一手牌主流程 ===== */
-async function playHand(){
-  // 重置
-  G.deck=shuffle(makeDeck());
-  G.community=[]; G.pot=0; G.round='preflop'; G.lastBet=BB; G.minRaise=BB;
-  G.ended=false; G.showdown=false;
-  reviewLog.length = 0; // 清空上一手复盘
-  for(const k in _prevBets) delete _prevBets[k]; // 清空筹码记录
-  document.getElementById('result-bar').style.display='none';
-  document.getElementById('action-area').classList.remove('hidden');
-  document.getElementById('action-area').classList.remove('invisible');
-  for(const p of G.players){ p.hand=[]; p.bet=0; p.folded=p.eliminated; p.allIn=false; p._isWinner=false; p._handName=''; }
-
-  const alive=G.players.filter(p=>!p.eliminated);
-  if(alive.length<2){gameOver();return;}
-
-  // 推进庄家
-  do{ G.dealer=(G.dealer+1)%G.players.length; }while(G.players[G.dealer].eliminated);
-
-  // 发牌
-  for(let i=0;i<2;i++) for(const p of alive) p.hand.push(G.deck.pop());
-
-  // 盲注
-  const sbIdx=nextSeat(G.dealer);
-  const bbIdx=nextSeat(sbIdx);
-  const payB=(idx,amt)=>{
-    const p=G.players[idx];const pay=Math.min(amt,p.chips);
-    p.chips-=pay;p.bet=pay;G.pot+=pay;
-    if(p.chips===0)p.allIn=true;
-    _triggerChipAnim(idx);
-  };
-  payB(sbIdx,SB); payB(bbIdx,BB);
-
-  addLog(`手牌 #${G.handNum} 开始 — 庄家: ${G.players[G.dealer].name}`,'gold');
-  addLog(`${G.players[sbIdx].name} 小盲${SB} · ${G.players[bbIdx].name} 大盲${BB}`);
-
-  document.getElementById('top-hand').textContent=G.handNum;
-  activeIdx=-1;
-  renderAll();
-  await sleep(200);
-
-  // 翻牌前：从枪口位开始（大盲后面）
-  const firstIdx=nextSeat(bbIdx);
-  await bettingRound(firstIdx);
-
-  // 检查是否还有多人
-  const stillContesting = G.players.filter(p=>!p.folded&&!p.eliminated);
-  if(stillContesting.length<=1){
-    await endHand(false);
+function savePlayers(arr) {
+  localStorage.setItem('poker_players', JSON.stringify(arr));
+}
+function getPlayerData(id) {
+  const all = loadPlayers();
+  return all.find(p => p.id === id) || null;
+}
+function savePlayerData(id, data) {
+  const all = loadPlayers();
+  const idx = all.findIndex(p => p.id === id);
+  if (idx >= 0) all[idx] = { ...all[idx], ...data };
+  else all.push(data);
+  savePlayers(all);
+}
+function selectPlayer(p) {
+  currentPlayer = p;
+  localStorage.setItem('poker_current_player', p.id);
+  renderTopbar();
+  renderHomePage();
+  document.getElementById('player-modal').classList.remove('show');
+}
+function renderTopbar() {
+  if (!currentPlayer) {
+    document.getElementById('tp-name').textContent = '点击选择玩家';
+    document.getElementById('tp-score').textContent = '';
     return;
   }
-
-  // 翻牌
-  G.round='flop';
-  G.deck.pop();
-  for(let i=0;i<3;i++) G.community.push(G.deck.pop());
-  for(const p of G.players) if(!p.eliminated){ p.bet=0; }
-  G.lastBet=0; G.minRaise=BB;
-  renderAll();
-  await sleep(400);
-
-  const postFlopActive = G.players.filter(p=>!p.folded&&!p.allIn&&!p.eliminated);
-  if(postFlopActive.length>1) await bettingRound(nextSeat(G.dealer));
-
-  const afterFlop=G.players.filter(p=>!p.folded&&!p.eliminated);
-  if(afterFlop.length<=1){await endHand(false);return;}
-
-  // 转牌
-  G.round='turn';
-  G.deck.pop();
-  G.community.push(G.deck.pop());
-  for(const p of G.players) if(!p.eliminated){ p.bet=0; }
-  G.lastBet=0; G.minRaise=BB;
-  renderAll();
-  await sleep(400);
-
-  const turnActive=G.players.filter(p=>!p.folded&&!p.allIn&&!p.eliminated);
-  if(turnActive.length>1) await bettingRound(nextSeat(G.dealer));
-
-  const afterTurn=G.players.filter(p=>!p.folded&&!p.eliminated);
-  if(afterTurn.length<=1){await endHand(false);return;}
-
-  // 河牌
-  G.round='river';
-  G.deck.pop();
-  G.community.push(G.deck.pop());
-  for(const p of G.players) if(!p.eliminated){ p.bet=0; }
-  G.lastBet=0; G.minRaise=BB;
-  renderAll();
-  await sleep(400);
-
-  const riverActive=G.players.filter(p=>!p.folded&&!p.allIn&&!p.eliminated);
-  if(riverActive.length>1) await bettingRound(nextSeat(G.dealer));
-
-  await endHand(true);
+  const p = getPlayerData(currentPlayer.id) || currentPlayer;
+  document.getElementById('tp-name').textContent = p.name || p.id;
+  document.getElementById('tp-score').textContent = (p.score || 0) + ' 积分';
+}
+function renderHomePage() {
+  if (!currentPlayer) {
+    document.getElementById('home-no-player').style.display = 'block';
+    document.getElementById('home-player-row').style.display = 'none';
+    return;
+  }
+  const p = getPlayerData(currentPlayer.id) || currentPlayer;
+  document.getElementById('home-no-player').style.display = 'none';
+  document.getElementById('home-player-row').style.display = 'flex';
+  document.getElementById('home-avatar').textContent = (p.name || p.id).charAt(0).toUpperCase();
+  document.getElementById('home-player-name').textContent = p.name || p.id;
+  document.getElementById('home-player-level').textContent = getLevelName(p.score || 0);
+  document.getElementById('home-player-score').textContent = (p.score || 0) + ' 积分';
 }
 
-/* ===== 初始化 ===== */
-function initGame(n){
-  const ps=[{id:0,name:'你',isHero:true,chips:BUY_IN,hand:[],bet:0,folded:false,allIn:false,eliminated:false}];
-  const names=shuffle([...AI_NAMES]).slice(0,n-1);
-  for(let i=1;i<n;i++) ps.push({id:i,name:names[i-1],isHero:false,chips:BUY_IN,hand:[],bet:0,folded:false,allIn:false,eliminated:false});
-  G={players:ps,deck:[],community:[],pot:0,round:'preflop',dealer:-1,handNum:1,lastBet:BB,minRaise:BB,logs:[],ended:false,showdown:false};
-  activeIdx=-1; heroResolve=null;
-  playHand();
-}
-
-/* ===== UI事件 ===== */
-// 人数选择
-let selectedN=8;
-document.querySelectorAll('#cnt-select button').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('#cnt-select button').forEach(b=>b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedN=parseInt(btn.dataset.n);
+function showPlayerModal() {
+  const players = loadPlayers();
+  let html = '';
+  players.forEach(p => {
+    html += `<div class="player-list-item" onclick="selectPlayer(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+      <div class="player-list-avatar">${(p.name||p.id).charAt(0).toUpperCase()}</div>
+      <div class="player-list-name">${p.name || p.id}</div>
+      <div class="player-list-score">${p.score||0} 积分</div>
+    </div>`;
   });
+  if (!html) html = '<div style="text-align:center;color:var(--text-dim);padding:16px 0;font-size:14px;">还没有玩家，点击下方创建</div>';
+  document.getElementById('player-list').innerHTML = html;
+  document.getElementById('new-player-row').classList.remove('show');
+  document.getElementById('player-modal').classList.add('show');
+}
+document.getElementById('player-modal').addEventListener('click', () => {
+  document.getElementById('player-modal').classList.remove('show');
 });
+function toggleNewPlayerInput() {
+  document.getElementById('new-player-row').classList.toggle('show');
+  if (document.getElementById('new-player-row').classList.contains('show')) {
+    setTimeout(() => document.getElementById('new-player-name').focus(), 100);
+  }
+}
+function confirmCreatePlayer() {
+  const name = document.getElementById('new-player-name').value.trim();
+  if (!name) return;
+  const p = { id: 'p_' + Date.now(), name, score: 0 };
+  const all = loadPlayers();
+  all.push(p);
+  savePlayers(all);
+  selectPlayer(p);
+  document.getElementById('new-player-name').value = '';
+}
 
-document.getElementById('btn-start').addEventListener('click',()=>{
-  document.getElementById('start-overlay').style.display='none';
-  initGame(selectedN);
-});
+/* ===================================================
+   Tab导航
+   =================================================== */
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.querySelector(`.tab-item[data-tab="${tab}"]`)?.classList.add('active');
+  // 滚动到顶
+  document.getElementById('main-content').scrollTop = 0;
 
-document.getElementById('btn-next-hand').addEventListener('click',()=>{
-  document.getElementById('result-bar').style.display='none';
-  closeStrategyPanel(); // 收起面板，让用户先思考
-  const alive=G.players.filter(p=>!p.eliminated);
-  if(alive.length<2){gameOver();return;}
-  G.handNum++;
-  playHand();
-});
+  if (tab === 'scenario') mInitScenario();
+  if (tab === 'train') renderTopicGrid();
+}
+
+/* ===================================================
+   练习模式渲染
+   =================================================== */
+function renderTopicGrid() {
+  const html = TOPICS.map(t => `
+    <div class="topic-card" onclick="alert('练习模式敬请期待完整版，当前可在电脑版中体验全部120道题！')">
+      <div class="topic-icon">${t.icon}</div>
+      <div class="topic-name">${t.name}</div>
+      <div class="topic-count">${t.count} 道题</div>
+      <div class="topic-prog-bar"><div class="topic-prog-fill" style="width:0%"></div></div>
+    </div>
+  `).join('');
+  document.getElementById('topic-grid').innerHTML = html;
+}
+
+/* ===================================================
+   自由游戏
+   =================================================== */
+function openDesktopGame() {
+  window.open('./index.html', '_blank');
+}
+function openMobileGame() {
+  // 横屏后直接跳到游戏页（后续可嵌入或新开窗口）
+  window.open('./mobile_v1.html', '_blank');
+}
+
+/* ===================================================
+   情景实战逻辑
+   =================================================== */
+let MSC = {
+  filters: { street: 'all', pos: 'all', pot: 'all' },
+  queue: [], idx: 0, results: [], current: null
+};
+
+function mInitScenario() {
+  // 绑定筛选chip（防止重复绑定）
+  document.querySelectorAll('.sc-chip').forEach(chip => {
+    chip.onclick = function() {
+      const g = this.dataset.group;
+      const v = this.dataset.val;
+      document.querySelectorAll(`.sc-chip[data-group="${g}"]`).forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      MSC.filters[g] = v;
+      updateScCountDesc();
+    };
+  });
+  updateScCountDesc();
+  mShowSection('filter');
+}
+
+function updateScCountDesc() {
+  const count = mFilterScenarios().length;
+  document.getElementById('sc-count-desc').textContent = `共 ${count} 道题可选，每次最多随机抽 ${Math.min(count,20)} 题`;
+}
+
+function mFilterScenarios() {
+  return SCENARIO_DATA.filter(q => {
+    if (MSC.filters.street !== 'all' && q.street !== MSC.filters.street) return false;
+    if (MSC.filters.pos !== 'all' && q.posType !== MSC.filters.pos) return false;
+    if (MSC.filters.pot !== 'all' && q.potType !== MSC.filters.pot) return false;
+    return true;
+  });
+}
+
+function mStartSession() {
+  const pool = mFilterScenarios();
+  if (pool.length === 0) { alert('当前筛选条件下没有题目，请调整！'); return; }
+  MSC.queue = [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(20, pool.length));
+  MSC.idx = 0;
+  MSC.results = [];
+  mShowSection('question');
+  mRenderQuestion(MSC.queue[0]);
+}
+
+function mShowSection(sec) {
+  document.getElementById('sc-filter-wrap').style.display   = sec === 'filter'   ? 'block' : 'none';
+  document.getElementById('sc-q-wrap').style.display         = sec === 'question' ? 'block' : 'none';
+  document.getElementById('sc-result-wrap').style.display    = sec === 'result'   ? 'block' : 'none';
+  document.getElementById('sc-summary-wrap').style.display   = sec === 'summary'  ? 'block' : 'none';
+  // 滚到顶
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+function mRenderQuestion(q) {
+  MSC.current = q;
+  const total = MSC.queue.length;
+  const cur = MSC.idx + 1;
+  document.getElementById('sc-prog-text').textContent = `第 ${cur} / ${total} 题`;
+  document.getElementById('sc-prog-bar').style.width = ((cur-1)/total*100).toFixed(0) + '%';
+
+  // 标签
+  const posLabel = q.posType === 'ip' ? '有利位置(IP)' : '不利位置(OOP)';
+  const potLabel = q.potType === 'srp' ? 'SRP底池' : q.potType === '3bet' ? '3-bet底池' : '4-bet底池';
+  document.getElementById('sc-tags').innerHTML =
+    `<span class="sc-tag sc-tag-${q.street}">${q.streetLabel}</span>
+     <span class="sc-tag sc-tag-${q.posType}">${posLabel}</span>
+     <span class="sc-tag sc-tag-pot">${potLabel}</span>`;
+
+  document.getElementById('sc-q-title').textContent = q.title;
+
+  // 手牌
+  document.getElementById('sc-hero-cards').innerHTML = mRenderCards(q.setup.heroCards);
+  // 公牌
+  const board = mRenderCards(q.setup.boardCards);
+  document.getElementById('sc-board-cards').innerHTML = board;
+  document.getElementById('sc-board-group').style.display = q.setup.boardCards && q.setup.boardCards.length ? '' : 'none';
+
+  // 情景信息
+  document.getElementById('sc-info-grid').innerHTML = `
+    <div class="sc-info-item"><span class="sc-info-label">位置：</span>${q.setup.pos}</div>
+    <div class="sc-info-item"><span class="sc-info-label">筹码：</span>${q.setup.stack}BB</div>
+    <div class="sc-info-item"><span class="sc-info-label">底池：</span>${q.setup.pot||0}BB</div>
+    <div class="sc-info-item full"><span class="sc-info-label">对手行动：</span>${q.setup.villainAction}</div>
+  `;
+
+  // 问题
+  document.getElementById('sc-question-text').textContent = q.question;
+
+  // 选项
+  document.getElementById('sc-options').innerHTML = q.options.map((opt,i) =>
+    `<button class="sc-opt-btn" onclick="mSubmitAnswer(${i})">${opt.label}</button>`
+  ).join('');
+}
+
+function mRenderCards(cards) {
+  if (!cards || !cards.length) return '';
+  return cards.map(c => {
+    const isRed = c.includes('♥') || c.includes('♦');
+    return `<div class="sc-card ${isRed ? 'sc-card-red' : 'sc-card-black'}">${c}</div>`;
+  }).join('');
+}
+
+function mSubmitAnswer(idx) {
+  const q = MSC.current;
+  const score = q.options[idx].score;
+  MSC.results.push({ id: q.id, score, chose: idx });
+
+  // 禁用按钮
+  document.querySelectorAll('.sc-opt-btn').forEach(b => { b.disabled = true; b.style.opacity = '.55'; });
+
+  mShowResult(q, idx, score);
+}
+
+function mShowResult(q, optIdx, score) {
+  mShowSection('result');
+
+  // 进度同步
+  const total = MSC.queue.length;
+  const cur = MSC.idx + 1;
+  document.getElementById('sc-result-prog').textContent = `第 ${cur} / ${total} 题`;
+  document.getElementById('sc-result-prog-bar').style.width = (cur/total*100).toFixed(0) + '%';
+
+  // 大分数
+  const scoreBig = document.getElementById('sc-score-big');
+  scoreBig.textContent = score;
+  scoreBig.className = 'sc-score-big ' + mScoreClass(score);
+
+  // 得分条
+  const bar = document.getElementById('sc-bar-fill');
+  bar.style.width = score + '%';
+  bar.className = 'sc-bar-fill ' + mScoreClass(score);
+
+  // 偏差标签
+  const dev = document.getElementById('sc-deviation');
+  if (score >= 90)      { dev.textContent = '🏆 GTO最优解！'; dev.className = 'sc-deviation sc-dev-perfect'; }
+  else if (score >= 70) { dev.textContent = '✅ 接近最优解';   dev.className = 'sc-deviation sc-dev-good'; }
+  else if (score >= 40) { dev.textContent = '⚠️ 偏离GTO';     dev.className = 'sc-deviation sc-dev-ok'; }
+  else                  { dev.textContent = '❌ 严重偏离GTO';  dev.className = 'sc-deviation sc-dev-bad'; }
+
+  // 各选项评分
+  document.getElementById('sc-all-scores').innerHTML = q.options.map((opt,i) => {
+    const chosen = i === optIdx;
+    const cls = mScoreClass(opt.score);
+    return `<div class="sc-all-score-item ${chosen ? 'sc-chosen' : ''}">
+      <div class="sc-all-score-label">${chosen ? '▶ ' : '　'}${opt.label}</div>
+      <div class="sc-all-score-bar-wrap"><div class="sc-all-score-bar ${cls}" style="width:${opt.score}%"></div></div>
+      <div class="sc-all-score-num">${opt.score}分</div>
+    </div>`;
+  }).join('');
+
+  // GTO解析
+  document.getElementById('sc-explain-text').textContent = q.explain;
+  document.getElementById('sc-keypoint-text').textContent = q.keyPoint;
+
+  // 下一题按钮
+  const isLast = MSC.idx >= MSC.queue.length - 1;
+  const btn = document.getElementById('sc-next-btn');
+  btn.textContent = isLast ? '查看训练总结' : '下一题 →';
+  btn.onclick = isLast ? mShowSummary : mNextQuestion;
+}
+
+function mNextQuestion() {
+  MSC.idx++;
+  mShowSection('question');
+  mRenderQuestion(MSC.queue[MSC.idx]);
+}
+
+function mShowSummary() {
+  mShowSection('summary');
+  const results = MSC.results;
+  const total = results.length;
+  const avg = total ? Math.round(results.reduce((s,r)=>s+r.score,0)/total) : 0;
+  const perfect = results.filter(r => r.score >= 90).length;
+  const gtoRate = total ? Math.round(perfect/total*100) : 0;
+
+  document.getElementById('sc-sum-avg').textContent = avg;
+  document.getElementById('sc-sum-total').textContent = total;
+  document.getElementById('sc-sum-gto').textContent = gtoRate + '%';
+
+  let grade = '', gradeColor = '';
+  if (avg >= 85) { grade = '🏆 GTO大师'; gradeColor = '#FFD700'; }
+  else if (avg >= 70) { grade = '🥇 优秀水平'; gradeColor = '#4CAF50'; }
+  else if (avg >= 55) { grade = '🥈 中等水平'; gradeColor = '#2196F3'; }
+  else               { grade = '🥉 需要加强'; gradeColor = '#FF5722'; }
+  const gradeEl = document.getElementById('sc-sum-grade');
+  gradeEl.textContent = grade; gradeEl.style.color = gradeColor;
+
+  // 积分奖励
+  const bonus = Math.round(avg/10)*total;
+  document.getElementById('sc-sum-bonus').textContent = '+' + bonus + ' 积分';
+  if (currentPlayer) {
+    const p = getPlayerData(currentPlayer.id) || currentPlayer;
+    p.score = (p.score||0) + bonus;
+    savePlayerData(currentPlayer.id, p);
+    currentPlayer = p;
+    renderTopbar();
+    renderHomePage();
+  }
+
+  // 题目回顾
+  document.getElementById('sc-review-list').innerHTML = MSC.queue.map((q,i) => {
+    const r = MSC.results[i] || {};
+    const s = r.score || 0;
+    return `<div class="sc-review-item">
+      <span class="sc-review-id">${q.id}</span>
+      <span class="sc-review-ttl">${q.title}</span>
+      <span class="sc-review-score ${mScoreClass(s)}">${s}分</span>
+    </div>`;
+  }).join('');
+}
+
+function mResetSession() {
+  MSC.queue=[]; MSC.idx=0; MSC.results=[]; MSC.current=null;
+  mShowSection('filter');
+  updateScCountDesc();
+}
+
+function mScoreClass(s) {
+  if (s >= 90) return 'score-perfect';
+  if (s >= 70) return 'score-good';
+  if (s >= 40) return 'score-ok';
+  return 'score-bad';
+}
+
+/* ===================================================
+   初始化
+   =================================================== */
+(function init() {
+  // 恢复上次玩家
+  const savedId = localStorage.getItem('poker_current_player');
+  if (savedId) {
+    const p = getPlayerData(savedId);
+    if (p) currentPlayer = p;
+  }
+  renderTopbar();
+  renderHomePage();
+  renderTopicGrid();
+})();
 </script>
 </body>
 </html>
