@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="游戏瞎" />
+  <meta name="apple-mobile-web-app-title" content="得得地" />
   <meta name="theme-color" content="#0d1117" />
-  <title>游戏瞎 · 德州扑克</title>
+  <title>得得地 · 德州扑克</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -444,6 +444,19 @@ html, body {
 #page-game {
   padding: 0;
   background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+#mg-start {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
+}
+#mg-table {
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
 }
 .game-landscape-hint {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -493,13 +506,123 @@ html, body {
 }
 .section-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
 button { font-family: inherit; }
+
+/* ===================================================
+   竖版游戏样式
+   =================================================== */
+.mg-n-btn {
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.mg-n-btn.active {
+  background: rgba(240,192,64,.15);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+}
+.mg-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 48px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: #111;
+  box-shadow: 0 2px 4px rgba(0,0,0,.3);
+  flex-shrink: 0;
+}
+.mg-card .mg-rank { font-size: 13px; }
+.mg-card .mg-suit { font-size: 13px; }
+.mg-card.red { color: #d32f2f; }
+.mg-card.back {
+  background: linear-gradient(135deg, #1a3a6a, #0d1f3c);
+  border-color: #2a4a7a;
+  color: transparent;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.1);
+}
+.mg-opponent-row {
+  background: var(--bg2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .2s;
+}
+.mg-opponent-row.active {
+  border-color: var(--gold);
+  background: rgba(240,192,64,.06);
+}
+.mg-opponent-row.folded {
+  opacity: 0.4;
+}
+.mg-opponent-row.eliminated {
+  opacity: 0.25;
+}
+.mg-opponent-row.winner {
+  border-color: #40c070;
+  background: rgba(64,192,112,.08);
+}
+.mg-op-info { flex: 1; min-width: 0; }
+.mg-op-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.mg-op-chips { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+.mg-op-cards { display: flex; gap: 3px; }
+.mg-op-bet { font-size: 11px; color: rgba(240,192,64,.8); margin-top: 2px; }
+.mg-op-status { font-size: 10px; color: var(--text-dim); }
+.mg-action-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 72px;
+  transition: all .15s;
+  flex: 1;
+}
+.mg-action-btn:active { transform: scale(.96); }
+.mg-btn-fold { background: rgba(200,70,70,.15); color: #e07070; border: 1px solid rgba(200,70,70,.3); }
+.mg-btn-check { background: rgba(80,160,200,.15); color: #80bce0; border: 1px solid rgba(80,160,200,.3); }
+.mg-btn-call { background: rgba(60,180,120,.15); color: #60c890; border: 1px solid rgba(60,180,120,.3); }
+.mg-btn-raise { background: rgba(240,192,64,.15); color: var(--gold); border: 1px solid rgba(240,192,64,.3); }
+.mg-btn-allin { background: rgba(200,100,200,.15); color: #d080d0; border: 1px solid rgba(200,100,200,.3); }
+.mg-log-item { font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-log-item.gold { color: var(--gold); }
+.mg-log-item.red { color: #e07070; }
+.dealer-d { display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; background: var(--gold); color: #000;
+  border-radius: 50%; font-size: 9px; font-weight: 900; margin-left: 4px; flex-shrink: 0; }
+.mg-blind-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.mg-blind-badge.sb { background: rgba(100,160,255,.2); color: #80a8ff; }
+.mg-blind-badge.bb { background: rgba(255,100,100,.2); color: #ff8080; }
+
 </style>
 </head>
 <body>
 
 <!-- 顶栏 -->
 <div id="topbar">
-  <div class="logo">🃏 游戏瞎</div>
+  <div class="logo">🃏 得得地</div>
   <div class="player-info" id="topbar-player" onclick="showPlayerModal()">
     <span class="name" id="tp-name">点击选择玩家</span>
     <span class="score" id="tp-score"></span>
@@ -512,7 +635,7 @@ button { font-family: inherit; }
   <!-- 主页 -->
   <div class="page active" id="page-home">
     <div class="home-banner">
-      <h1>🃏 游戏瞎</h1>
+      <h1>🃏 得得地</h1>
       <p>德州扑克 · GTO实战训练平台</p>
     </div>
 
@@ -716,15 +839,234 @@ button { font-family: inherit; }
 
   <!-- 自由游戏页 -->
   <div class="page" id="page-game">
-    <div class="game-landscape-hint">
-      <div class="hint-icon">🎮</div>
-      <h3>自由游戏</h3>
-      <p>自由游戏为完整桌面版牌局体验，<br>建议在电脑或横屏模式下使用，<br>获得最佳游戏体验。</p>
-      <button class="game-launch-btn" onclick="openDesktopGame()">🖥️ 打开电脑版</button>
-      <p style="font-size:12px;color:var(--text-dim);margin-top:12px;">或横屏后点击此按钮体验手机游戏</p>
-      <button class="game-launch-btn" style="background:rgba(255,255,255,.1);color:var(--text);border:1px solid rgba(255,255,255,.15);" onclick="openMobileGame()">📱 手机横屏游戏</button>
+
+    <!-- 游戏开始界面 -->
+    <div id="mg-start" style="padding:20px 16px;flex-direction:column;gap:16px;overflow-y:auto;">
+      <div style="text-align:center;padding:10px 0;">
+        <div style="font-size:32px;margin-bottom:6px;">🃏</div>
+        <div style="font-size:20px;font-weight:700;color:var(--gold);">自由游戏</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">德州扑克 · 竖版</div>
+      </div>
+      <!-- 玩家数设置 -->
+      <div style="background:var(--bg2);border-radius:14px;padding:16px;border:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">玩家人数</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="mg-n-btn active" data-n="3" onclick="mgSelectN(this)">3人</button>
+          <button class="mg-n-btn" data-n="4" onclick="mgSelectN(this)">4人</button>
+          <button class="mg-n-btn" data-n="5" onclick="mgSelectN(this)">5人</button>
+          <button class="mg-n-btn" data-n="6" onclick="mgSelectN(this)">6人</button>
+        </div>
+      </div>
+      <!-- 升盲设置 -->
+      <div style="background:var(--bg2);border-radius:14px;padding:16px;border:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">升盲结构</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <input type="radio" name="blindLevel" value="fixed" checked onchange="mgBlindChange(this)" style="accent-color:var(--gold);">
+            <span>固定盲注 <span style="color:var(--text-dim)">10/20（不升盲）</span></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <input type="radio" name="blindLevel" value="slow" onchange="mgBlindChange(this)" style="accent-color:var(--gold);">
+            <span>慢速升盲 <span style="color:var(--text-dim)">每10手翻倍</span></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <input type="radio" name="blindLevel" value="fast" onchange="mgBlindChange(this)" style="accent-color:var(--gold);">
+            <span>快速升盲 <span style="color:var(--text-dim)">每5手翻倍</span></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <input type="radio" name="blindLevel" value="turbo" onchange="mgBlindChange(this)" style="accent-color:var(--gold);">
+            <span>Turbo升盲 <span style="color:var(--text-dim)">每3手翻倍</span></span>
+          </label>
+        </div>
+      </div>
+      <button onclick="mgStartGame()" style="background:var(--gold);color:#000;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:1px;">开始游戏</button>
+      <button onclick="window.open('./index.html','_blank')" style="background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid var(--border);border-radius:14px;padding:12px;font-size:13px;cursor:pointer;">🖥️ 打开电脑完整版</button>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div id="mg-table" style="display:none;height:100%;flex-direction:column;">
+
+      <!-- 顶栏：底池信息 -->
+      <div id="mg-topbar" style="background:rgba(13,17,23,.96);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div style="display:flex;flex-direction:column;">
+          <div style="font-size:11px;color:var(--text-dim);">底池</div>
+          <div id="mg-pot" style="font-size:16px;font-weight:700;color:var(--gold);">0</div>
+        </div>
+        <div style="text-align:center;">
+          <div id="mg-round-label" style="font-size:12px;color:var(--text-dim);">翻牌前</div>
+          <div id="mg-blind-label" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:1px;">盲注 10/20</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button onclick="mgToggleGTO()" id="mg-gto-btn" style="background:rgba(64,192,112,.12);border:1px solid rgba(64,192,112,.25);color:#40c070;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;">GTO</button>
+          <button onclick="mgQuitGame()" style="background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;">✕</button>
+        </div>
+      </div>
+
+      <!-- 公牌区 -->
+      <div id="mg-board-wrap" style="background:rgba(20,30,15,.6);padding:10px 12px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:6px;">公共牌</div>
+        <div id="mg-board-cards" style="display:flex;gap:5px;min-height:44px;align-items:center;">
+          <div style="color:rgba(255,255,255,.15);font-size:12px;">等待发牌...</div>
+        </div>
+      </div>
+
+      <!-- 对手区域（滚动） -->
+      <div id="mg-opponents" style="flex:1;overflow-y:auto;padding:6px 10px;display:flex;flex-direction:column;gap:6px;min-height:0;">
+      </div>
+
+      <!-- GTO建议面板（折叠） -->
+      <div id="mg-gto-panel" style="display:none;background:rgba(13,17,23,.98);border-top:1px solid var(--border);padding:12px 14px;flex-shrink:0;max-height:200px;overflow-y:auto;">
+        <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px;">GTO 建议</div>
+        <div id="mg-gto-content" style="font-size:12px;color:var(--text);line-height:1.6;"></div>
+      </div>
+
+      <!-- 消息日志 -->
+      <div id="mg-log" style="padding:4px 12px;flex-shrink:0;min-height:22px;max-height:44px;overflow:hidden;">
+      </div>
+
+      <!-- 玩家自己的信息区 -->
+      <div id="mg-hero-area" style="background:rgba(13,17,23,.98);border-top:1px solid var(--border);padding:8px 12px 4px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--gold);">你</div>
+            <div id="mg-hero-chips" style="font-size:13px;color:var(--text);">2000 积分</div>
+          </div>
+          <div style="text-align:right;">
+            <div id="mg-hero-hand-name" style="font-size:11px;color:var(--text-dim);"></div>
+            <div id="mg-hero-bet-disp" style="font-size:11px;color:rgba(240,192,64,.7);"></div>
+          </div>
+        </div>
+        <!-- 英雄手牌 -->
+        <div id="mg-hero-cards" style="display:flex;gap:5px;margin-bottom:8px;justify-content:center;"></div>
+      </div>
+
+      <!-- 操作按钮区 -->
+      <div id="mg-action-area" style="background:rgba(13,17,23,.98);padding:6px 10px 10px;flex-shrink:0;">
+        <div id="mg-action-btns" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;"></div>
+        <!-- 加注滑块（按需显示） -->
+        <div id="mg-raise-wrap" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:var(--text-dim);" id="mg-raise-lbl">加注至</span>
+            <span id="mg-raise-val" style="font-size:14px;font-weight:700;color:var(--gold);"></span>
+          </div>
+          <input type="range" id="mg-raise-slider" style="width:100%;accent-color:var(--gold);" oninput="mgRaiseSlide(this)">
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button onclick="mgRaiseCancel()" style="flex:1;background:rgba(255,255,255,.08);border:none;color:var(--text-dim);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">取消</button>
+            <button onclick="mgRaiseConfirm()" style="flex:2;background:var(--gold);border:none;color:#000;border-radius:8px;padding:8px;font-size:13px;font-weight:700;cursor:pointer;">确认加注</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 结算条 -->
+      <div id="mg-result-bar" style="display:none;background:rgba(13,17,23,.98);border-top:2px solid var(--gold);padding:10px 14px;flex-shrink:0;flex-direction:column;gap:4px;">
+        <div id="mg-rb-winner" style="font-size:14px;font-weight:700;color:var(--gold);"></div>
+        <div id="mg-rb-detail" style="font-size:12px;color:var(--text-dim);"></div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button id="mg-btn-next" onclick="mgNextHand()" style="flex:1;background:var(--gold);border:none;color:#000;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">下一手 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 游戏结束覆盖层 -->
+    <div id="mg-over-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:50;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:12px;">
+      <div id="mg-over-icon" style="font-size:56px;"></div>
+      <div id="mg-over-title" style="font-size:22px;font-weight:700;color:var(--gold);"></div>
+      <div id="mg-over-desc" style="font-size:14px;color:var(--text);line-height:1.7;"></div>
+      <!-- GTO综合评分 -->
+      <div id="mg-over-score-wrap" style="width:100%;background:rgba(255,255,255,.05);border-radius:14px;padding:16px;border:1px solid var(--border);text-align:left;display:none;">
+        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px;">📊 全局GTO综合评分</div>
+        <div id="mg-over-score-content" style="font-size:12px;color:var(--text);line-height:1.8;"></div>
+      </div>
+      <button onclick="mgReturnToStart()" style="background:var(--gold);border:none;color:#000;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">再来一局</button>
     </div>
   </div>
+
+
+<!-- 练习模式答题覆盖层 -->
+<div id="quiz-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:var(--bg);overflow-y:auto;">
+  <!-- 顶栏 -->
+  <div style="position:sticky;top:0;z-index:10;background:rgba(13,17,23,.95);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;">
+    <button onclick="closeQuizOverlay()" style="background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
+    <div id="qo-title" style="font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+    <div id="qo-prog" style="font-size:13px;color:var(--text-dim);white-space:nowrap;"></div>
+  </div>
+  <!-- 答题区 -->
+  <div id="qo-question-wrap" style="padding:14px 16px;">
+    <!-- 进度条 -->
+    <div style="height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-bottom:16px;overflow:hidden;">
+      <div id="qo-prog-bar" style="height:100%;background:var(--gold);border-radius:2px;transition:width .3s;width:0%"></div>
+    </div>
+    <!-- 难度+专项标签 -->
+    <div id="qo-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <!-- 情景描述 -->
+    <div id="qo-scenario" style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:14px;font-size:14px;line-height:1.7;border:1px solid var(--border);"></div>
+    <!-- 手牌 + 公牌展示 -->
+    <div id="qo-cards-wrap" style="margin-bottom:14px;display:none;">
+      <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">你的手牌</div>
+          <div id="qo-hero-cards" style="display:flex;gap:4px;"></div>
+        </div>
+        <div id="qo-board-group" style="display:none;">
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">公牌</div>
+          <div id="qo-board-cards" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+    </div>
+    <!-- 底池信息 -->
+    <div id="qo-pot-info" style="font-size:13px;color:var(--text-dim);margin-bottom:14px;display:none;"></div>
+    <!-- 选项 -->
+    <div id="qo-options" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+  <!-- 答题结果区（答完后显示） -->
+  <div id="qo-result-wrap" style="padding:0 16px 16px;display:none;">
+    <!-- 结果标注 -->
+    <div id="qo-result-banner" style="border-radius:12px;padding:14px 16px;margin-bottom:14px;text-align:center;"></div>
+    <!-- 解析 -->
+    <div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:8px;">📖 解析</div>
+      <div id="qo-analysis" style="font-size:13px;line-height:1.7;"></div>
+    </div>
+    <!-- 下一题/结束按钮 -->
+    <button id="qo-next-btn" onclick="quizNextQuestion()" style="width:100%;padding:14px;background:var(--gold);color:#1a1000;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;">下一题 →</button>
+  </div>
+</div>
+
+<!-- 练习总结覆盖层 -->
+<div id="quiz-summary-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:201;background:var(--bg);overflow-y:auto;padding:20px 16px 80px;">
+  <h2 style="font-size:22px;font-weight:700;text-align:center;margin-bottom:6px;">🎉 练习完成！</h2>
+  <p id="qs-topic-name" style="text-align:center;color:var(--text-dim);font-size:14px;margin-bottom:20px;"></p>
+  <!-- 核心数字 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+    <div style="background:var(--bg2);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border);">
+      <div id="qs-correct" style="font-size:28px;font-weight:800;color:#40c070;"></div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">答对</div>
+    </div>
+    <div style="background:var(--bg2);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border);">
+      <div id="qs-total" style="font-size:28px;font-weight:800;color:var(--gold);"></div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">题目数</div>
+    </div>
+    <div style="background:var(--bg2);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border);">
+      <div id="qs-accuracy" style="font-size:28px;font-weight:800;color:var(--text);"></div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">正确率</div>
+    </div>
+  </div>
+  <!-- 积分奖励 -->
+  <div id="qs-bonus-card" style="background:linear-gradient(135deg,#2a1a00,#3a2500);border:1px solid var(--gold);border-radius:14px;padding:16px;text-align:center;margin-bottom:16px;">
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">本次获得积分</div>
+    <div id="qs-bonus" style="font-size:32px;font-weight:800;color:var(--gold);"></div>
+  </div>
+  <!-- 错题列表 -->
+  <div id="qs-wrong-block" style="display:none;margin-bottom:16px;">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#f06060;">❌ 答错的题目</div>
+    <div id="qs-wrong-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+  <!-- 按钮组 -->
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <button onclick="quizRetry()" style="padding:14px;background:var(--gold);color:#1a1000;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">🔄 再练一遍</button>
+    <button onclick="closeQuizSummary()" style="padding:14px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;">返回专项列表</button>
+  </div>
+</div>
 
 </div><!-- /main-content -->
 
@@ -766,6 +1108,153 @@ button { font-family: inherit; }
 /* ===================================================
    题库数据
    =================================================== */
+const QUIZ_DATA = {
+  starting_hand: [
+    {id:'sh01',diff:'mid',scenario:'6人桌UTG位，手持A♠K♦。没人行动，轮到你。',seats:[{"pos": 0, "label": "你(UTG)", "hero": true}, {"pos": 3, "label": "BTN"}, {"pos": 4, "label": "SB"}, {"pos": 5, "label": "BB"}],community:[],pot:0,heroCards:[{"r": "A", "s": "♠"}, {"r": "K", "s": "♦"}],heroInfo:'UTG · 筹码 2000',options:["弃牌，位置太早", "加注到60（3BB）", "全下，超强起手牌", "平跟20"],answer:1,pts:20,analysis:'<strong>AK</strong>是顶级起手牌。UTG虽位置不佳，但AK够强，<strong>加注2.5-3BB</strong>是标准打法，建立主动权。全下过激，平跟放弃主动，弃牌是严重错误。'},
+    {id:'sh02',diff:'mid',scenario:'BTN位，手持7♣7♦。前面UTG加注60，其他人跟注，轮到你。',seats:[{"pos": 0, "label": "BTN(你)", "hero": true}, {"pos": 2, "label": "UTG"}, {"pos": 3, "label": "MP"}, {"pos": 5, "label": "BB"}],community:[],pot:180,heroCards:[{"r": "7", "s": "♣"}, {"r": "7", "s": "♦"}],heroInfo:'BTN · 需跟注60',options:["弃牌，中对太危险", "跟注60，寻求三条机会", "加注到200", "全下"],answer:1,pts:20,analysis:'<strong>中间对子（66-99）</strong>最标准打法是<strong>平跟set mining</strong>（摸三条）。BTN位置最好，翻牌后永远最后行动，摸到三条时可赢大底池。加注会面临4-bet困境，全下超线。'},
+    {id:'sh03',diff:'mid',scenario:'CO位，手持A♠3♠。前面所有人弃牌，轮到你。',seats:[{"pos": 0, "label": "CO(你)", "hero": true}, {"pos": 1, "label": "BTN"}, {"pos": 2, "label": "SB"}, {"pos": 3, "label": "BB"}],community:[],pot:30,heroCards:[{"r": "A", "s": "♠"}, {"r": "3", "s": "♠"}],heroInfo:'CO · 筹码 2000',options:["弃牌，A3价值不高", "加注到60，偷盲或价值", "加注到100", "全下诈唬"],answer:1,pts:20,analysis:'<strong>A3s在CO位</strong>是标准加注牌。有同花顺潜力、顶对价值，只剩3人时加注2.5-3BB可偷盲或建立有利局面。'},
+    {id:'sh04',diff:'hard',scenario:'BB位，手持Q♦J♦。BTN加注60，SB弃牌，轮到你。',seats:[{"pos": 0, "label": "BB(你)", "hero": true}, {"pos": 1, "label": "BTN", "active": true}, {"pos": 2, "label": "SB"}],community:[],pot:90,heroCards:[{"r": "Q", "s": "♦"}, {"r": "J", "s": "♦"}],heroInfo:'BB · 已投20 · 需补40',options:["弃牌", "跟注40，有连接性", "3-bet到180", "全下"],answer:1,pts:30,analysis:'<strong>QJs在BB对BTN加注</strong>：底池赔率好（补40赢90，约31%），加上连接性和同花潜力，跟注是标准打法。3-bet也有价值但风险更高。QJs有多条获胜路径。'},
+    {id:'sh05',diff:'mid',scenario:'UTG+1，手持9♠8♠。前面UTG弃牌，9人桌。',seats:[{"pos": 0, "label": "UTG+1(你)", "hero": true}, {"pos": 4, "label": "BTN"}, {"pos": 5, "label": "BB"}],community:[],pot:30,heroCards:[{"r": "9", "s": "♠"}, {"r": "8", "s": "♠"}],heroInfo:'UTG+1 · 9人桌',options:["弃牌，早位连接牌太弱", "加注到60", "平跟20", "加注到80"],answer:0,pts:20,analysis:'<strong>98s在UTG+1</strong>：应弃牌。早位面对6个玩家，连接牌需要翻牌后的多种有利情况，位置最差。这类牌在CO/BTN才值得进入底池。'},
+    {id:'sh06',diff:'mid',scenario:'BTN位，手持K♣Q♣。前面MP加注60，轮到你。',seats:[{"pos": 0, "label": "BTN(你)", "hero": true}, {"pos": 2, "label": "MP", "active": true}, {"pos": 3, "label": "SB"}, {"pos": 4, "label": "BB"}],community:[],pot:90,heroCards:[{"r": "K", "s": "♣"}, {"r": "Q", "s": "♣"}],heroInfo:'BTN · 需跟注60',options:["弃牌", "跟注60，位置优势大", "3-bet到180", "全下"],answer:1,pts:20,analysis:'<strong>KQs在BTN</strong>是优质牌（前10%）。对MP加注，跟注或3-bet都合理，跟注更保守但位置优势明显。翻牌后KQs有顶对、强听牌等多条路径。'},
+    {id:'sh07',diff:'hard',scenario:'SB位，手持A♥K♥。BTN加注60，BB弃牌，轮到你。',seats:[{"pos": 0, "label": "SB(你)", "hero": true}, {"pos": 1, "label": "BTN", "active": true}],community:[],pot:80,heroCards:[{"r": "A", "s": "♥"}, {"r": "K", "s": "♥"}],heroInfo:'SB · 已投10 · 需补50',options:["跟注50，看翻牌", "3-bet到200，AKs必须3-bet", "弃牌，位置不利", "全下"],answer:1,pts:30,analysis:'<strong>AKs在SB对BTN</strong>：3-bet强烈推荐！①建立大底池获取价值；②逼迫BTN弃牌；③对阵AA/KK也有机会。跟注后SB位置不利，决策困难。<strong>3-bet到5-6倍加注额</strong>是正确选择。'},
+    {id:'sh08',diff:'mid',scenario:'6人桌HJ位，手持T♠T♥。UTG弃牌，轮到你。',seats:[{"pos": 0, "label": "HJ(你)", "hero": true}, {"pos": 1, "label": "CO"}, {"pos": 2, "label": "BTN"}, {"pos": 3, "label": "BB"}],community:[],pot:30,heroCards:[{"r": "10", "s": "♠"}, {"r": "10", "s": "♥"}],heroInfo:'HJ · 筹码 1800',options:["弃牌，TT中位一般", "加注到60，TT是强牌", "平跟看翻牌", "全下"],answer:1,pts:20,analysis:'<strong>TT（口袋十）</strong>是顶级起手牌（前5%），任何位置都应<strong>主动加注</strong>。翻牌前胜率对大多数手牌超过70%。平跟放弃主动权是错误。'},
+    {id:'sh09',diff:'hard',scenario:'CO位，手持J♦T♦。MP加注60，BTN跟注，轮到你。',seats:[{"pos": 0, "label": "CO(你)", "hero": true}, {"pos": 1, "label": "MP", "active": true}, {"pos": 2, "label": "BTN"}, {"pos": 3, "label": "BB"}],community:[],pot:150,heroCards:[{"r": "J", "s": "♦"}, {"r": "T", "s": "♦"}],heroInfo:'CO · 需跟注60',options:["弃牌，多人底池JT价值低", "跟注60，多人底池同花连接牌有价值", "3-bet", "全下"],answer:1,pts:30,analysis:'<strong>JTs多人底池</strong>价值更高，坚果牌（同花顺）赔率随人数增加。底池赔率合理（约29%），跟注有正期望。多人底池中拿到同花顺/顺子可赢大底池。跟注是合理打法。'},
+    {id:'sh10',diff:'mid',scenario:'BB位，手持5♣5♦。UTG加注60，MP跟注，CO跟注，SB弃牌，轮到你。',seats:[{"pos": 0, "label": "BB(你)", "hero": true}, {"pos": 1, "label": "UTG"}, {"pos": 2, "label": "MP"}, {"pos": 3, "label": "CO"}],community:[],pot:200,heroCards:[{"r": "5", "s": "♣"}, {"r": "5", "s": "♦"}],heroInfo:'BB · 已投20 · 需补40',options:["弃牌，55面对三对手太弱", "跟注40，多人底池set value好", "3-bet挤压", "全下"],answer:1,pts:20,analysis:'<strong>55面对多人底池</strong>：跟注40赢200，只需17%成功率。三条的概率约12%，但多人底池赢取更大价值。<strong>Set mining在多人底池中特别有价值</strong>，跟注正确。'}
+  ],
+  position: [
+    {id:'po01',diff:'mid',scenario:'BTN位，手持K♠9♠。CO加注60，轮到你。',seats:[{"pos": 0, "label": "BTN(你)", "hero": true}, {"pos": 1, "label": "CO", "active": true}, {"pos": 2, "label": "SB"}, {"pos": 3, "label": "BB"}],community:[],pot:90,heroCards:[{"r": "K", "s": "♠"}, {"r": "9", "s": "♠"}],heroInfo:'BTN · 需跟注60',options:["弃牌，K9不够强", "跟注60，利用位置优势", "3-bet到200", "弃牌，CO代表强牌"],answer:1,pts:20,analysis:'<strong>BTN是最好位置</strong>，翻牌后永远最后行动。K9s跟注是标准"位置利用"——可以浮牌诈唬、控制底池大小等。K9s够强跟注，3-bet会面临被挤压风险。'},
+    {id:'po02',diff:'mid',scenario:'UTG位，9人桌，手持A♦J♦。',seats:[{"pos": 0, "label": "UTG(你)", "hero": true}, {"pos": 3, "label": "BTN"}, {"pos": 4, "label": "SB"}, {"pos": 5, "label": "BB"}],community:[],pot:30,heroCards:[{"r": "A", "s": "♦"}, {"r": "J", "s": "♦"}],heroInfo:'UTG · 面对8人行动',options:["加注到60-70，AJ同花够强", "弃牌，UTG不适合AJ", "平跟看翻牌", "全下"],answer:0,pts:20,analysis:'<strong>AJs在UTG</strong>是可以加注的手牌（前10%）。UTG加注代表强范围，有利翻牌后延续下注。加注要足（2.5-3BB）清洗弱牌。纯弃牌对AJs过于保守。'},
+    {id:'po03',diff:'hard',scenario:'SB位，手持Q♠7♠。所有人弃牌，只剩你和BB。',seats:[{"pos": 0, "label": "SB(你)", "hero": true}, {"pos": 1, "label": "BB"}],community:[],pot:30,heroCards:[{"r": "Q", "s": "♠"}, {"r": "7", "s": "♠"}],heroInfo:'SB · 已投10',options:["补10平跟", "加注到50-60，SB对BB应扩大范围", "弃牌", "全下诈唬"],answer:1,pts:30,analysis:'<strong>单挑BB时，SB应大幅扩大加注范围</strong>。Q7s同花有潜力，单挑底池中超过平均强度的牌就值得加注。标准SB vs BB：约70%手牌加注，Q7s完全在范围内。'},
+    {id:'po04',diff:'mid',scenario:'BTN位，手持5♠4♠。CO加注，轮到你。',seats:[{"pos": 0, "label": "BTN(你)", "hero": true}, {"pos": 1, "label": "CO", "active": true}, {"pos": 2, "label": "SB"}, {"pos": 3, "label": "BB"}],community:[],pot:90,heroCards:[{"r": "5", "s": "♠"}, {"r": "4", "s": "♠"}],heroInfo:'BTN · 需跟注60',options:["弃牌，54太弱", "跟注，位置+同花顺潜力", "3-bet squeeze", "全下"],answer:1,pts:20,analysis:'<strong>54s在BTN</strong>：同花顺潜力极强，位置最好，价格合理。BTN翻牌后最后行动，是实现小连接牌价值的理想场景。跟注是标准打法，3-bet过激。'},
+    {id:'po05',diff:'hard',scenario:'UTG+1，手持A♠Q♦。UTG加注60，轮到你。',seats:[{"pos": 0, "label": "UTG+1(你)", "hero": true}, {"pos": 1, "label": "UTG", "active": true}, {"pos": 3, "label": "BTN"}, {"pos": 4, "label": "BB"}],community:[],pot:90,heroCards:[{"r": "A", "s": "♠"}, {"r": "Q", "s": "♦"}],heroInfo:'UTG+1 · 需跟注60',options:["跟注，AQ是好牌", "3-bet到180-200", "弃牌，对UTG范围太危险", "全下"],answer:1,pts:30,analysis:'<strong>AQo对UTG加注</strong>是典型"困难手牌"。UTG代表AA/KK/QQ/AK强范围，AQo：①被AK/AA/KK占优；②多人底池高牌价值降低。<strong>3-bet获取信息并建立主动权</strong>，比被动跟注后翻牌难决策要好。'},
+    {id:'po06',diff:'mid',scenario:'CO位，9人桌，前3人弃牌。手持J♣T♣。',seats:[{"pos": 0, "label": "CO(你)", "hero": true}, {"pos": 1, "label": "BTN"}, {"pos": 2, "label": "SB"}, {"pos": 3, "label": "BB"}],community:[],pot:30,heroCards:[{"r": "J", "s": "♣"}, {"r": "T", "s": "♣"}],heroInfo:'CO · 筹码 2000',options:["弃牌", "加注到60，标准CO开牌", "加注到100，强调力量", "全下"],answer:1,pts:20,analysis:'<strong>JTs在CO</strong>是标准加注牌。只剩3人，加注可偷盲或建立有利局面。JTs连接性+同花，是CO-BTN范围内优质手牌。加注2.5BB标准。'},
+    {id:'po07',diff:'hard',scenario:'BB位，手持8♦7♦。BTN加注60，SB弃牌，轮到你。',seats:[{"pos": 0, "label": "BB(你)", "hero": true}, {"pos": 1, "label": "BTN", "active": true}],community:[],pot:80,heroCards:[{"r": "8", "s": "♦"}, {"r": "7", "s": "♦"}],heroInfo:'BB · 已投20 · 需补40',options:["弃牌", "跟注40，87s有连接潜力", "3-bet展示强势", "全下"],answer:1,pts:30,analysis:'<strong>87s在BB对BTN</strong>：底池赔率优秀（补40赢80，33%），连接性+同花潜力，跟注是标准且有利打法。BTN加注范围很宽，87s在多种牌面都有价值。BB应以宽泛范围防守BTN加注。'},
+    {id:'po08',diff:'mid',scenario:'MP位，手持A♣2♣。UTG弃牌，轮到你，9人桌。',seats:[{"pos": 0, "label": "MP(你)", "hero": true}, {"pos": 2, "label": "BTN"}, {"pos": 3, "label": "SB"}, {"pos": 4, "label": "BB"}],community:[],pot:30,heroCards:[{"r": "A", "s": "♣"}, {"r": "2", "s": "♣"}],heroInfo:'MP · 筹码 2000',options:["弃牌，A2不够在MP加注", "加注到60，A2s有同花潜力", "平跟看翻牌", "全下"],answer:0,pts:20,analysis:'<strong>A2s在MP（9人桌）</strong>是边界手牌。位置较差，A2s虽有同花潜力，但实现价值需要特定翻牌。9人桌MP弃牌是保守安全的选择；6人桌则可以加注。'},
+    {id:'po09',diff:'hard',scenario:'HJ位，手持K♦Q♦。前面UTG平跟（limp），轮到你。',seats:[{"pos": 0, "label": "HJ(你)", "hero": true}, {"pos": 1, "label": "UTG", "active": true}, {"pos": 2, "label": "CO"}, {"pos": 3, "label": "BTN"}],community:[],pot:40,heroCards:[{"r": "K", "s": "♦"}, {"r": "Q", "s": "♦"}],heroInfo:'HJ · 筹码 2000',options:["也平跟，控制底池", "加注到80，隔离UTG", "弃牌，UTG可能慢打", "全下"],answer:1,pts:30,analysis:'<strong>对抗平跟应该加注隔离</strong>：UTG平跟代表偏弱范围（强牌通常加注）。KQs加注60-80可以：①隔离UTG单挑有利；②清洗后面玩家；③建立主动权。跟进平跟让多人进底池，降低KQs价值。'},
+    {id:'po10',diff:'mid',scenario:'BTN位，手持2♣2♦。CO加注60，轮到你。',seats:[{"pos": 0, "label": "BTN(你)", "hero": true}, {"pos": 1, "label": "CO", "active": true}, {"pos": 2, "label": "SB"}, {"pos": 3, "label": "BB"}],community:[],pot:90,heroCards:[{"r": "2", "s": "♣"}, {"r": "2", "s": "♦"}],heroInfo:'BTN · 需跟注60',options:["弃牌，22太小", "跟注60，位置好set mining", "3-bet给压力", "全下"],answer:1,pts:20,analysis:'<strong>22在BTN</strong>：经典set mining场景。BTN位置最好，成功摸到三条时可赢大底池。跟注60赢90+，位置优势让22的期望值为正。3-bet后被4-bet陷入困境，全下大幅超线。'}
+  ],
+  pot_odds: [
+    {id:'oo01',diff:'mid',scenario:'翻牌圈，底池200，对手全下200。你的胜率约38%，应该怎么做？',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "K", "s": "♠"}, {"r": "7", "s": "♥"}, {"r": "2", "s": "♦"}],pot:200,heroCards:[{"r": "A", "s": "♦"}, {"r": "Q", "s": "♦"}],heroInfo:'需跟注 200',options:["弃牌，38%不够", "跟注200，底池赔率合适", "全下更多", "重新加注"],answer:1,pts:20,analysis:'<strong>底池赔率</strong>：需要胜率=200/(400+200)=33%。你的胜率38%>33%，期望值为正，<strong>应该跟注！</strong>公式：所需胜率=跟注额/(底池+跟注额)。'},
+    {id:'oo02',diff:'mid',scenario:'河牌圈，底池500，对手下注400。你只有一对，胜率约25%。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "A", "s": "♣"}, {"r": "K", "s": "♦"}, {"r": "7", "s": "♠"}, {"r": "4", "s": "♥"}, {"r": "2", "s": "♣"}],pot:500,heroCards:[{"r": "J", "s": "♠"}, {"r": "J", "s": "♥"}],heroInfo:'需跟注 400',options:["弃牌，赔率不合适", "跟注400", "加注1200诈唬", "全下"],answer:0,pts:20,analysis:'需要胜率=400/900≈44%。胜率25%<44%，<strong>期望值为负，应该弃牌！</strong>河牌无法再发牌，胜率就是最终胜率，必须严格按赔率决策。'},
+    {id:'oo03',diff:'hard',scenario:'翻牌，底池300，对手下注150。你有两端顺子听牌（8个出牌≈32%），还有两次机会。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "9", "s": "♣"}, {"r": "8", "s": "♦"}, {"r": "2", "s": "♣"}],pot:300,heroCards:[{"r": "T", "s": "♣"}, {"r": "7", "s": "♣"}],heroInfo:'需跟注 150 | 还有转牌+河牌',options:["弃牌", "跟注150，赔率合适", "加注变半诈唬", "直接全下"],answer:1,pts:30,analysis:'需要胜率=150/450=33%。实际胜率32%≈临界点。但还有两次机会，且完成时有<strong>隐含赔率</strong>（赢取更多筹码）。跟注期望值为正，半诈唬加注也是好选择。'},
+    {id:'oo04',diff:'mid',scenario:'翻牌，底池240，对手全下480。你持TPTK（AK中了顶对），胜率约55%。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "A", "s": "♥"}, {"r": "T", "s": "♦"}, {"r": "5", "s": "♣"}],pot:240,heroCards:[{"r": "A", "s": "♠"}, {"r": "K", "s": "♠"}],heroInfo:'需跟注 480',options:["弃牌，被超注可能面对更强牌", "跟注480，胜率够", "全下更多", "思考后弃牌"],answer:0,pts:20,analysis:'需要胜率=480/720=67%。胜率55%<67%，<strong>应该弃牌！</strong>面对全下加倍注，TPTK胜率不足67%要求。对手可能有两对/三条，不值得承担这个底池赔率。'},
+    {id:'oo05',diff:'hard',scenario:'转牌，底池600，对手下注300。你有同花听牌（9个出牌≈20%），只剩河牌。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "A", "s": "♣"}, {"r": "K", "s": "♣"}, {"r": "7", "s": "♠"}, {"r": "3", "s": "♦"}],pot:600,heroCards:[{"r": "Q", "s": "♣"}, {"r": "J", "s": "♣"}],heroInfo:'需跟注 300 | 只剩河牌',options:["弃牌，只有一次机会", "跟注300", "加注半诈唬，利用折叠价值", "全下"],answer:2,pts:30,analysis:'<strong>转牌同花听牌的半诈唬</strong>：只剩河牌，完成约20%。需要赔率33%>20%，直接跟注期望值为负。但<strong>半诈唬加注</strong>有折叠价值（对手弃牌即赢）+完成时的大额价值，总期望值可能为正。这是进阶的底池赔率运用。'},
+    {id:'oo06',diff:'mid',scenario:'翻牌，底池400，你下注200被加注到800。你有两对，胜率约45%。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "K", "s": "♠"}, {"r": "Q", "s": "♥"}, {"r": "7", "s": "♦"}],pot:400,heroCards:[{"r": "K", "s": "♥"}, {"r": "Q", "s": "♦"}],heroInfo:'已投200，需补600，胜率约45%',options:["弃牌，被加注可能面对三条", "跟注600，计算赔率", "全下反加注", "过牌"],answer:1,pts:20,analysis:'需要胜率=600/1200=50%。胜率45%<50%，理论上轻微负期望。但两对有转牌/河牌发展成葫芦的机会（<strong>隐含赔率</strong>）。跟注合理，弃牌也是保守的选择。'},
+    {id:'oo07',diff:'mid',scenario:'河牌已发完，底池1000，对手全下500。你估计胜率65%。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "A", "s": "♦"}, {"r": "K", "s": "♣"}, {"r": "7", "s": "♥"}, {"r": "3", "s": "♣"}, {"r": "2", "s": "♠"}],pot:1000,heroCards:[{"r": "A", "s": "♥"}, {"r": "J", "s": "♠"}],heroInfo:'需跟注 500',options:["弃牌", "跟注500，正期望", "全下反加注", "再思考"],answer:1,pts:20,analysis:'需要胜率=500/1500=33%。胜率65%>>33%，<strong>明显正期望，必须跟注！</strong>期望值=0.65×1500-0.35×500=+800积分。'},
+    {id:'oo08',diff:'hard',scenario:'翻牌，底池200，对手全下400。你有两端顺子听牌（8个出牌），还有两次机会。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "T", "s": "♠"}, {"r": "9", "s": "♥"}, {"r": "3", "s": "♦"}],pot:200,heroCards:[{"r": "J", "s": "♣"}, {"r": "8", "s": "♦"}],heroInfo:'需跟注 400 | 还有转牌+河牌',options:["弃牌，顺子听牌赔率不足", "跟注400", "加注半诈唬", "全下"],answer:1,pts:30,analysis:'两端顺子=8个出牌，两次机会完成约32%。需要赔率=400/600=67%。直接赔率不足，但<strong>隐含赔率</strong>：完成顺子后可赢取更多，加上两次机会，跟注总期望值为正。'},
+    {id:'oo09',diff:'mid',scenario:'转牌，底池500，对手下注250。你持TPTK（AQ），胜率60%。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "A", "s": "♠"}, {"r": "K", "s": "♦"}, {"r": "6", "s": "♣"}, {"r": "2", "s": "♥"}],pot:500,heroCards:[{"r": "A", "s": "♣"}, {"r": "Q", "s": "♣"}],heroInfo:'需跟注 250',options:["弃牌", "跟注250", "加注到750，价值下注", "全下"],answer:2,pts:20,analysis:'需要赔率=250/750=33%。胜率60%>>33%，明显正期望。但更好是<strong>加注提取价值</strong>！TPTK在干燥转牌，加注可保护领先+获取更多价值。跟注也是正期望但次优。'},
+    {id:'oo10',diff:'hard',scenario:'翻牌，底池180，对手下注90。你有两对但有三张同花，胜率约42%。',seats:[{"pos": 0, "label": "你", "hero": true}, {"pos": 3, "label": "对手", "active": true}],community:[{"r": "Q", "s": "♣"}, {"r": "T", "s": "♣"}, {"r": "4", "s": "♣"}],pot:180,heroCards:[{"r": "Q", "s": "♠"}, {"r": "T", "s": "♦"}],heroInfo:'需跟注 90 | 三张同花牌面',options:["弃牌，同花牌面危险", "跟注90，赔率足够", "加注到300，保护两对", "全下"],answer:2,pts:30,analysis:'需要赔率=90/270=33%。胜率42%>33%，跟注有正期望。但<strong>三张同花让两对很脆弱</strong>，应该<strong>加注保护</strong>（约300-360）：逼对手听牌支付高赔率，同时获取信息。'}
+  ],
+  preflop: [
+    {id:"pf01",diff:"hard",scenario:"锦标赛泡沫期，你在CO位，筹码15BB，手持A♠J♦。前面UTG短筹码（8BB）推入，轮到你。",seats:[{"pos":0,"label":"CO(你)","hero":true},{"pos":1,"label":"UTG推入","active":true},{"pos":2,"label":"BTN"},{"pos":3,"label":"BB"}],community:[],pot:180,heroCards:[{"r":"A","s":"♠"},{"r":"J","s":"♦"}],heroInfo:"CO · 15BB · 需跟注8BB",options:["弃牌，AJo面对短筹码推入风险高","跟注，AJo有翻牌前优势","再加注隔离，防止多人进来","全下，筹码压力"],answer:1,pts:30,analysis:"<strong>15BB vs 8BB全下</strong>：AJo对UTG短筹码推入范围胜率约65%+。底池赔率极佳：跟注8BB赢18BB，只需约31%胜率。AJo完全满足条件。再加注隔离虽然理想，但15BB自己也偏短，跟注比再加注更合理。"},
+    {id:"pf02",diff:"hard",scenario:"9人桌，你在BTN，手持K♠K♦。UTG加注，HJ 3-bet，CO冷跟，轮到你。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"UTG"},{"pos":2,"label":"HJ"},{"pos":3,"label":"CO"}],community:[],pot:540,heroCards:[{"r":"K","s":"♠"},{"r":"K","s":"♦"}],heroInfo:"BTN · 需跟注3-bet额",options:["跟注，KK多人底池慢打","4-bet到满足利润最大化","全下，KK见AA就是命","弃牌（错误答案）"],answer:1,pts:30,analysis:"<strong>KK面对3-bet+冷跟多人局面</strong>：必须4-bet！多人底池KK胜率大幅下降（每增加一人约-10%）。4-bet约3-4倍3-bet额，目标是隔离为单挑，获取最大价值。跟注是常见错误——让多人用便宜价格进来，AA/QQ/AK都能以有利赔率实现价值。"},
+    {id:"pf03",diff:"hard",scenario:"6人桌，你在HJ，手持A♣A♦。前面弃牌，你加注60，CO 3-bet到180，BTN冷跟，SB冷跟，轮到你。",seats:[{"pos":0,"label":"HJ(你)","hero":true},{"pos":1,"label":"CO"},{"pos":2,"label":"BTN"},{"pos":3,"label":"SB"}],community:[],pot:780,heroCards:[{"r":"A","s":"♣"},{"r":"A","s":"♦"}],heroInfo:"HJ · 已投60 · 4-bet还是跟注？",options:["跟注，AA慢打多人底池","4-bet到640，隔离为单挑","全下5000+，AA必须价值最大化","弃牌（不可能）"],answer:1,pts:30,analysis:"<strong>AA面对三方跟注</strong>：4-bet！原因：①多人底池AA胜率随人数线性下降；②CO 3-bet+两人冷跟说明有很多对子和同花连接牌，这些手牌在多人底池中实现价值的概率很高；③4-bet把底池推到单挑或少人局面，是最大化期望值的策略。"},
+    {id:"pf04",diff:"hard",scenario:"你在BB，手持Q♦Q♣。BTN加注，SB 3-bet，轮到你（BB位置）。",seats:[{"pos":0,"label":"BB(你)","hero":true},{"pos":1,"label":"BTN"},{"pos":2,"label":"SB"}],community:[],pot:390,heroCards:[{"r":"Q","s":"♦"},{"r":"Q","s":"♣"}],heroInfo:"BB · 已投20 · 对SB的3-bet",options:["弃牌，QQ面对两个加注者危险","跟注，QQ有足够价值","4-bet挤压BTN，单挑SB","全下"],answer:2,pts:30,analysis:"<strong>QQ在3-way挤压中</strong>：4-bet是最强打法。目标是挤出BTN，单挑位置更差的SB。QQ是顶级4-bet牌，对SB的3-bet范围（JJ+/AK/AQs）胜率在65%以上。跟注会让BTN以良好赔率进来，降低QQ的期望值。"},
+    {id:"pf05",diff:"hard",scenario:"深码（200BB），你在SB，手持A♠5♠。BTN加注，你3-bet，BTN 4-bet，轮到你。",seats:[{"pos":0,"label":"SB(你)","hero":true},{"pos":1,"label":"BTN"},{"pos":2,"label":"BB"}],community:[],pot:1200,heroCards:[{"r":"A","s":"♠"},{"r":"5","s":"♠"}],heroInfo:"SB · 深码200BB · 面对4-bet",options:["弃牌，A5s面对4-bet无法继续","5-bet全下半诈唬，利用阻断效应","跟注，位置不利但深码有价值","跟注加看翻牌"],answer:1,pts:30,analysis:"<strong>A5s的5-bet极化打法</strong>：深码场景下，A5s是完美的5-bet诈唬牌，原因：①A牌阻断了对手AA/AK的组合数；②5s阻断了55；③完成同花顺时赢取极大底池；④弃牌则直接输掉所有已投资筹码，期望值更低。这是GTO范围极化策略的典型应用。"},
+    {id:"pf06",diff:"mid",scenario:"9人桌，你在CO，手持8♣7♣。前面UTG/MP都弃牌，轮到你。BTN是松攻型玩家。",seats:[{"pos":0,"label":"CO(你)","hero":true},{"pos":1,"label":"BTN松攻","active":true},{"pos":2,"label":"SB"},{"pos":3,"label":"BB"}],community:[],pot:30,heroCards:[{"r":"8","s":"♣"},{"r":"7","s":"♣"}],heroInfo:"CO · 面对松攻BTN",options:["弃牌，87面对松攻BTN","加注，87s有足够价值","平跟，控制底池","加注但准备弃牌面对3-bet"],answer:1,pts:20,analysis:"<strong>87s在CO对阵松攻BTN</strong>：正常加注。同花连接牌在CO有足够价值，即使面对松攻BTN的3-bet，87s的同花顺潜力和翻牌后可实现性也支持继续。关键是BTN虽然松，但位置在你后面，加注后的打法选择要灵活。"},
+    {id:"pf07",diff:"hard",scenario:"你在UTG，9人桌，手持J♣J♦。你加注到60，MP 3-bet到200，CO冷跟200，轮到你。",seats:[{"pos":0,"label":"UTG(你)","hero":true},{"pos":1,"label":"MP"},{"pos":2,"label":"CO"}],community:[],pot:490,heroCards:[{"r":"J","s":"♣"},{"r":"J","s":"♦"}],heroInfo:"UTG · 已投60 · 面对3-bet+冷跟",options:["弃牌，JJ面对两人强范围危险","4-bet到640","跟注，JJ多人底池有价值","全下"],answer:0,pts:30,analysis:"<strong>JJ面对3-bet+冷跟的艰难决定</strong>：弃牌是合理选项！UTG的JJ面对MP 3-bet（代表QQ+/AK/AQs）加上CO冷跟（代表TT+/AQ+），你的JJ只有约30%胜率，且位置最差。4-bet被call后在JJ超牌牌面处境尴尬。这是牌力与位置的综合判断，弃牌或跟注都可，但全下/4-bet过于激进。"},
+    {id:"pf08",diff:"mid",scenario:"6人桌，你在BTN，手持A♦K♣（AKo）。SB是强玩家，你加注后SB 3-bet到210，BB弃牌，轮到你。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"SB强玩家","active":true}],community:[],pot:300,heroCards:[{"r":"A","s":"♦"},{"r":"K","s":"♣"}],heroInfo:"BTN · 已投70 · 面对SB的3-bet",options:["跟注140，AKo看翻牌","4-bet到560，AKo必须4-bet","弃牌，SB强玩家代表强牌","全下"],answer:1,pts:20,analysis:"<strong>AKo面对强玩家3-bet</strong>：4-bet是标准打法。AKo是顶级手牌，对SB的3-bet范围（JJ+/AK/AQs）有65%+的胜率。4-bet到4倍3-bet额（约560-630）可以：①赢得弃牌收益；②对对手的跟注范围有良好胜率；③保持主动权。跟注放弃主动权且位置优势受限。"},
+    {id:"pf09",diff:"hard",scenario:"你在BB，手持T♦T♣。UTG加注，MP跟注，CO跟注，BTN跟注，SB弃牌，轮到你。5人进底池的可能。",seats:[{"pos":0,"label":"BB(你)","hero":true},{"pos":1,"label":"UTG"},{"pos":2,"label":"MP"},{"pos":3,"label":"CO"},{"pos":4,"label":"BTN"}],community:[],pot:330,heroCards:[{"r":"T","s":"♦"},{"r":"T","s":"♣"}],heroInfo:"BB · 已投20 · 需补40 · 4人已入底池",options:["弃牌，TT多人底池价值低","3-bet挤压到600+","只跟注40，set mining多人底池","全下"],answer:2,pts:30,analysis:"<strong>TT面对多人平跟底池的挤压</strong>：3-bet到600+是最强打法。目标：①清洗CO/BTN的连接牌；②对UTG的加注范围（可能JJ+/AK/AQ）获取信息；③TT对2-3人的胜率远好于5人局面。只跟注让所有人以低价进来，TT实现价值难度大增。挤压3-bet才是最大化期望的选择。"},
+    {id:"pf10",diff:"hard",scenario:"深码（150BB），你在CO，手持Q♠J♠。MP加注，你3-bet，MP 4-bet，轮到你。",seats:[{"pos":0,"label":"CO(你)","hero":true},{"pos":1,"label":"MP","active":true}],community:[],pot:1200,heroCards:[{"r":"Q","s":"♠"},{"r":"J","s":"♠"}],heroInfo:"CO · 深码150BB · 面对MP的4-bet",options:["弃牌，QJs面对4-bet无法继续","跟注，深码同花连接牌有隐含赔率","5-bet全下极化诈唬","全下用QJs价值5-bet"],answer:0,pts:30,analysis:"<strong>QJs面对MP的4-bet</strong>：弃牌。虽然深码有隐含赔率，但MP的4-bet范围极为紧密（AA/KK/QQ/AKs），你的QJs对这个范围胜率仅约35%，且位置不利（CO对MP）。深码跟注后翻牌难以实现：在A/K高牌面你只有听牌，对手会继续下注。5-bet诈唬则过于冒险。"}
+  ],
+  postflop: [
+    {id:"ppf01",diff:"hard",scenario:"翻牌：A♠9♦3♣（干燥彩虹）。你持A♥Q♥（顶对顶踢），位置有利（BTN）。对手过牌，你下注120，对手check-raise到360，底池原先200。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"BB对手","active":true}],community:[{"r":"A","s":"♠"},{"r":"9","s":"♦"},{"r":"3","s":"♣"}],pot:200,heroCards:[{"r":"A","s":"♥"},{"r":"Q","s":"♥"}],heroInfo:"已投120，被加注到360",options:["弃牌，TPTK面对check-raise危险","跟注360，TPTK值得继续","全下反加注，保护主动权","只跟注观察河牌"],answer:1,pts:30,analysis:"<strong>TPTK面对干燥牌面check-raise</strong>：跟注探虚实，不要全下。A♠9♦3♣干燥牌面check-raise范围：A+（A9/A3）、三条（99/33/AA）、诈唬（QJ/KJ等）。你的AQ顶对踢牌很强，但被完全击败的可能性存在。跟注后河牌若对手继续大注则考虑弃牌，若过牌则强摊牌。"},
+    {id:"ppf02",diff:"hard",scenario:"翻牌：K♠Q♦J♣（三张高牌）。你持A♥T♥（坚果顺子）。先行动，底池300，你在BB。",seats:[{"pos":0,"label":"BB(你)","hero":true},{"pos":1,"label":"BTN对手","active":true}],community:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"},{"r":"J","s":"♣"}],pot:300,heroCards:[{"r":"A","s":"♥"},{"r":"T","s":"♥"}],heroInfo:"先行动 · 底池300",options:["过牌，诱导对手下注","下注90（30%底池），小注诱钓","下注200（70%底池），价值下注","全下，坚果无敌"],answer:1,pts:30,analysis:"<strong>坚果顺子在高牌连续牌面的慢打</strong>：过牌！KQJ牌面每个人都可能有顺子，对手如果持有T9/A9等也有强牌，若你先下注会让对手弃牌。过牌诱导，让对手认为你在钓鱼，当他下注时你再加注，这样可以赢取更大底池。坚果牌的策略是建大底池，而非赶走对手。"},
+    {id:"ppf03",diff:"hard",scenario:"翻牌：7♦6♣5♠（低连接牌面）。你是3-bet方，持K♦K♠，对手过牌。",seats:[{"pos":0,"label":"你(3-bet方)","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"7","s":"♦"},{"r":"6","s":"♣"},{"r":"5","s":"♠"}],pot:400,heroCards:[{"r":"K","s":"♦"},{"r":"K","s":"♠"}],heroInfo:"先行动 · 3-bet主动方",options:["过牌，低连接牌面KK很危险","下注280（70%底池）","下注120（30%）小注探测","全下保护"],answer:2,pts:30,analysis:"<strong>KK在低连接牌面的下注策略</strong>：小注（25-33%）是正确的！原因：①你的范围（3-bet方）在这个牌面覆盖率很低——KK/QQ/JJ都没有打中；②对手的范围有大量低对、连接牌；③小注可以保护（让听牌付费），同时控制底池；④大注容易被对手的强牌（顺子/两对）反利用。"},
+    {id:"ppf04",diff:"hard",scenario:"转牌：A♣K♦9♠2♥。你持9♦9♣（翻牌摸到三条），先行动，底池500。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♣"},{"r":"K","s":"♦"},{"r":"9","s":"♠"},{"r":"2","s":"♥"}],pot:500,heroCards:[{"r":"9","s":"♦"},{"r":"9","s":"♣"}],heroInfo:"先行动 · 三条999",options:["过牌诱导，三条慢打","下注150（30%）小注引诱","下注350（70%）价值下注","全下，三条强牌"],answer:2,pts:30,analysis:"<strong>三条在A/K高牌面的价值下注</strong>：70%底池是正确大小。牌面A♣K♦9♠2♥，持有AX/KX的对手有强手牌愿意跟注。过牌慢打风险是让对手免费看牌，可能让AK/A9等超牌。三条是强牌但不是坚果，应该积极提取价值，同时保护领先地位。"},
+    {id:"ppf05",diff:"hard",scenario:"翻牌：J♠T♦9♠（湿连接牌面）。你持Q♣K♣（坚果顺子），对手下注200，底池300。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"J","s":"♠"},{"r":"T","s":"♦"},{"r":"9","s":"♠"}],pot:300,heroCards:[{"r":"Q","s":"♣"},{"r":"K","s":"♣"}],heroInfo:"需跟注200 | 湿润牌面",options:["跟注200，等转牌","加注到600，保护坚果顺子","全下，坚果必须最大化","弃牌（错误）"],answer:1,pts:30,analysis:"<strong>湿润牌面的坚果顺子应该加注！</strong>J♠T♦9♠有大量可能的改牌（同花完成、配对等），加注到600+可以：①让同花听牌付出高额代价；②防止对手免费拿到转牌；③在你有最大优势时建立大底池。跟注虽然也有价值，但坚果+湿牌面应该积极加注保护。"},
+    {id:"ppf06",diff:"hard",scenario:"河牌：K♦Q♣J♠T♥A♠（顺子公牌，五花色各不同）。你持2♣2♦，对手下注400，底池600。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♦"},{"r":"Q","s":"♣"},{"r":"J","s":"♠"},{"r":"T","s":"♥"},{"r":"A","s":"♠"}],pot:600,heroCards:[{"r":"2","s":"♣"},{"r":"2","s":"♦"}],heroInfo:"需跟注400",options:["跟注，22在这个牌面大家平分底池","弃牌，宁可放弃底池","加注全下，逼对手弃牌","过牌（已轮到你）"],answer:0,pts:30,analysis:"<strong>公牌顺子的摊牌分析</strong>：公牌K♦Q♣J♠T♥A♠是Broadway顺子，且五张牌花色各不同（♦♣♠♥♠，注意有两张♠），没有任何同花。因此任何人手里的两张手牌都无法构成同花顺。无论对手持什么，最多也是Broadway顺子，和你一样平分底池。你的22不影响牌面，直接平分。对手下注400大概率是在诈唬独吞底池，跟注至少能保住分池权益，弃牌则白白送给他。"},
+    {id:"ppf07",diff:"hard",scenario:"转牌：A♥8♦3♣2♠。你持A♠8♠（两对顶两对），先行动，底池400。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♥"},{"r":"8","s":"♦"},{"r":"3","s":"♣"},{"r":"2","s":"♠"}],pot:400,heroCards:[{"r":"A","s":"♠"},{"r":"8","s":"♠"}],heroInfo:"先行动 · 两对A+8",options:["过牌诱导，两对慢打","下注120（30%）小注","下注300（75%）强价值下注","全下，两对顶两对"],answer:2,pts:30,analysis:"<strong>两对顶两对的价值下注</strong>：75%底池是标准。A♥8♦3♣2♠牌面，你的A8是最强的两对，对手可能有：单A（顶对）、A3/A2（次级两对）、88/33等（比你的两对弱）。这些手牌都会用75%底注跟注，过牌或小注都是放弃价值。河牌改牌风险不大（4/5/6/7对你威胁最大）。"},
+    {id:"ppf08",diff:"hard",scenario:"河牌：Q♠J♦T♣9♥K♦（顺子牌面）。你持Q♦Q♣（QQ），对手一路过牌，你先行动，底池500。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"Q","s":"♠"},{"r":"J","s":"♦"},{"r":"T","s":"♣"},{"r":"9","s":"♥"},{"r":"K","s":"♦"}],pot:500,heroCards:[{"r":"Q","s":"♦"},{"r":"Q","s":"♣"}],heroInfo:"先行动 · QQ",options:["过牌，三条但牌面有顺子","下注300，QQ有三条价值","下注500满池价值下注","全下，三条QQ超强"],answer:0,pts:30,analysis:"<strong>三条在顺子公牌面的策略</strong>：过牌！公牌KQJT9，任何持有A的人可以凑成Broadway顺子（A-K-Q-J-T），持有8的人可以凑成8-9-T-J-Q顺子。你的三条QQQ均输给顺子。先行动时过牌是明智的：①防止被顺子反加注入大底池；②如果对手也过牌则摊牌，说明他也没顺子；③让对手先行动，观察他是否有顺子再决策。"},
+    {id:"ppf09",diff:"hard",scenario:"翻牌：A♦5♥2♣（干燥，低）。你在CO，持K♣K♦，3-bet方。对手（BB）过牌，轮到你。",seats:[{"pos":0,"label":"CO(你)","hero":true},{"pos":1,"label":"BB","active":true}],community:[{"r":"A","s":"♦"},{"r":"5","s":"♥"},{"r":"2","s":"♣"}],pot:360,heroCards:[{"r":"K","s":"♣"},{"r":"K","s":"♦"}],heroInfo:"3-bet主动方，先行动",options:["过牌，KK面对A高牌面很危险","下注100（28%）小注诈唬","下注250（70%）延续下注","全下，KK不管牌面"],answer:1,pts:30,analysis:"<strong>KK在A高牌面的C-bet策略</strong>：小注（25-33%）最优！理由：①A高干燥牌面，对手BB有大量AX手牌愿意继续；②你的KK在这个牌面是单纯的\"过牌诱导\"或\"保护性小注\"；③小注可以让AX继续，同时控制底池——如果转牌来了另一张A或5，你可以放弃；④大注C-bet可能被AX的check-raise反利用。"},
+    {id:"ppf10",diff:"hard",scenario:"翻牌：9♣8♣7♦（顺子+同花可能）。你持T♦T♥（口袋T）对手全下700，底池400。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"9","s":"♣"},{"r":"8","s":"♣"},{"r":"7","s":"♦"}],pot:400,heroCards:[{"r":"T","s":"♦"},{"r":"T","s":"♥"}],heroInfo:"需跟注700 | 极湿牌面",options:["弃牌，TT在这个极湿牌面被顺子克制","跟注700，TT有顶对+超牌价值","全下反加注","思考后跟注"],answer:0,pts:30,analysis:"<strong>TT在极湿牌面面对超注全下</strong>：弃牌！9♣8♣7♦是极湿连接牌面，对手全下（175%底池）的范围：JT（已有顺子）、T6s、J9s/T8s（顺子）、9x（三条）、89（两对）、同花听牌+顺子听牌组合。你的TT只有两个小高牌，对这些范围的胜率约20-30%。超注全下通常代表坚果或强听牌，跟注是负期望。"}
+  ],
+  bluff: [
+    {id:"bl01",diff:"hard",scenario:"河牌：A♠K♦Q♣J♠T♥（公牌顺子，但有一张同花）。你持9♣9♦（没有顺子），先行动，底池600。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♠"},{"r":"K","s":"♦"},{"r":"Q","s":"♣"},{"r":"J","s":"♠"},{"r":"T","s":"♥"}],pot:600,heroCards:[{"r":"9","s":"♣"},{"r":"9","s":"♦"}],heroInfo:"先行动 · 底池600",options:["过牌，99没有成牌","下注360（60%）诈唬","下注600满池诈唬","全下极化诈唬"],answer:2,pts:30,analysis:"<strong>公牌顺子牌面的诈唬策略</strong>：过牌！AKQJT是公牌顺子，所有人都有顺子（除非持有同花可能赢）。在这个牌面先行动下注没有意义：①对手也有顺子，不会弃牌；②对手过牌后你也应该过牌，让顺子分池；③唯一例外是你有♠同花顺，那才是价值下注场景。"},
+    {id:"bl02",diff:"hard",scenario:"翻牌：K♥7♦2♣。你在BTN，3-bet后CO跟注，CO过牌。你持A♠Q♠，无成牌。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"CO","active":true}],community:[{"r":"K","s":"♥"},{"r":"7","s":"♦"},{"r":"2","s":"♣"}],pot:380,heroCards:[{"r":"A","s":"♠"},{"r":"Q","s":"♠"}],heroInfo:"3-bet主动方 · 先行动",options:["过牌，AQ未成牌","下注228（60%）C-bet","下注380满池C-bet","全下"],answer:1,pts:30,analysis:"<strong>干燥K高牌面的C-bet</strong>：60%是正确大小。K♥7♦2♣干燥彩虹，非常有利于3-bet方的范围（AA/KK/AK/AQ等），CO跟注3-bet后过牌说明他没有强K或更好的牌。你虽无成牌但C-bet代表的范围很强，让AX/QQ/JJ等手牌弃牌。C-bet频率应该很高（70%+），大小60%足够。"},
+    {id:"bl03",diff:"hard",scenario:"转牌：A♣6♦3♠9♥。你持4♥5♥（双端顺子听牌完成了），先行动，底池500。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♣"},{"r":"6","s":"♦"},{"r":"3","s":"♠"},{"r":"9","s":"♥"}],pot:500,heroCards:[{"r":"4","s":"♥"},{"r":"5","s":"♥"}],heroInfo:"先行动 · 顺子完成",options:["过牌，诱导对手下注","下注150（30%）小注引钓","下注375（75%）价值下注","全下"],answer:2,pts:30,analysis:"<strong>顺子完成后的价值策略</strong>：75%底池价值下注！A♣6♦3♠9♥，你的45完成了A高顺子（A2345？不对，3456789—等等，4-5-6-A？实际是A-2-3-4-5的轮子顺子！）这是最强顺子之一（但A2345低顺，要注意更高顺子）。不论如何，持有顺子应该积极价值下注，让AX/两对等付费。"},
+    {id:"bl04",diff:"hard",scenario:"河牌：Q♦J♣T♠9♦8♥。你持K♦Q♠（K高顺子KQJT9成顺），底池700，先行动。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"Q","s":"♦"},{"r":"J","s":"♣"},{"r":"T","s":"♠"},{"r":"9","s":"♦"},{"r":"8","s":"♥"}],pot:700,heroCards:[{"r":"K","s":"♦"},{"r":"Q","s":"♠"}],heroInfo:"先行动 · K高顺子",options:["过牌，这个牌面可能有更高顺子","下注420（60%）价值下注","下注700满池","全下"],answer:0,pts:30,analysis:"<strong>顺子在极度连接牌面的谨慎策略</strong>：过牌！QJJT98牌面中，你持KQ有K高顺子（KQJT9），但对手持有AK则有A高顺子（AKQJT）。在如此连接的牌面先行动下注有风险——如果被加注，你面临艰难决策。过牌让对手先行动，如果他下注再跟注（不加注），如果他也过牌就摊牌。控制底池是合理选择。"},
+    {id:"bl05",diff:"hard",scenario:"翻牌：A♦A♣7♥（对子牌面）。你持K♠Q♠，对手过牌，轮到你（BTN位）。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♦"},{"r":"A","s":"♣"},{"r":"7","s":"♥"}],pot:240,heroCards:[{"r":"K","s":"♠"},{"r":"Q","s":"♠"}],heroInfo:"BTN · KQ未成牌",options:["过牌，KQ在对子A牌面没有价值","下注72（30%）小注诈唬","下注168（70%）大注诈唬","全下"],answer:1,pts:30,analysis:"<strong>对子A牌面（AA7）的诈唬策略</strong>：小注（25-33%）最优！对子牌面是诈唬的理想场景，原因：①对手的范围中持有A的比例较低（A牌只有4张，已出现2张）；②7低牌，对手的一对7/非对对子都很脆弱；③小注让对手认为你在价值下注，他持有的Kx/Qx会弃牌；④大注C-bet可能被持有A的对手反利用。"},
+    {id:"bl06",diff:"hard",scenario:"转牌：K♠Q♦7♣2♥。你持J♣T♣（同花+顺子双听，在翻牌后已有），底池400，对手下注280。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"},{"r":"7","s":"♣"},{"r":"2","s":"♥"}],pot:400,heroCards:[{"r":"J","s":"♣"},{"r":"T","s":"♣"}],heroInfo:"需跟注280 | 听牌中",options:["弃牌，面对下注无成牌","跟注280，保持听牌","加注到860，半诈唬最大化","全下"],answer:2,pts:30,analysis:"<strong>转牌听牌的半诈唬加注</strong>：加注到860是最优！JT在KQ牌面有：顺子听牌（A高需要A或J完成）+同花潜力。加注原因：①折叠价值——很多K+低踢牌会弃牌；②完成听牌时赢取更大底池；③主动权——不被动等牌。半诈唬是当你既有折叠价值又有完成听牌价值时的最强打法。"},
+    {id:"bl07",diff:"hard",scenario:"河牌：K♣Q♥J♦2♠4♣（两张杂牌河牌）。你持A♦T♣（错过了顺子听牌）。对手在翻牌和转牌都下注，河牌过牌，轮到你。底池800。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♣"},{"r":"Q","s":"♥"},{"r":"J","s":"♦"},{"r":"2","s":"♠"},{"r":"4","s":"♣"}],pot:800,heroCards:[{"r":"A","s":"♦"},{"r":"T","s":"♣"}],heroInfo:"对手河牌过牌，你后行动",options:["过牌，AT未成牌没有价值","下注400（50%）诈唬","下注800满池大诈唬","全下极化"],answer:1,pts:30,analysis:"<strong>河牌超线诈唬：对手过牌后的探测性下注</strong>：50%底池诈唬有价值！对手在翻牌/转牌下注后河牌过牌，这通常代表他有中等强度手牌（中对、弱K等）或者在放弃。你的AT没有任何摊牌价值，过牌肯定输。50%底池诈唬：①对手的中等手牌面对50%下注会考虑弃牌；②你的A阻断了对手持有A的组合；③T也是边界阻断牌。"},
+    {id:"bl08",diff:"hard",scenario:"翻牌：7♠6♠5♣（湿连接低牌面）。你是3-bet方，持A♥K♦（无成牌），对手过牌。",seats:[{"pos":0,"label":"你(3-bet方)","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"7","s":"♠"},{"r":"6","s":"♠"},{"r":"5","s":"♣"}],pot:380,heroCards:[{"r":"A","s":"♥"},{"r":"K","s":"♦"}],heroInfo:"3-bet主动方 · 先行动",options:["过牌，AK在低连接牌面C-bet不合理","下注114（30%）小注C-bet","下注266（70%）大注C-bet","全下"],answer:1,pts:30,analysis:"<strong>AK在低连接湿牌面的C-bet策略</strong>：小注（25-30%）！这个牌面对3-bet方很不利：对手的跟注范围有大量低对（55/66/77/66）、同花连接牌（8s7s/87s）等，这些手牌都打中了。大注C-bet会被check-raise，你无法继续。小注有以下优势：①低成本的范围C-bet；②让纯高牌（JJ/TT等）弃牌；③保留信息——如果被加注可以放弃。"},
+    {id:"bl09",diff:"hard",scenario:"河牌：A♦K♣Q♠J♥T♠（Broadway公牌顺子）。你持9♥9♣，对手下注600，底池800。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♦"},{"r":"K","s":"♣"},{"r":"Q","s":"♠"},{"r":"J","s":"♥"},{"r":"T","s":"♠"}],pot:800,heroCards:[{"r":"9","s":"♥"},{"r":"9","s":"♣"}],heroInfo:"需跟注600",options:["跟注，99分摊公牌顺子","弃牌，对手下注代表同花顺","加注全下","过牌（不是你的行动）"],answer:0,pts:30,analysis:"<strong>公牌Broadway顺子+对手下注</strong>：跟注！AKQJT公牌顺子，理论上所有人分摊。对手下注600代表：①他有♠同花顺（♠K♠Q♠T♠9等）想获取价值；②他在诈唬你弃牌。你的99没有同花顺，跟注后：①如果对手有同花顺则输；②如果对手在诈唬则分池。但弃牌则直接输掉。跟注/弃牌取决于对手的诈唬频率，一般倾向跟注。"},
+    {id:"bl10",diff:"hard",scenario:"转牌：A♠K♦7♣3♥。你一直主动下注，持Q♣J♣（未成牌），对手一路跟注。河牌：2♠。对手过牌，你先行动，底池1000，筹码1500。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♠"},{"r":"K","s":"♦"},{"r":"7","s":"♣"},{"r":"3","s":"♥"},{"r":"2","s":"♠"}],pot:1000,heroCards:[{"r":"Q","s":"♣"},{"r":"J","s":"♣"}],heroInfo:"先行动 · 河牌 · 无成牌",options:["过牌，三街下注后河牌放弃","下注600（60%），继续施压","下注1000满池，极化诈唬","全下1500"],answer:2,pts:30,analysis:"<strong>三街延续+河牌极化诈唬</strong>：满池下注（极化诈唬）！你一直在代表强牌（AK/AA/KK等），对手一路跟注说明他有中等强度手牌（可能AX弱踢或KX）。河牌2♠是空白牌，不帮助对手。满池下注极化：对手持AX中等手牌面对满池需要37%胜率，但在你展示的强范围下，他很难置信你在诈唬，弃牌概率高。过牌则白白放弃了之前建立的主动权。"}
+  ],
+  hand_reading: [
+    {id:"hr01",diff:"hard",scenario:"UTG在9人桌加注，你在BTN跟注。翻牌K♠Q♦5♣，UTG下注（70%底池）。UTG的范围是？",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"UTG","active":true}],community:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"},{"r":"5","s":"♣"}],pot:300,heroCards:[{"r":"J","s":"♦"},{"r":"T","s":"♦"}],heroInfo:"分析UTG下注范围",options:["主要是AK/KQ/KK/QQ等有利于牌面的强牌","主要是空气牌在诈唬","AX手牌为主，未打中在C-bet","无法判断"],answer:0,pts:30,analysis:"<strong>UTG在9人桌加注后下注</strong>：代表很强的范围。UTG的开牌范围本就是15%左右的强牌（AA/KK/QQ/JJ/TT/99/AK/AQ/AJs+/KQs等）。K♠Q♦5♣牌面非常有利于这个范围：KK/QQ/AK/KQ都打中了。70%底池C-bet说明UTG确实有strong手牌，很少是纯诈唬。你的JTs面对这个C-bet应该谨慎。"},
+    {id:"hr02",diff:"hard",scenario:"你在BB，手持A♦J♦。翻牌：A♠8♥3♣。对手（BTN）在翻牌过牌，转牌5♦，对手下注90（底池150）。你怎么分析对手的范围？",seats:[{"pos":0,"label":"BB(你)","hero":true},{"pos":1,"label":"BTN","active":true}],community:[{"r":"A","s":"♠"},{"r":"8","s":"♥"},{"r":"3","s":"♣"},{"r":"5","s":"♦"}],pot:150,heroCards:[{"r":"A","s":"♦"},{"r":"J","s":"♦"}],heroInfo:"对手翻牌过牌，转牌下注",options:["翻牌过牌说明无A，转牌下注可能是诈唬或中对","翻牌慢打，转牌下注代表强A（A8/A5等）","对手可能有同花听牌（♦）在半诈唬","以上都有可能，需要综合判断"],answer:3,pts:30,analysis:"<strong>翻牌过牌+转牌下注的多种解读</strong>：综合判断是正确的。可能范围：①弱A（AT/A9/A7等）翻牌控制底池，转牌仍有价值；②中对（88/33）翻牌过牌，转牌下注测试；③同花听牌（♦♦）半诈唬；④完全诈唬。你的AJ对这些范围都有优势（顶对+好踢），跟注或加注都可以，但要意识到A5两对的可能性。"},
+    {id:"hr03",diff:"hard",scenario:"河牌：J♠T♦9♣4♥2♣。对手在翻牌过牌跟，转牌check-raise，你跟注。河牌对手全下。对手最可能持有什么？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"J","s":"♠"},{"r":"T","s":"♦"},{"r":"9","s":"♣"},{"r":"4","s":"♥"},{"r":"2","s":"♣"}],pot:600,heroCards:[{"r":"K","s":"♠"},{"r":"J","s":"♥"}],heroInfo:"对手转牌check-raise后河牌全下",options:["顺子（QT/Q8/KQ）—转牌check-raise+河牌全下","两对（JT/J9/T9）—强两对","诈唬—转牌check-raise是pure bluff","三条（JJJ/TTT/999）—慢打三条"],answer:0,pts:30,analysis:"<strong>转牌check-raise+河牌全下的范围解读</strong>：最可能是顺子！J♠T♦9♣的牌面，QT或Q8可以完成顺子（需要Q完成QJT9或Q8T9等）。转牌check-raise是典型的\"半诈唬/强牌保护\"动作，而河牌全下则是价值或极化诈唬。对手若有顺子，转牌保护+河牌全下完全合理。你的KJ顶对面对这种打法应该弃牌。"},
+    {id:"hr04",diff:"hard",scenario:"翻牌后三街，对手始终以小注（25-30%底池）下注。河牌突然改为满池下注。你怎么解读？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♦"},{"r":"K","s":"♣"},{"r":"5","s":"♥"},{"r":"9","s":"♠"},{"r":"2","s":"♦"}],pot:500,heroCards:[{"r":"A","s":"♣"},{"r":"Q","s":"♥"}],heroInfo:"三街小注，河牌满池",options:["对手慢打，河牌改为大注代表坚果（两对/三条）","对手在诈唬，河牌大注是恐吓","对手有弱A，河牌大注提取最后价值","下注大小变化无意义，跟注"],answer:0,pts:30,analysis:"<strong>下注大小变化（Bet sizing tell）</strong>：三街小注+河牌大注是强力信号。这种模式通常代表：慢打强牌（两对、三条）三街小注积累底池，河牌确认牌力后大注获取最大价值。对手若是AK/A5/K5/A9/K9等，三街小注建底池后河牌满池是经典价值提取。你的AQ顶对应该认真考虑弃牌。"},
+    {id:"hr05",diff:"hard",scenario:"你在BTN，加注后BB跟注。翻牌T♣9♣8♦，BB过牌，你C-bet，BB check-raise到3倍。分析BB的范围。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"BB","active":true}],community:[{"r":"T","s":"♣"},{"r":"9","s":"♣"},{"r":"8","s":"♦"}],pot:300,heroCards:[{"r":"A","s":"♠"},{"r":"K","s":"♠"}],heroInfo:"面对BB的check-raise",options:["主要是顺子（J7/76/QJ）和两对（T9/T8/98）","主要是同花听牌（♣♣）半诈唬","强三条（TTT/999/888）慢打","混合范围：强牌+半诈唬同花听牌"],answer:3,pts:30,analysis:"<strong>湿润牌面的check-raise范围分析</strong>：混合范围！T♣9♣8♦极湿，BB的check-raise包含：①价值：顺子（J7/QJ/76等）、两对（T9/T8/98）、三条；②半诈唬：同花听牌（♣♣）、顺子+同花组合听牌。好的玩家在这个牌面会用强牌和强听牌混合check-raise，让你无法直接判断。你的AK无成牌，面对这种范围弃牌是正确的。"},
+    {id:"hr06",diff:"hard",scenario:"对手是TAGfish（紧攻鱼型玩家）。河牌他全下，底池的180%。他的意图是？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"TAGfish对手","active":true}],community:[{"r":"Q","s":"♠"},{"r":"J","s":"♦"},{"r":"T","s":"♣"},{"r":"4","s":"♥"},{"r":"4","s":"♠"}],pot:500,heroCards:[{"r":"Q","s":"♣"},{"r":"T","s":"♦"}],heroInfo:"对手全下180%底池",options:["代表坚果（顺子/三条），要求跟注","是诈唬，TAGfish一般不诈唬这么大","可能是两对或三条的价值下注","超注（overbet）通常是极化：坚果或空气"],answer:3,pts:30,analysis:"<strong>超注全下的范围极化</strong>：超注（>100%底池）在现代扑克中是极化动作，代表：要么坚果（最强牌力），要么空气（诈唬）。对于TAGfish（紧攻鱼型），他很少用超注诈唬，所以这里更可能代表：顺子（KQ/K9完成KQJT9）、四条44、葫芦（QQ4/JJ4/TT4）。你的Q两对（QQ+TT？不对，QT两对）面对这个范围很脆弱。跟注还是弃牌取决于对手具体打法。"},
+    {id:"hr07",diff:"hard",scenario:"翻牌：A♥K♦Q♣。有三个对手，全部过牌。转牌7♠，对手A下注，对手B跟注。你持J♣T♣，轮到你。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手A"},{"pos":2,"label":"对手B"}],community:[{"r":"A","s":"♥"},{"r":"K","s":"♦"},{"r":"Q","s":"♣"},{"r":"7","s":"♠"}],pot:400,heroCards:[{"r":"J","s":"♣"},{"r":"T","s":"♣"}],heroInfo:"多人底池 | JT听牌",options:["弃牌，多人底池JT面对两人行动","跟注，JT有坚果顺子潜力","加注，半诈唬挤压","全下"],answer:0,pts:30,analysis:"<strong>多人底池中的听牌打法</strong>：弃牌！AKQ7牌面，你的JT需要完成顺子（T高顺子=AKQJT或JT完成Broadway）。问题是：①在A/K/Q牌面，对手A/B一定有强牌（可能AK两对、三条等）；②多人底池中，你完成顺子后对手可能已经有更强的牌；③底池赔率通常不支持多路行动中的听牌。弃牌保存筹码。"},
+    {id:"hr08",diff:"hard",scenario:"你和对手的筹码比（SPR=Stack-to-Pot Ratio）是1.5。翻牌后你持顶对顶踢（TPTK）。对手下注半池，轮到你。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♠"},{"r":"9","s":"♦"},{"r":"3","s":"♣"}],pot:400,heroCards:[{"r":"A","s":"♥"},{"r":"K","s":"♥"}],heroInfo:"SPR=1.5 · TPTK",options:["跟注，控制底池","全下，SPR低时强牌必须全下","加注到全下，SPR低确认主动权","弃牌太保守"],answer:1,pts:30,analysis:"<strong>低SPR（筹码底池比）下的决策</strong>：全下！SPR=1.5意味着你的剩余筹码只有底池的1.5倍，这是明显的\"承诺底池\"（committed pot）。在这种情况下，TPTK足够强，你已经承诺了这个底池，跟注然后再决策没有意义——全下才是正确的。低SPR下，中等强度手牌（两对及以上）就应该全下，无需等待更多信息。"},
+    {id:"hr09",diff:"hard",scenario:"你的对手是\"超级鱼\"——在所有牌面上盲目下注，从不诈唬，只有顶对以上才敢下注。河牌他全下，底池400，需要跟注600。你持A♦Q♣（顶对Q踢）。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"超级鱼","active":true}],community:[{"r":"A","s":"♣"},{"r":"T","s":"♥"},{"r":"5","s":"♦"},{"r":"8","s":"♠"},{"r":"3","s":"♣"}],pot:400,heroCards:[{"r":"A","s":"♦"},{"r":"Q","s":"♣"}],heroInfo:"对手全下，超级鱼只在强牌时下注",options:["跟注，AQ顶对很强","弃牌，超级鱼全下代表至少两对","跟注，底池赔率合适","加注全下"],answer:1,pts:30,analysis:"<strong>对手特征分析决策</strong>：弃牌！这是手牌阅读的核心——利用对手模式信息。\"超级鱼只在顶对以上才下注\"，他河牌全下的范围是：两对（AT/A5/A8/A3/T5等）、三条、顺子、同花。你的AQ顶对对这个特定范围的胜率几乎为零。即使底池赔率表面上合适，对手的范围信息让跟注变成严重负期望。针对不同对手类型调整策略是高级手牌阅读技能。"},
+    {id:"hr10",diff:"hard",scenario:"河牌：A♦K♠Q♥J♣T♦（公牌Broadway顺子）。你持K♦Q♦（无同花，仅4张♦不够5张）。对手全下，底池800。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♦"},{"r":"K","s":"♠"},{"r":"Q","s":"♥"},{"r":"J","s":"♣"},{"r":"T","s":"♦"}],pot:800,heroCards:[{"r":"K","s":"♦"},{"r":"Q","s":"♦"}],heroInfo:"公牌Broadway顺子，你无同花，对手全下",options:["跟注，Broadway公牌顺子大家平分底池","弃牌，对手全下可能有同花顺（A♦J♦等）","全下加注","直接弃牌不考虑"],answer:0,pts:30,analysis:"<strong>公牌顺子+阻断牌分析</strong>：跟注是正确的！分析如下：①公牌A♦K♠Q♥J♣T♦是Broadway顺子，没有同花顺的人至少可以平分底池；②你的K♦Q♦只有4张♦（加公牌A♦T♦），并没有同花，也没有同花顺；③对手要有同花顺，必须持有J♦+另一张♦（如A♦J♦，但A♦已在公牌），实际上对手最可能的♦同花顺是需要J♦9♦，但9♦并不在需要的范围内——Broadway同花顺需要A♦K♦Q♦J♦T♦，而K♦Q♦已在你手里，你完美阻断了对手的♦同花顺！对手全下大概率是诈唬或平分。跟注保住分池权益。"}
+  ],
+  tournament: [
+    {id:"to01",diff:"hard",scenario:"锦标赛，ICM关键时刻。你有30BB，在泡沫期（差1人进钱）。手持A♠K♠，短筹码（8BB）在你前面推入。你应该？",seats:[{"pos":0,"label":"你(30BB)","hero":true},{"pos":1,"label":"短筹码(8BB)","active":true}],community:[],pot:180,heroCards:[{"r":"A","s":"♠"},{"r":"K","s":"♠"}],heroInfo:"30BB · 泡沫期 · AKs",options:["全下跟注，AKs有优势","弃牌，泡沫期ICM压力太大","只跟注最小量","等待泡沫破裂再行动"],answer:0,pts:30,analysis:"<strong>泡沫期ICM vs 筹码价值</strong>：跟注！AKs对短筹码（8BB）推入范围胜率约65%，且8BB是小筹码，跟注赢/输对你30BB的ICM影响相对可控。如果你有超级大筹码（如100BB）则ICM压力更大，但30BB跟注8BB是合理的风险收益比。泡沫期应该回避大筹码之间的冒险，但对短筹码的跟注是正确的。"},
+    {id:"to02",diff:"hard",scenario:"锦标赛决赛桌（9人），筹码排名你是第4（30BB），BB是短筹码（6BB），轮到你（BTN）。手持Q♣T♦，前面弃牌。你在BTN。",seats:[{"pos":0,"label":"BTN(你,30BB)","hero":true},{"pos":1,"label":"SB(20BB)"},{"pos":2,"label":"BB(6BB短筹码)"}],community:[],pot:90,heroCards:[{"r":"Q","s":"♣"},{"r":"T","s":"♦"}],heroInfo:"BTN · 30BB · 决赛桌",options:["弃牌，QTo不够强","加注3BB，标准偷盲","全下，逼短筹码做决策","加注到15BB隔离"],answer:2,pts:30,analysis:"<strong>决赛桌面对BB短筹码的推入策略</strong>：全下（或至少大加注）！BB只有6BB，他会用较宽的范围跟注全下（因为ICM上短筹码被淘汰影响不大）。标准3BB加注后他跟注，翻牌后决策复杂。直接全下（30BB）可以：①让SB弃牌；②BB的跟注范围是可以接受的（QT对6BB推入范围有足够胜率）；③最简化决策。"},
+    {id:"to03",diff:"hard",scenario:"锦标赛，5人剩余（最终5名有奖），你是大筹码（60BB）。两个中等筹码对战，如果其中一个被淘汰你的奖金会增加。你在BB，手持K♦7♣，BTN（30BB）推入。",seats:[{"pos":0,"label":"BB(你,60BB)","hero":true},{"pos":1,"label":"BTN(30BB)","active":true}],community:[],pot:660,heroCards:[{"r":"K","s":"♦"},{"r":"7","s":"♣"}],heroInfo:"BB · 60BB · ICM关键",options:["跟注，K7有一定胜率","弃牌，ICM压力下避免冒险","全下反加注","思考后弃牌"],answer:1,pts:30,analysis:"<strong>大筹码在ICM关键时刻的保守策略</strong>：弃牌！这是ICM思维的核心：当其他玩家在对战时，你作为大筹码应该尽量减少风险，让他们互相淘汰，以提升自己的ICM价值。K7o对BTN（30BB）推入的范围胜率约55%，但冒险30BB（你一半筹码）的ICM损失大于期望收益。等待其他人被淘汰是最优ICM策略。"},
+    {id:"to04",diff:"hard",scenario:"锦标赛，支付梯度（pay jump）很大。你有10BB，是中短筹码。手持J♠9♠，在CO位，前面弃牌。",seats:[{"pos":0,"label":"CO(你,10BB)","hero":true},{"pos":1,"label":"BTN(25BB)"},{"pos":2,"label":"BB(8BB)"}],community:[],pot:150,heroCards:[{"r":"J","s":"♠"},{"r":"9","s":"♠"}],heroInfo:"CO · 10BB · 短筹码",options:["弃牌，J9在10BB推入有风险","全下推入，10BB是推入最佳窗口","加注3BB，标准开牌","平跟，控制底池"],answer:1,pts:30,analysis:"<strong>10BB的推入策略（Shove or Fold）</strong>：全下推入！10BB是\"推入或弃牌\"（shove-or-fold）的临界区间（通常8-15BB）。理由：①J9s是适合推入的手牌（有同花顺潜力、连接性）；②3BB加注后面对再加注无法舒适继续，不如直接推入给对手压力；③CO位置面对BTN/BB，他们的跟注范围可以被J9s击败；④筹码不多，等待太好的牌会错过宝贵的偷盲机会。"},
+    {id:"to05",diff:"hard",scenario:"锦标赛决赛桌，3人对决（三缺一）。你有20BB，对手A有15BB，对手B有50BB。手持A♦8♦，你在BTN。",seats:[{"pos":0,"label":"BTN(你,20BB)","hero":true},{"pos":1,"label":"SB(15BB)"},{"pos":2,"label":"BB(50BB)"}],community:[],pot:300,heroCards:[{"r":"A","s":"♦"},{"r":"8","s":"♦"}],heroInfo:"BTN · 20BB · 三缺一",options:["弃牌，A8不够","全下推入，三缺一阶段积极偷盲","加注到60，标准开牌","跟注SB的盲注"],answer:1,pts:30,analysis:"<strong>三缺一（3-handed）决策</strong>：全下！三人桌每人都是大盲，位置价值更高，攻击应该更积极。A8s在三缺一是强牌，BTN推入20BB：①SB/BB的跟注范围很紧（要冒20BB面对A8的胜率）；②即使被跟注，A8s对宽泛范围有约55%+胜率；③积累筹码对三缺一单挑很重要。"},
+    {id:"to06",diff:"hard",scenario:"MTT（多桌锦标赛），你处于泡沫（bubble）阶段，筹码40BB，是桌上最大筹码。对手（25BB）在EP加注，轮到你（CO），手持T♦T♣。",seats:[{"pos":0,"label":"CO(你,40BB)","hero":true},{"pos":1,"label":"EP(25BB)","active":true}],community:[],pot:390,heroCards:[{"r":"T","s":"♦"},{"r":"T","s":"♣"}],heroInfo:"CO · 40BB · 泡沫最大筹码",options:["弃牌，泡沫期避免冒险","跟注，TT有价值","3-bet隔离，利用大筹码优势","全下"],answer:2,pts:30,analysis:"<strong>泡沫期大筹码的3-bet挤压</strong>：3-bet隔离！作为桌上最大筹码，你在泡沫期有巨大的ICM优势——其他玩家不敢跟你对赌。3-bet到5-6BB可以：①给EP压力，他的25BB不想在泡沫期冒全部筹码；②清洗后面的手牌；③即使被跟注，TT有足够的翻牌前优势。全下太激进，跟注放弃了大筹码的压力优势。"},
+    {id:"to07",diff:"hard",scenario:"锦标赛，你在盲注级别结束前最后一手。你有12BB，坐在BB。SB（30BB）加注到3BB，轮到你，手持7♦2♣（72o，最差手牌）。",seats:[{"pos":0,"label":"BB(你,12BB)","hero":true},{"pos":1,"label":"SB(30BB)","active":true}],community:[],pot:180,heroCards:[{"r":"7","s":"♦"},{"r":"2","s":"♣"}],heroInfo:"BB · 12BB · 最后一手",options:["弃牌，72o太弱","全下反加注，短筹码防守","跟注，看翻牌再决策","跟注20，控制底池"],answer:0,pts:30,analysis:"<strong>72o（最差手牌）的正确应对</strong>：弃牌！无论位置多好，72o是最差的起手牌，翻牌前胜率最低。即使你是12BB短筹码，用72o推入/跟注对SB的加注范围（约30-40%手牌）只有约30%胜率。弃牌损失1BB（BB盲注），但全下损失12BB。等待下一手更好的机会，哪怕下一级别盲注变高也不值得用72o冒险。"},
+    {id:"to08",diff:"hard",scenario:"锦标赛，你筹码30BB，在UTG，手持A♠A♥。这是锦标赛关键阶段（平均筹码20BB）。",seats:[{"pos":0,"label":"UTG(你,30BB)","hero":true},{"pos":2,"label":"BTN(15BB)"},{"pos":3,"label":"BB(8BB短筹码)"}],community:[],pot:150,heroCards:[{"r":"A","s":"♠"},{"r":"A","s":"♥"}],heroInfo:"UTG · 30BB · AA",options:["平跟，慢打AA诱钓","加注到2.5BB，标准开牌","加注到3BB","全下，AA就要推入"],answer:1,pts:30,analysis:"<strong>锦标赛中AA的标准开牌</strong>：2.5BB标准加注。锦标赛和现金局的区别：①筹码价值不同，不需要\"全下赢取最多积分\"；②目标是建立有利局面；③AA在翻牌前全下会赶走所有弱手牌，只有强手牌（KK/QQ/AK）才会跟注，但这些你都是大幅优势。标准开牌后，让对手犯错是最优策略。平跟AA（慢打）在锦标赛是常见错误。"},
+    {id:"to09",diff:"hard",scenario:"你在决赛桌（6人），筹码排名第2（40BB）。排名第1的大筹码（80BB）在你左边（SB）。你在BTN，手持Q♠J♠。",seats:[{"pos":0,"label":"BTN(你,40BB)","hero":true},{"pos":1,"label":"SB(大筹码80BB)"},{"pos":2,"label":"BB(15BB)"}],community:[],pot:270,heroCards:[{"r":"Q","s":"♠"},{"r":"J","s":"♠"}],heroInfo:"BTN · 40BB · 右边是大筹码",options:["加注，QJs标准BTN开牌","弃牌，避免与大筹码正面冲突","全下，40BB应该积极推进","平跟，控制底池"],answer:0,pts:30,analysis:"<strong>决赛桌中与大筹码的互动</strong>：加注！QJs在BTN是标准开牌手牌，即使大筹码在左边，你也不应该因为担心而折叠合理手牌。加注到2-2.5BB，如果大筹码3-bet则弃牌（QJs对大筹码强范围胜率不够），如果BB跟注则进入有位置优势的单挑。不能因为大筹码存在而过度缩手——那会损失大量盲注期望值。"},
+    {id:"to10",diff:"hard",scenario:"锦标赛，只剩2人（HU，单挑），你100BB，对手100BB。手持5♣3♦，你在SB（BTN兼SB）。",seats:[{"pos":0,"label":"SB/BTN(你)","hero":true},{"pos":1,"label":"BB/对手"}],community:[],pot:150,heroCards:[{"r":"5","s":"♣"},{"r":"3","s":"♦"}],heroInfo:"HU单挑 · SB=BTN位置",options:["弃牌，53不够强","加注，HU单挑范围极宽","全下极化","平跟探索牌面"],answer:1,pts:30,analysis:"<strong>HU（单挑）的范围策略</strong>：加注！HU单挑中，BTN/SB应该用非常宽泛的范围加注（约70-80%手牌），5-3o虽然弱，但：①你有位置优势（翻牌后最后行动）；②加注偷取BB盲注成功时直接获利；③即使被跟注，53在某些低牌面有不错的实现价值；④HU中平均手牌强度很低，53o并非特别差。"}
+  ],
+  short_stack: [
+    {id:"ss01",diff:"hard",scenario:"你有10BB，在HJ位，前面弃牌，手持A♦7♠，你的推入范围包含A7o吗？",seats:[{"pos":0,"label":"HJ(你,10BB)","hero":true},{"pos":1,"label":"CO"},{"pos":2,"label":"BTN"},{"pos":3,"label":"BB"}],community:[],pot:150,heroCards:[{"r":"A","s":"♦"},{"r":"7","s":"♠"}],heroInfo:"HJ · 10BB · 推入or弃牌",options:["推入，A7o在10BB HJ是标准推入","弃牌，A7o不够强在HJ推入","加注3BB，不全下","等待更好的手牌"],answer:0,pts:30,analysis:"<strong>短筹码推入范围（Nash均衡）</strong>：推入！根据Nash推入图表，10BB在HJ位的推入范围约为30-35%的手牌，A7o完全在这个范围内。理由：①A7o有顶踢牌（A）和不错的副牌（7）；②10BB推入给后面3位玩家压力，即使被跟注也有约40%胜率对抗宽跟注范围；③等待更好的牌会消耗盲注，让筹码进一步减少。"},
+    {id:"ss02",diff:"hard",scenario:"你有8BB，在UTG，手持K♠Q♦。这是你应该推入的牌吗？（9人桌）",seats:[{"pos":0,"label":"UTG(你,8BB)","hero":true},{"pos":3,"label":"BTN"},{"pos":4,"label":"BB"}],community:[],pot:120,heroCards:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"}],heroInfo:"UTG · 8BB · 9人桌",options:["推入，KQo足够强","弃牌，UTG面对8人有风险","加注3BB而不是全下","跟注探索"],answer:0,pts:30,analysis:"<strong>8BB UTG推入决策</strong>：推入！8BB是明确的推入或弃牌区间。KQo在9人桌UTG的Nash均衡是推入。原因：①KQo是强牌，有顶对/两对/顺子潜力；②8BB推入让8人做决策，多数人会弃牌；③加注3BB后面对再加注只能弃牌，浪费了3BB，不如直接推入获取最大折叠价值。"},
+    {id:"ss03",diff:"hard",scenario:"你有15BB，在BB，SB（50BB）全下推入，你的手牌是J♥9♥。应该跟注吗？",seats:[{"pos":0,"label":"BB(你,15BB)","hero":true},{"pos":1,"label":"SB(50BB)","active":true}],community:[],pot:300,heroCards:[{"r":"J","s":"♥"},{"r":"9","s":"♥"}],heroInfo:"BB · 15BB · SB全下",options:["弃牌，J9面对SB全下太弱","跟注，J9s有足够潜力","全下加注","再等等"],answer:0,pts:30,analysis:"<strong>15BB BB面对SB推入</strong>：弃牌！注意：SB（50BB）推入BB（15BB）的范围很宽（可能50%手牌），但J9s对这个宽范围的胜率约47%。底池赔率：跟注15BB赢30BB，需要33%。表面上赔率合适，但15BB是你全部筹码——这是全压决策，不仅仅是赔率计算。J9s（非同花连接）在ICM/锦标赛场景中弃牌保守，在现金局则可跟注。"},
+    {id:"ss04",diff:"hard",scenario:"你有6BB（极短），在CO，前面弃牌。手持2♦2♣（最小对子）。你应该？",seats:[{"pos":0,"label":"CO(你,6BB)","hero":true},{"pos":1,"label":"BTN"},{"pos":2,"label":"BB"}],community:[],pot:90,heroCards:[{"r":"2","s":"♦"},{"r":"2","s":"♣"}],heroInfo:"CO · 6BB · 极短筹码",options:["弃牌，22太小","全下推入，对子有翻牌前优势","加注2BB，小注试探","跟注BB平跟"],answer:1,pts:30,analysis:"<strong>极短筹码（6BB）的对子推入</strong>：全下！6BB是高度承诺的区间，任何加注都等于全下。22的翻牌前胜率对随机手牌约50%，对宽跟注范围（AX/KX）约50%+（因为22是对子，即使面对AK也有45%）。6BB推入只需要赢1/3的时间就是正期望，而等待更好的机会可能会让盲注继续消耗。"},
+    {id:"ss05",diff:"hard",scenario:"你有12BB，在BTN，手持A♠6♠，CO加注到3BB，轮到你。",seats:[{"pos":0,"label":"BTN(你,12BB)","hero":true},{"pos":1,"label":"CO(30BB)","active":true}],community:[],pot:270,heroCards:[{"r":"A","s":"♠"},{"r":"6","s":"♠"}],heroInfo:"BTN · 12BB · 面对CO加注",options:["弃牌，A6s面对CO加注","全下推入，A6s再加注","跟注，看翻牌","加注到6BB"],answer:1,pts:30,analysis:"<strong>短筹码的3-bet全下（再加注推入）</strong>：全下推入！面对CO的加注，你有3个选择：弃牌、跟注、推入。12BB在BTN：①跟注后翻牌还有9BB，每次翻牌后都面临推入或弃牌的决策，复杂且被动；②A6s推入：A牌有阻断效应（减少对手AA/AK的组合数），6s有同花潜力；③CO的跟注范围对A6s约50%+胜率。推入简化决策，给CO压力。"},
+    {id:"ss06",diff:"hard",scenario:"你有20BB，在BB，BTN（40BB）加注到2.5BB，SB弃牌，轮到你。手持T♣8♣。",seats:[{"pos":0,"label":"BB(你,20BB)","hero":true},{"pos":1,"label":"BTN(40BB)","active":true}],community:[],pot:375,heroCards:[{"r":"T","s":"♣"},{"r":"8","s":"♣"}],heroInfo:"BB · 20BB · 面对BTN标准加注",options:["弃牌，T8面对加注","3-bet全下，T8s有潜力推入","跟注，T8s有连接性","过牌（不是你的行动）"],answer:2,pts:30,analysis:"<strong>20BB BB面对BTN加注的处理</strong>：跟注是合理选择。20BB不够到\"纯推入或弃牌\"区间，但T8s跟注：①底池赔率合适；②翻牌后如果打中（两对/三条/顺子），直接推入剩余17.5BB；③T8s有连接性和同花潜力。3-bet推入（T8s的再加注全下）也是可行选项，但T8s作为推入牌稍弱，跟注看翻牌是更保守的方式。"},
+    {id:"ss07",diff:"hard",scenario:"你只有5BB（危急状态），在UTG+1，手持K♣3♦。你的正确操作？",seats:[{"pos":0,"label":"UTG+1(你,5BB)","hero":true},{"pos":2,"label":"BTN"},{"pos":3,"label":"BB"}],community:[],pot:75,heroCards:[{"r":"K","s":"♣"},{"r":"3","s":"♦"}],heroInfo:"UTG+1 · 5BB · 危急",options:["弃牌，K3不够在UTG推入","全下推入，K3有K的阻断","等待更好位置","跟注1BB平跟"],answer:1,pts:30,analysis:"<strong>5BB危急状态的推入决策</strong>：全下！5BB极度危急，下一手BB你就只有4BB。K3o虽然不强，但K牌有阻断效应（减少对手AA/AK/KK的组合），对宽跟注范围胜率约38%。5BB推入只需对手跟注范围胜率>29%就是正期望。更重要的是：等待会让筹码继续消耗，最终必须用更差的手牌推入，降低期望值。"},
+    {id:"ss08",diff:"hard",scenario:"你有18BB，在CO，手持9♠9♦。UTG（35BB）加注到2.5BB，MP弃牌，轮到你。",seats:[{"pos":0,"label":"CO(你,18BB)","hero":true},{"pos":1,"label":"UTG(35BB)","active":true}],community:[],pot:375,heroCards:[{"r":"9","s":"♠"},{"r":"9","s":"♦"}],heroInfo:"CO · 18BB · 面对UTG加注",options:["弃牌，99面对UTG危险","3-bet全下，99是价值推入牌","跟注，18BB跟注看翻牌","加注到6BB"],answer:1,pts:30,analysis:"<strong>18BB面对UTG加注的3-bet全下</strong>：3-bet全下！99是标准的3-bet价值牌。18BB：①跟注后剩余15.5BB，翻牌如果有A/K/Q超牌，你面临困境；②直接推入给UTG压力，对他的加注范围（JJ+/AK/AQ/KQs约12%）有55%胜率，对宽一点的范围（10-15%）更高；③避免翻牌后的复杂决策。短筹码应该积极推入强牌。"},
+    {id:"ss09",diff:"hard",scenario:"你有25BB，在SB。BTN加注，BB弃牌，轮到你。手持A♦Q♦。BTN是松攻型玩家。",seats:[{"pos":0,"label":"SB(你,25BB)","hero":true},{"pos":1,"label":"BTN松攻(50BB)","active":true}],community:[],pot:450,heroCards:[{"r":"A","s":"♦"},{"r":"Q","s":"♦"}],heroInfo:"SB · 25BB · AQs",options:["3-bet到6BB，标准加注","全下推入，AQs是强推入牌","跟注，位置不利看翻牌","弃牌"],answer:1,pts:30,analysis:"<strong>AQs面对松攻BTN的推入决策</strong>：全下推入！对阵松攻玩家：①BTN的加注范围宽（可能40%+手牌）；②AQs对这个宽范围胜率约60%+；③25BB推入：如果BTN弃牌赢到盲注+加注额；如果跟注，AQs有足够胜率。3-bet到6BB后面对4-bet只能弃牌，浪费了6BB。直接推入简化决策并给松攻玩家最大压力。"},
+    {id:"ss10",diff:"hard",scenario:"你有30BB，在BB。CO（60BB）加注，BTN跟注，SB弃牌，轮到你。手持6♦6♠。",seats:[{"pos":0,"label":"BB(你,30BB)","hero":true},{"pos":1,"label":"CO(60BB)"},{"pos":2,"label":"BTN(45BB)"}],community:[],pot:600,heroCards:[{"r":"6","s":"♦"},{"r":"6","s":"♠"}],heroInfo:"BB · 30BB · 多人底池 · 66",options:["弃牌，66多人底池位置最差","3-bet挤压到全下","跟注，set mining多人底池","跟注再看翻牌"],answer:1,pts:30,analysis:"<strong>30BB BB面对多人跟注的挤压推入</strong>：3-bet挤压（推入）！理由：①30BB推入给CO和BTN巨大压力，ICM和筹码压力让他们难以跟注；②即使一人跟注，66有set mining的机会（约12%）加上阻断效应；③跟注多人底池，66在3人局面胜率仅约25-30%，每个人都可能超牌你；④挤压推入是中短筹码在多人底池中的正确激进打法。"}
+  ],
+  gto: [
+    {id:"gt01",diff:"hard",scenario:"GTO策略中，你在BTN对BB单挑。翻牌后你应该用什么频率C-bet？",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"BB"}],community:[{"r":"A","s":"♦"},{"r":"7","s":"♣"},{"r":"2","s":"♥"}],pot:200,heroCards:[{"r":"K","s":"♦"},{"r":"Q","s":"♦"}],heroInfo:"BTN · C-bet频率问题",options:["几乎所有牌面都C-bet（70-80%）","只有打中牌面才C-bet（30%）","随机C-bet（50%）","只在干燥牌面C-bet"],answer:0,pts:30,analysis:"<strong>GTO C-bet频率</strong>：BTN对BB单挑，GTO策略是高频C-bet（约65-80%）。原因：①BTN的翻牌前加注范围（约25%手牌）对大多数牌面有范围优势；②BB跟注范围宽，但翻牌后防守频率受限；③高频小注C-bet（25-33%底池）是GTO中的主导策略，让BB无法通过弃牌来盈利。"},
+    {id:"gt02",diff:"hard",scenario:"GTO中，\"极化范围\"（polarized range）指的是什么？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"},{"r":"J","s":"♣"}],pot:500,heroCards:[{"r":"A","s":"♣"},{"r":"T","s":"♣"}],heroInfo:"GTO概念题",options:["强牌和弱牌混合，没有中等牌","只有强牌的范围","只有中等强度牌的范围","随机手牌组成的范围"],answer:0,pts:30,analysis:"<strong>极化范围（Polarized Range）</strong>：强牌和空气（弱牌）的混合，没有中间强度的手牌。典型场景：河牌全下是极化动作——要么坚果（价值），要么空气（诈唬）。极化范围的对立面是\"线性范围\"（merged range）或\"缩合范围\"（condensed range）——只有中等强度手牌。GTO中，大注下注往往使用极化范围，小注使用线性范围。"},
+    {id:"gt03",diff:"hard",scenario:"GTO中，\"MDF（最小防守频率）\"决定你应该至少多少频率跟注/加注来防止对手的下注有利可图？对手下注75%底池时，MDF是多少？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♠"},{"r":"K","s":"♦"},{"r":"9","s":"♣"}],pot:400,heroCards:[{"r":"Q","s":"♣"},{"r":"J","s":"♣"}],heroInfo:"MDF计算题",options:["约40%","约57%","约75%","约33%"],answer:1,pts:30,analysis:"<strong>MDF（最小防守频率）计算</strong>：MDF = 底池 / (底池 + 下注) = 400/(400+300) ≈ 57%。含义：如果你防守（跟注+加注）频率低于57%，对手的诈唬就会有利可图（即使是纯空气牌的下注）。当对手下注75%底池时，MDF约57%。这是GTO的核心概念，确保你的范围不能被对手的纯诈唬剥削。"},
+    {id:"gt04",diff:"hard",scenario:"GTO策略中，为什么要在价值下注的范围中混入诈唬？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♦"},{"r":"Q","s":"♣"},{"r":"T","s":"♠"},{"r":"7","s":"♥"},{"r":"2","s":"♦"}],pot:600,heroCards:[{"r":"A","s":"♦"},{"r":"J","s":"♦"}],heroInfo:"GTO概念：混合策略",options:["让对手无法通过范围判断来应对，保持不可预测性","诈唬本身就有价值","增加下注的频率，让对手支付更多","没有必要，纯价值下注更好"],answer:0,pts:30,analysis:"<strong>GTO混合策略的本质</strong>：保持不可预测性。如果你只在有价值时下注，对手可以弃掉所有弱牌，你的价值下注获利减少。混入诈唬后：①对手不知道你是价值还是诈唬；②他必须用MDF防守，让你的价值下注获得最多价值；③这是纳什均衡的核心——任何一方都无法单方面改变策略来获取更多利润。"},
+    {id:"gt05",diff:"hard",scenario:"翻牌后，你作为3-bet方在BTN位，面对BB在A♠K♦3♣牌面的过牌。GTO建议你如何下注？",seats:[{"pos":0,"label":"BTN(你,3-bet方)","hero":true},{"pos":1,"label":"BB","active":true}],community:[{"r":"A","s":"♠"},{"r":"K","s":"♦"},{"r":"3","s":"♣"}],pot:400,heroCards:[{"r":"J","s":"♠"},{"r":"T","s":"♠"}],heroInfo:"3-bet方面对BB过牌",options:["高频小注（25%底池）覆盖整个范围","中频大注（75%底池）只下注强牌","极化全下，代表坚果","随机选择"],answer:0,pts:30,analysis:"<strong>GTO在有利牌面的C-bet策略</strong>：高频小注！A♠K♦3♣干燥牌面极有利于3-bet方（AK/AA/KK/AQ都打中），BB的范围覆盖率低。GTO解决方案是高频（70%+）使用小注（25-33%底池），用整个范围下注，而不是中频大注。这样：①最大化EV（每手牌都获取一定价值）；②让BB无法通过弃牌来免于损失；③消除对手的过牌-弃牌策略。"},
+    {id:"gt06",diff:"hard",scenario:"\"阻断牌（Blocker）\"策略在GTO中的作用是什么？你持A♠K♠，公牌有同花顺可能，你在做全下诈唬决策。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"Q","s":"♠"},{"r":"J","s":"♠"},{"r":"T","s":"♠"},{"r":"2","s":"♥"},{"r":"3","s":"♦"}],pot:800,heroCards:[{"r":"A","s":"♠"},{"r":"K","s":"♠"}],heroInfo:"你持A♠K♠，决定是否全下诈唬",options:["持A♠K♠是理想的诈唬牌，因为阻断了对手的坚果同花顺","A♠K♠本身就是同花顺，无需诈唬","阻断牌无关紧要，诈唬取决于底池赔率","持A♠K♠反而不应该诈唬"],answer:0,pts:30,analysis:"<strong>阻断牌在诈唬中的作用</strong>：你持A♠K♠，坚果同花顺是A♠高的同花顺——而你手里有A♠！这意味着对手不可能持有A♠高同花顺，他的同花顺最高只能是K♠（但你有K♠），所以对手没有任何同花顺！这时你的\"全下诈唬\"极为有效：对手没有可以跟注的超强牌，只有更弱的同花或成牌，很可能弃牌。这是阻断牌策略的经典应用。"},
+    {id:"gt07",diff:"hard",scenario:"GTO中，\"范围优势（Range Advantage）\"如何影响翻牌后策略？A♦K♣2♠牌面，谁有范围优势？",seats:[{"pos":0,"label":"BTN(你,加注方)","hero":true},{"pos":1,"label":"BB","active":true}],community:[{"r":"A","s":"♦"},{"r":"K","s":"♣"},{"r":"2","s":"♠"}],pot:200,heroCards:[{"r":"Q","s":"♦"},{"r":"J","s":"♦"}],heroInfo:"范围优势分析",options:["BTN（加注方）有范围优势，可以高频C-bet","BB有范围优势，BTN应该谨慎","两者平等，无范围优势","无法判断"],answer:0,pts:30,analysis:"<strong>范围优势分析</strong>：BTN有明显范围优势！A♦K♣2♠牌面：BTN的加注范围（约25%手牌）包含AA/KK/AK/AQ/AJ等大量打中这个牌面的强牌。BB的跟注范围（约15-20%防守范围）虽然也有AX/KX，但比例更低。范围优势意味着BTN整体范围在这个牌面的平均强度更高，因此BTN应该高频C-bet（>65%），用整个范围下注。"},
+    {id:"gt08",diff:"hard",scenario:"GTO中，河牌\"过牌-加注（Check-raise）\"的正确价值/诈唬比例是什么？（以对手下注75%底池为例）",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♣"},{"r":"K","s":"♠"},{"r":"J","s":"♦"},{"r":"9","s":"♥"},{"r":"2","s":"♠"}],pot:400,heroCards:[{"r":"A","s":"♦"},{"r":"J","s":"♣"}],heroInfo:"河牌check-raise频率",options:["约1:1（50%价值,50%诈唬）","约2:1（67%价值,33%诈唬）","约3:1（75%价值,25%诈唬）","全部是价值下注"],answer:1,pts:30,analysis:"<strong>河牌check-raise的价值/诈唬比例</strong>：约2:1（约33%诈唬频率）。这取决于check-raise大小。若加注到2.5倍（对手需约29%胜率才能跟注），你的诈唬频率应让对手无差异，即诈唬频率约29%，价值约71%，接近2.5:1。实践中，约2:1（33%诈唬）是常见的近似值。关键是：河牌的诈唬比例永远少于价值，因为你没有后续街道的额外杠杆。"},
+    {id:"gt09",diff:"hard",scenario:"什么是\"频率利用（Frequency exploit）\"？对手过度弃牌（fold frequency太高），你应该？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♥"},{"r":"7","s":"♦"},{"r":"2","s":"♣"},{"r":"4","s":"♠"},{"r":"9","s":"♣"}],pot:500,heroCards:[{"r":"A","s":"♠"},{"r":"J","s":"♦"}],heroInfo:"对手fold频率过高",options:["增加诈唬频率，剥削对手过度弃牌","保持GTO策略不变","减少诈唬，对手紧说明他有牌","随机选择"],answer:0,pts:30,analysis:"<strong>频率剥削（Frequency Exploit）</strong>：增加诈唬！当对手弃牌频率超过GTO均衡值时，你应该增加诈唬频率来剥削这个错误。原理：如果对手弃牌60%（GTO应该约43%，对75%下注），他的防守频率低于MDF（57%），说明他给了你\"免费的钱\"——你每次诈唬期望值为正。剥削打法的本质是：发现对手的偏差，然后选择最能利用这个偏差的策略。"},
+    {id:"gt10",diff:"hard",scenario:"在GTO中，\"超注（Overbet）\"策略通常在什么情况下使用？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♦"},{"r":"A","s":"♣"},{"r":"K","s":"♥"},{"r":"2","s":"♠"},{"r":"5","s":"♦"}],pot:400,heroCards:[{"r":"A","s":"♥"},{"r":"K","s":"♦"}],heroInfo:"GTO超注应用场景",options:["当你有极大的范围优势，且范围极化时","任何时候想要更多价值","当对手筹码很多时","超注不是GTO策略"],answer:0,pts:30,analysis:"<strong>GTO超注的使用条件</strong>：当你有极大的范围优势且范围可以极化时。A♦A♣K♥2♠5♦牌面，你（3-bet方）的范围包含AA/KK/AK等超强牌，而对手的范围强度相对低——这是超注的典型场景。超注（150%+底池）的逻辑：①你的范围比对手强得多，可以用更大的注来榨取价值；②极化的范围在超注后能让强牌获取最大价值，弱牌（诈唬）提供足够的折叠equity。"}
+  ],
+  mtt_bubble: [
+    {id:"mb01",diff:"hard",scenario:"MTT泡沫期（差3人进钱）。你有45BB（桌上最大），对手A（20BB）推入全下，手持K♦Q♦，你应该？",seats:[{"pos":0,"label":"你(45BB)","hero":true},{"pos":1,"label":"对手A(20BB)","active":true}],community:[],pot:450,heroCards:[{"r":"K","s":"♦"},{"r":"Q","s":"♦"}],heroInfo:"45BB · 泡沫差3人",options:["弃牌，泡沫期保守","跟注，KQs有优势","全下，最大筹码有压力优势","等到泡沫破裂"],answer:0,pts:30,analysis:"<strong>泡沫期大筹码的ICM压力</strong>：弃牌！作为大筹码，你在泡沫期应该用ICM来施压——但不是用KQs冒险。KQs对中等筹码推入范围（约30%手牌）只有约55%胜率，跟注20BB：①输了你损失20BB，ICM价值大幅下降；②赢了获利20BB，但ICM增益远小于损失。泡沫期大筹码应该用\"零成本压力\"（对短筹码的加注）而非\"冒险跟注\"来积累筹码。"},
+    {id:"mb02",diff:"hard",scenario:"泡沫期，你是短筹码（8BB），中等筹码（25BB）在CO加注。你在BTN，手持A♠5♠。",seats:[{"pos":0,"label":"BTN(你,8BB)","hero":true},{"pos":1,"label":"CO(25BB)","active":true}],community:[],pot:240,heroCards:[{"r":"A","s":"♠"},{"r":"5","s":"♠"}],heroInfo:"BTN · 8BB · 泡沫期短筹码",options:["弃牌，泡沫期不冒险","全下推入，A5s是很好的推入牌","跟注，看翻牌","最小加注试探"],answer:1,pts:30,analysis:"<strong>短筹码泡沫期的推入决策</strong>：全下推入！短筹码（8BB）在泡沫期实际上面临的ICM压力比大筹码小，因为：①你已经在泡沫外侧，被淘汰只损失小额奖金；②守株待兔会让盲注继续吃掉你；③A5s对CO加注范围（约20-25%手牌）有约55%+胜率；④A牌有阻断效应。推入是正确的，短筹码没有\"保守\"的奢侈。"},
+    {id:"mb03",diff:"hard",scenario:"泡沫期，你有35BB，都是中等筹码（20-40BB）的桌。你在BTN，前面弃牌，手持T♠9♠。大小盲都是中等筹码。",seats:[{"pos":0,"label":"BTN(你,35BB)","hero":true},{"pos":1,"label":"SB(25BB)"},{"pos":2,"label":"BB(28BB)"}],community:[],pot:150,heroCards:[{"r":"T","s":"♠"},{"r":"9","s":"♠"}],heroInfo:"BTN · 35BB · 中等筹码桌",options:["弃牌，泡沫期T9太弱","加注，利用泡沫ICM压力偷盲","全下推入，T9s强推","平跟，看翻牌"],answer:1,pts:30,analysis:"<strong>泡沫期中等筹码的偷盲策略</strong>：加注！T9s在BTN是标准开牌手牌。泡沫期的关键：中等筹码玩家面对你的加注时，他们害怕被淘汰（影响进钱），会比平时更多弃牌。这给了你更多的偷盲机会。标准3BB加注，SB/BB的弃牌率在泡沫期会更高。不要因为泡沫期就缩手缩脚，丢掉应该赢的底池。"},
+    {id:"mb04",diff:"hard",scenario:"泡沫期最后一人（还差1人进钱），你有60BB（最大），短筹码（5BB）在你右边，轮到你（CO），手持7♦2♣。",seats:[{"pos":0,"label":"CO(你,60BB)","hero":true},{"pos":1,"label":"短筹码右边(5BB)"},{"pos":2,"label":"BTN(30BB)"}],community:[],pot:150,heroCards:[{"r":"7","s":"♦"},{"r":"2","s":"♣"}],heroInfo:"CO · 60BB · 差1人进钱",options:["弃牌，72o最差手牌","加注，利用冒泡压力偷盲","全下极化诈唬","跟注平跟"],answer:1,pts:30,analysis:"<strong>差1人进钱时的激进加注</strong>：加注！即使持有72o，在这个场景下加注是有利可图的。原因：①BTN（30BB）在泡沫期会非常保守，不想在进钱前冒险；②短筹码（5BB）已经快被盲注消耗，他可能在等其他人出局；③大盲和小盲在泡沫期弃牌率极高；④即使手牌很差（72o），折叠价值（让对手弃牌赢取盲注）使加注期望值为正。"},
+    {id:"mb05",diff:"hard",scenario:"刚过泡沫期，奖金差异很大（从第9名到第8名奖金翻倍）。你有20BB，手持K♣T♦，CO加注，轮到你（BTN）。",seats:[{"pos":0,"label":"BTN(你,20BB)","hero":true},{"pos":1,"label":"CO(35BB)","active":true}],community:[],pot:390,heroCards:[{"r":"K","s":"♣"},{"r":"T","s":"♦"}],heroInfo:"BTN · 20BB · 刚过泡沫",options:["弃牌，KTo面对加注","3-bet推入，KTo是价值推入","跟注，看翻牌","全下"],answer:1,pts:30,analysis:"<strong>过泡沫后的策略转变</strong>：3-bet推入！刚过泡沫，ICM压力降低，应该恢复积极打法。KTo对CO加注范围（约20%）有约55%+胜率，20BB推入：①CO如果弃牌你直接赢盲注+加注额（约4BB）；②CO跟注你有55%的胜率；③积累筹码在后续锦标赛阶段更重要。过泡沫期后，停止过度保守是关键调整。"},
+    {id:"mb06",diff:"hard",scenario:"决赛桌泡沫（10人→9人有奖，你是第10名要争进钱）。你有12BB，大筹码（80BB）对你加注，前面弃牌，轮到你（BB）。手持A♦9♥。",seats:[{"pos":0,"label":"BB(你,12BB)","hero":true},{"pos":1,"label":"大筹码(80BB)","active":true}],community:[],pot:360,heroCards:[{"r":"A","s":"♦"},{"r":"9","s":"♥"}],heroInfo:"BB · 12BB · 面对大筹码",options:["弃牌，大筹码压力下保守","全下推入，A9o是强推入","跟注，A9看翻牌","思考后弃牌"],answer:1,pts:30,analysis:"<strong>决赛桌泡沫期的短筹码推入</strong>：全下推入！大筹码对你（BB）加注，他的范围极宽（可能50%+手牌）。A9o对这个宽范围有约60%胜率。选择：①弃牌：安全，但12BB会继续消耗；②推入：对宽范围有优势，即使进钱失败也合理。关键判断：大筹码会用很宽的范围压迫你，你的A9o足够强到推入，不必因ICM而弃牌强手。"},
+    {id:"mb07",diff:"hard",scenario:"泡沫期，你有25BB，看到两个短筹码（6BB和8BB）在另外两桌对战。你在BB，BTN加注3BB，手持J♠T♠。",seats:[{"pos":0,"label":"BB(你,25BB)","hero":true},{"pos":1,"label":"BTN(30BB)","active":true}],community:[],pot:450,heroCards:[{"r":"J","s":"♠"},{"r":"T","s":"♠"}],heroInfo:"BB · 25BB · 短筹码在其他桌",options:["弃牌，泡沫期保守","跟注，JTs有价值","3-bet推入，利用泡沫压力","3-bet到75，标准3-bet"],answer:0,pts:30,analysis:"<strong>泡沫期的动态决策</strong>：弃牌！重要信息：两个短筹码在其他桌对战。如果一个被淘汰，你自动进钱。在这种情况下，等待他们出局是最优的ICM策略——不冒任何风险，让短筹码自然淘汰。JTs虽然是好牌，但进入风险底池（对25BB来说相当大）不值得，因为你\"几乎免费\"就能进钱。"},
+    {id:"mb08",diff:"hard",scenario:"泡沫期，你在UTG，有40BB，手持Q♦Q♣。前面全部弃牌，轮到你（6人桌）。",seats:[{"pos":0,"label":"UTG(你,40BB)","hero":true},{"pos":1,"label":"CO"},{"pos":2,"label":"BTN"},{"pos":3,"label":"BB"}],community:[],pot:150,heroCards:[{"r":"Q","s":"♦"},{"r":"Q","s":"♣"}],heroInfo:"UTG · 40BB · 泡沫期",options:["弃牌，QQ在UTG泡沫期危险","加注3BB，标准开牌","全下，QQ要推入","平跟，慢打QQ"],answer:1,pts:30,analysis:"<strong>泡沫期的QQ打法</strong>：标准加注3BB！QQ是顶级手牌，即使在泡沫期也应该正常开牌加注。弃牌是严重错误。全下则过于激进（会让所有弱手牌弃牌，只留下AK/KK/AA跟注）。标准3BB加注：①可以赢取盲注；②面对3-bet可以评估是否全下；③保留最大的灵活性。泡沫期不意味着放弃强手牌的价值。"},
+    {id:"mb09",diff:"hard",scenario:"泡沫期，有一个玩家在你左边，他非常紧（超级岩石）。你持有中等手牌时应该？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"超级紧玩家(右边)"}],community:[],pot:150,heroCards:[{"r":"8","s":"♣"},{"r":"7","s":"♣"}],heroInfo:"超级紧玩家在左",options:["减少加注，超级紧玩家会跟注强牌","增加对他的加注频率，他会弃掉大量手牌","不改变策略，GTO不针对特定玩家","只在强牌时加注"],answer:1,pts:30,analysis:"<strong>利用超级紧玩家</strong>：增加对他的加注频率！泡沫期超级紧玩家（rock）的弃牌率本来就高，在ICM压力下会更高。对他的加注：①他的弃牌率可能达到80%+；②即使他跟注，他的范围极紧（AA/KK/QQ/AK），你得到信息并可以弃牌；③中等手牌（87s）在他大量弃牌的场景下变成了\"高价值偷盲工具\"。剥削打法：针对不同玩家类型调整策略。"},
+    {id:"mb10",diff:"hard",scenario:"ICM计算题：剩4人，3人进钱，筹码：你30BB，玩家A 50BB，玩家B 15BB，玩家C 5BB。你的ICM价值取决于？",seats:[{"pos":0,"label":"你(30BB)","hero":true},{"pos":1,"label":"玩家A(50BB)"},{"pos":2,"label":"玩家B(15BB)"},{"pos":3,"label":"玩家C(5BB)"}],community:[],pot:0,heroCards:[{"r":"A","s":"♦"},{"r":"K","s":"♠"}],heroInfo:"ICM概念理解",options:["只取决于你自己的筹码多少","取决于所有玩家的筹码分布和奖金结构","只取决于进钱概率","只取决于第一名奖金"],answer:1,pts:30,analysis:"<strong>ICM（独立筹码模型）的本质</strong>：ICM价值取决于<strong>所有玩家的筹码分布和奖金结构</strong>。例如：即使你有30BB，如果C（5BB）被淘汰，你自动进第3名，ICM价值大增。这就是为什么你不应该冒险去跟注A（50BB）的大注——你的30BB对应的ICM价值在C被淘汰前和后差异巨大。ICM让筹码不是线性价值，而是与所有人的筹码和奖金表共同决定的。"}
+  ],
+  reads: [
+    {id:"re01",diff:"hard",scenario:"对手是\"松被动型\"（Loose Passive，跟注站）。他在河牌大注下注，底池800，下注600。你持中等强度手牌（两对）。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"松被动型对手","active":true}],community:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"},{"r":"8","s":"♣"},{"r":"3","s":"♥"},{"r":"7","s":"♠"}],pot:800,heroCards:[{"r":"K","s":"♥"},{"r":"Q","s":"♣"}],heroInfo:"对手松被动型，河牌大注",options:["跟注，他可能在诈唬","弃牌，松被动型玩家很少大注诈唬","加注全下，测试他","思考后跟注"],answer:1,pts:30,analysis:"<strong>针对松被动型玩家的决策</strong>：弃牌！松被动型（Calling Station）的特征是：①很少主动下注/加注；②通常只有强牌时才大注下注；③基本不诈唬。他在河牌突然大注（75%底池），这是强有力的信号——他有你打不过的手牌（三条/顺子/同花/葫芦）。你的两对KK+QQ虽强，但对他的强范围不够。弃牌是针对对手类型的正确剥削打法。"},
+    {id:"re02",diff:"hard",scenario:"对手是\"紧攻型\"（TAG，tight aggressive）。他在翻牌过牌，转牌下注，河牌大注。你全程跟注，现在持A♦J♣（顶对）。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"TAG对手","active":true}],community:[{"r":"A","s":"♣"},{"r":"T","s":"♥"},{"r":"5","s":"♦"},{"r":"3","s":"♠"},{"r":"9","s":"♣"}],pot:600,heroCards:[{"r":"A","s":"♦"},{"r":"J","s":"♣"}],heroInfo:"TAG对手翻过转河三街下注",options:["弃牌，TAG玩家三街下注代表强牌","跟注，AJ顶对有价值","加注，逼迫TAG弃掉弱牌","继续跟注"],answer:0,pts:30,analysis:"<strong>TAG玩家三街下注的范围</strong>：弃牌！TAG玩家特征：打牌紧、进入少，但进入就积极。翻牌过牌（控制底池或陷阱），转牌开始下注（已有成牌），河牌大注（完成听牌或一直有强牌）。三街下注的TAG范围非常窄：两对/三条/顺子/同花/葫芦等。你的AJ顶对+J踢对这个范围的胜率很低。弃牌。"},
+    {id:"re03",diff:"hard",scenario:"对手是\"松攻型\"（LAG，Loose Aggressive），经常3-bet和C-bet。他对你3-bet，你跟注。翻牌他C-bet，你跟注。转牌他检查（过牌）。你怎么应对？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"LAG对手","active":true}],community:[{"r":"K","s":"♦"},{"r":"7","s":"♥"},{"r":"2","s":"♣"},{"r":"9","s":"♠"}],pot:600,heroCards:[{"r":"Q","s":"♠"},{"r":"Q","s":"♣"}],heroInfo:"LAG对手转牌过牌",options:["过牌，对手可能在陷阱","下注，利用LAG转牌过牌的弱点","全下","过牌诱导"],answer:1,pts:30,analysis:"<strong>对抗LAG的打法</strong>：下注！LAG玩家3-bet+C-bet很常见，但在这个场景中：翻牌C-bet你跟注后，他转牌过牌说明他可能：①失去了对K高牌面的信心（他的3-bet范围未必有K）；②在控制底池（中等强度手牌）。你的QQ有超过K的价值，在他转牌示弱后应该下注（约50%底池）来：①价值提取；②防止他免费看河牌；③测试他的真实强度。"},
+    {id:"re04",diff:"hard",scenario:"你发现对手每次看完手牌后如果满意就摸筹码（物理tell）。现在翻牌后他在摸筹码，底池300，他下注240。你持A♥K♠（顶对顶踢）。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手(摸筹码)","active":true}],community:[{"r":"A","s":"♦"},{"r":"8","s":"♥"},{"r":"3","s":"♣"}],pot:300,heroCards:[{"r":"A","s":"♥"},{"r":"K","s":"♠"}],heroInfo:"对手有\"摸筹码\"的tell",options:["跟注，AK顶对很强","弃牌，物理tell显示他有强牌","加注，测试他是否真的强","全下"],answer:1,pts:30,analysis:"<strong>物理Tell（Physical Tell）的利用</strong>：弃牌！物理tell是现场扑克中最可靠的信息来源之一。如果你确认对手有\"摸筹码=有好牌\"的tell，且他在下注前摸了筹码，这强烈暗示他有两对以上的手牌（A8/A3/88/33等）。你的AK顶对对这个范围处于劣势。利用对手的弱点（包括物理tell）来做出对的决策，是高级扑克技能。"},
+    {id:"re05",diff:"hard",scenario:"对手在牌局中连续3次C-bet后放弃（在面对check-raise或浮牌后弃牌）。现在他又C-bet，你持K♦T♦（中等强度），牌面8♠7♠3♣。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"8","s":"♠"},{"r":"7","s":"♠"},{"r":"3","s":"♣"}],pot:300,heroCards:[{"r":"K","s":"♦"},{"r":"T","s":"♦"}],heroInfo:"对手连续放弃C-bet，你持KT",options:["弃牌，KT没打中牌面","跟注或加注，利用对手的C-bet后放弃模式","全下","过牌（不是你的行动）"],answer:1,pts:30,analysis:"<strong>利用对手的行为模式</strong>：跟注或加注！你发现了对手的弱点：\"连续C-bet后放弃\"。这意味着他的很多C-bet是纯诈唬，转牌他会放弃。策略：①浮牌（flat call翻牌C-bet），在转牌当他过牌时下注获取底池；②直接在翻牌check-raise，利用他的弃牌倾向。KT虽没打中，但你有这个模式信息，可以\"浮牌\"利用他的软弱点。"},
+    {id:"re06",diff:"hard",scenario:"对手在摊牌时显示，他的3-bet范围非常宽（包括KJo, QTo等中等手牌）。现在他3-bet，你持A♦T♦在CO位。",seats:[{"pos":0,"label":"CO(你)","hero":true},{"pos":1,"label":"对手(宽3-bet)","active":true}],community:[],pot:450,heroCards:[{"r":"A","s":"♦"},{"r":"T","s":"♦"}],heroInfo:"CO · 面对宽3-bet范围",options:["弃牌，3-bet一般代表强牌","4-bet，剥削他的宽3-bet范围","跟注，ATs有价值","全下"],answer:1,pts:30,analysis:"<strong>针对宽3-bet范围的4-bet剥削</strong>：4-bet！你知道对手3-bet范围包含KJo/QTo等弱手牌。ATs对这个宽3-bet范围有60%+胜率，而且4-bet可以：①让他弃掉KJ/QT等弱手牌（获取折叠价值）；②对跟注的手牌有优势；③剥削他的3-bet频率过高的错误。当对手偏离GTO均衡（3-bet太频繁），正确的剥削是增加4-bet频率。"},
+    {id:"re07",diff:"hard",scenario:"你在大量手牌中观察到对手有一个规律：他过牌表示弱，下注才有牌。河牌他过牌，底池600，轮到你，你持A♣3♣（无成牌）。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手(过牌=弱)","active":true}],community:[{"r":"K","s":"♦"},{"r":"Q","s":"♥"},{"r":"J","s":"♠"},{"r":"5","s":"♣"},{"r":"2","s":"♥"}],pot:600,heroCards:[{"r":"A","s":"♣"},{"r":"3","s":"♣"}],heroInfo:"对手过牌，你后行动",options:["过牌，没有成牌","下注300，利用对手的\"过牌=弱\"规律","满池诈唬600","全下诈唬"],answer:1,pts:30,analysis:"<strong>利用对手的过牌/下注模式</strong>：下注！你知道对手\"过牌=弱\"。他河牌过牌代表他有弱手牌（中对/弱对/错过听牌）。你的A3无成牌，但后行动+对手示弱是诈唬的完美场景。50%底池下注（300）：①折叠价值高（对手弱牌在300的下注下通常弃牌）；②你的A高在他弃牌后赢取600；③比过牌（肯定输）和大诈唬（风险过高）更平衡。"},
+    {id:"re08",diff:"hard",scenario:"对手是\"动作玩家\"，经常快速检查、快速过牌-加注。现在他快速过牌-加注，你持Q♣J♣（两对），翻牌K♠Q♦J♥。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手(快过牌加注)","active":true}],community:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"},{"r":"J","s":"♥"}],pot:300,heroCards:[{"r":"Q","s":"♣"},{"r":"J","s":"♣"}],heroInfo:"对手快速check-raise",options:["弃牌，两对面对check-raise危险","跟注，两对QJ很强","全下反加注","思考后跟注"],answer:2,pts:30,analysis:"<strong>行动速度Tell的应用</strong>：全下反加注！注意：快速check-raise通常（但不总是）代表强牌——玩家在快速执行预先计划的动作。但关键：你有QQ+JJ两对，在KQJ牌面这已经是很强的手牌。更重要的是，你的QJ阻断了：①T9的顺子（你有J）；②99/88的可能性（通过Q/J的阻断）。反加注全下：①如果对手是慢打三条，仍有约30%机会；②获取最大价值；③快速check-raise也可能是强听牌（ATs）的半诈唬。"},
+    {id:"re09",diff:"hard",scenario:"在一场5小时的牌局中，你注意到对手在持有听牌时总是\"提早摆好翻牌/弃牌的筹码\"。现在他在转牌下注前似乎\"已经准备好了\"。你持两对。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"T","s":"♦"},{"r":"9","s":"♥"},{"r":"4","s":"♣"},{"r":"K","s":"♠"}],pot:500,heroCards:[{"r":"T","s":"♣"},{"r":"K","s":"♦"}],heroInfo:"对手有\"提早准备\"的tell",options:["忽略tell，两对正常跟注/加注","加注，利用tell——他在听牌下注，你两对有优势","弃牌，tell不可靠","跟注观察河牌"],answer:1,pts:30,analysis:"<strong>利用弱点Tell进行剥削性加注</strong>：加注！如果你确认对手\"提早准备好=有听牌\"，那么他转牌下注代表他有同花听牌或顺子听牌，而不是成牌。你的TK两对（T♣K♦）对听牌有约65-70%的胜率（听牌还有约30%完成率）。加注（约2.5-3倍）可以：①让听牌支付高额赔率；②如果他弃牌更好；③即使跟注，你有很高胜率；④利用你掌握的额外信息。"},
+    {id:"re10",diff:"hard",scenario:"你在一个弱手牌玩家牌桌（鱼塘），应该调整哪个策略最重要？",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"弱玩家"},{"pos":2,"label":"弱玩家"},{"pos":3,"label":"弱玩家"}],community:[],pot:0,heroCards:[{"r":"A","s":"♠"},{"r":"K","s":"♦"}],heroInfo:"鱼塘桌策略选择",options:["使用复杂的GTO混合策略，对手无法读懂","简化策略：价值下注更大，减少诈唬","大量诈唬，弱手牌玩家容易弃牌","激进3-bet，建立主导权"],answer:1,pts:30,analysis:"<strong>弱手牌玩家（鱼）桌的最优策略</strong>：简化价值下注！鱼的特征：①跟注率高（Calling Station）；②不会折叠有一定价值的牌；③对下注大小不够敏感。最优剥削策略：①增大价值下注（对弱牌收取更多赔率）；②减少甚至消除诈唬（他们不会弃牌）；③用更直接的打法——有强牌就下大注；④减少复杂打法（三街检查-加注等）。简单直接的价值最大化是鱼塘最高期望值的打法。"}
+  ],
+};
+
 const SCENARIO_DATA = [
 
 /* ==================== 翻牌前 (20题) ==================== */
@@ -2192,13 +2681,13 @@ const SCENARIO_DATA = [
  keyPoint:"弱中等手牌(顶对弱踢)的河牌处理：过牌控制底池，利用摊牌价值，避免大注面对困境。"},
 
 {id:"R03",street:"river",streetLabel:"河牌",posType:"ip",potType:"3bet",
- title:"BTN在3-bet底池，AKT J→河牌Q，Broadway完成！",
+ title:"BTN在3-bet底池，AKTJ→河牌Q，Broadway完成！",
  setup:{
    pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:35,pot:65,
-   heroCards:["Q♠","T♦"],boardCards:["A♦","K♥","7♣","T♠","Q♥"],
-   villainAction:"三条街都有行动，河牌Q出来，BB过牌"
+   heroCards:["Q♠","T♦"],boardCards:["A♦","K♥","J♣","T♠","Q♥"],
+   villainAction:"三条街都有行动，河牌Q完成Broadway，BB过牌"
  },
- question:"AKTQJ完成板，你有QT（两对），河牌Q，BB过牌，怎么做？",
+ question:"AKQJT完成Broadway板，你有QT（两对），河牌Q，BB过牌，怎么做？",
  options:[
    {label:"过牌（check）",score:20,tag:"check"},
    {label:"下注 1/3底注（约22BB）",score:60,tag:"bet_third"},
@@ -2405,19 +2894,19 @@ const SCENARIO_DATA = [
  keyPoint:"河牌弱手牌面对全下时，冷静计算实际权益（而不只是底池赔率），不够权益则弃牌。"},
 
 {id:"R16",street:"river",streetLabel:"河牌",posType:"oop",potType:"3bet",
- title:"BB 3-bet底池，AJ8 T→河牌Q，面对BTN大注",
+ title:"BB 3-bet底池，AJ8T→河牌Q，对手持K成Broadway",
  setup:{
    pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:42,pot:58,
    heroCards:["A♦","J♠"],boardCards:["A♣","J♦","8♠","T♥","Q♦"],
    villainAction:"河牌BTN下注2/3（约39BB）"
  },
- question:"AJ8TQ（Broadway板），你有AJ（两对），面对BTN大注怎么应对？",
+ question:"AJ8TQ（顺子危险板，对手持K可成Broadway），你有AJ（两对），面对BTN大注怎么应对？",
  options:[
    {label:"弃牌",score:65,tag:"fold",star:true},
    {label:"跟注（call 39BB）",score:45,tag:"call"},
    {label:"加注全下",score:15,tag:"raise"}
  ],
- explain:"AJ两对在AJ8TQ完整Broadway板面对BTN 2/3大注：① AJ8TQ是完整顺子板（A-K-Q-J-T，持有K可以打成Broadway），任何持有K的手牌（KQ/KJ/K8等）都打成了顺子，并且超过你的两对；② BTN 3-bet call范围有大量KQ/KJs/KTs等，这些在河牌Q出来后全部打成顺子；③ 你的AJ两对在这里很可能落后；④ 底池赔率：39BB进97BB，需要40%权益；⑤ AJ两对对BTN大注范围权益约30-35%，弃牌是GTO的主要选择，虽然接近边界。",
+ explain:"AJ两对在AJ8TQ顺子危险板面对BTN 2/3大注：① AJ8TQ是顺子板（缺K，但对手持K可以打成A-K-Q-J-T Broadway顺子），任何持有K的手牌（KQ/KJ/K8等）都打成了顺子，并且超过你的两对；② BTN 3-bet call范围有大量KQ/KJs/KTs等，这些在河牌Q出来后全部打成顺子；③ 你的AJ两对在这里很可能落后；④ 底池赔率：39BB进97BB，需要40%权益；⑤ AJ两对对BTN大注范围权益约30-35%，弃牌是GTO的主要选择，虽然接近边界。",
  keyPoint:"在有顺子/同花完成的危险河牌面对大注时，中等强度手牌（两对等）通常选择弃牌。"},
 
 {id:"R17",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
@@ -2625,27 +3114,872 @@ function switchTab(tab) {
    练习模式渲染
    =================================================== */
 function renderTopicGrid() {
-  const html = TOPICS.map(t => `
-    <div class="topic-card" onclick="alert('练习模式敬请期待完整版，当前可在电脑版中体验全部120道题！')">
+  const pd = currentPlayer ? (getPlayerData(currentPlayer.id) || {}) : {};
+  const ts = pd.topicStats || {};
+  const html = TOPICS.map(t => {
+    const stat = ts[t.id] || {total:0, correct:0};
+    const pct = stat.total > 0 ? Math.round(stat.correct / stat.total * 100) : 0;
+    const pctStr = stat.total > 0 ? pct + '%' : '-';
+    const hasData = QUIZ_DATA && QUIZ_DATA[t.id] && QUIZ_DATA[t.id].length > 0;
+    return `<div class="topic-card" onclick="${hasData ? 'startTopicQuiz(\'' + t.id + '\')' : 'alert(\'该专项暂无题目\')'}">
       <div class="topic-icon">${t.icon}</div>
       <div class="topic-name">${t.name}</div>
-      <div class="topic-count">${t.count} 道题</div>
-      <div class="topic-prog-bar"><div class="topic-prog-fill" style="width:0%"></div></div>
-    </div>
-  `).join('');
+      <div class="topic-count">${stat.total > 0 ? stat.correct + '/' + stat.total + '题 · ' + pctStr : t.count + ' 道题'}</div>
+      <div class="topic-prog-bar"><div class="topic-prog-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
   document.getElementById('topic-grid').innerHTML = html;
 }
 
+/* quiz_logic_inserted */
+
 /* ===================================================
-   自由游戏
+   练习模式完整逻辑
    =================================================== */
-function openDesktopGame() {
-  window.open('./index.html', '_blank');
+let QZ = {
+  topicId: null,
+  topicName: '',
+  queue: [],
+  idx: 0,
+  results: [],  // {qid, correct, pts}
+  current: null,
+  answered: false
+};
+
+function startTopicQuiz(topicId) {
+  if (!QUIZ_DATA[topicId] || QUIZ_DATA[topicId].length === 0) {
+    alert('该专项暂无题目');
+    return;
+  }
+  const topic = TOPICS.find(t => t.id === topicId);
+  QZ.topicId = topicId;
+  QZ.topicName = topic ? topic.name : topicId;
+  QZ.queue = [...QUIZ_DATA[topicId]].sort(() => Math.random() - 0.5);
+  QZ.idx = 0;
+  QZ.results = [];
+  QZ.answered = false;
+  document.getElementById('qo-title').textContent = QZ.topicName;
+  document.getElementById('quiz-overlay').style.display = 'block';
+  document.getElementById('quiz-overlay').scrollTop = 0;
+  quizRenderQuestion(QZ.queue[0]);
 }
-function openMobileGame() {
-  // 横屏后直接跳到游戏页（后续可嵌入或新开窗口）
-  window.open('./mobile_v1.html', '_blank');
+
+function closeQuizOverlay() {
+  document.getElementById('quiz-overlay').style.display = 'none';
+  renderTopicGrid();
 }
+
+function quizRenderCard(c) {
+  // c 可以是 "A♠" 字符串 或 {r:"A", s:"♠"} 对象
+  const rank = typeof c === 'string' ? c.slice(0, -1) : c.r;
+  const suit = typeof c === 'string' ? c.slice(-1) : c.s;
+  const isRed = suit === '♥' || suit === '♦';
+  return `<div style="background:white;border-radius:6px;width:34px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;font-weight:800;line-height:1;gap:1px;color:${isRed ? '#d00' : '#111'};flex-shrink:0;">
+    <span>${rank}</span><span>${suit}</span>
+  </div>`;
+}
+
+function quizRenderQuestion(q) {
+  QZ.current = q;
+  QZ.answered = false;
+  const total = QZ.queue.length;
+  const cur = QZ.idx + 1;
+
+  document.getElementById('qo-prog').textContent = cur + '/' + total;
+  document.getElementById('qo-prog-bar').style.width = ((cur-1)/total*100).toFixed(0) + '%';
+
+  // 标签
+  const diffMap = {easy:'🟢 初级', mid:'🟡 中级', hard:'🔴 高级'};
+  document.getElementById('qo-tags').innerHTML =
+    `<span style="font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(240,192,64,.15);color:var(--gold);">${diffMap[q.diff] || q.diff}</span>` +
+    (q.heroInfo ? `<span style="font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.08);color:var(--text-dim);">${q.heroInfo}</span>` : '');
+
+  // 情景描述
+  document.getElementById('qo-scenario').textContent = q.scenario;
+
+  // 手牌 + 公牌
+  const cardsWrap = document.getElementById('qo-cards-wrap');
+  if (q.heroCards && q.heroCards.length) {
+    document.getElementById('qo-hero-cards').innerHTML = q.heroCards.map(c => quizRenderCard(c)).join('');
+    cardsWrap.style.display = 'block';
+    const boardGroup = document.getElementById('qo-board-group');
+    if (q.community && q.community.length) {
+      document.getElementById('qo-board-cards').innerHTML = q.community.map(c => quizRenderCard(c)).join('');
+      boardGroup.style.display = 'block';
+    } else {
+      boardGroup.style.display = 'none';
+    }
+  } else {
+    cardsWrap.style.display = 'none';
+  }
+
+  // 底池信息
+  const potInfo = document.getElementById('qo-pot-info');
+  if (q.pot) {
+    potInfo.textContent = '底池：' + q.pot + ' 积分';
+    potInfo.style.display = 'block';
+  } else {
+    potInfo.style.display = 'none';
+  }
+
+  // 选项
+  document.getElementById('qo-options').innerHTML = q.options.map((opt, i) => {
+    const optText = typeof opt === 'string' ? opt : opt;
+    return `<button class="qo-option" data-idx="${i}" onclick="quizAnswer(${i})"
+      style="width:100%;padding:13px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+      color:var(--text);font-size:14px;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;
+      transition:border-color .15s,background .15s;">${String.fromCharCode(65+i)}. ${optText}</button>`;
+  }).join('');
+
+  // 隐藏结果区
+  document.getElementById('qo-result-wrap').style.display = 'none';
+  document.getElementById('qo-question-wrap').style.display = 'block';
+}
+
+function quizAnswer(optIdx) {
+  if (QZ.answered) return;
+  QZ.answered = true;
+
+  const q = QZ.current;
+  const correct = optIdx === q.answer;
+  const pts = correct ? (q.pts || 20) : 0;
+  QZ.results.push({ qid: q.id, correct, pts, chosenIdx: optIdx });
+
+  // 更新积分（实时）
+  if (currentPlayer && correct) {
+    const p = getPlayerData(currentPlayer.id) || {...currentPlayer, score:0};
+    p.score = (p.score || 0) + pts;
+    // topicStats
+    if (!p.topicStats) p.topicStats = {};
+    if (!p.topicStats[QZ.topicId]) p.topicStats[QZ.topicId] = {total:0, correct:0};
+    p.topicStats[QZ.topicId].total = (p.topicStats[QZ.topicId].total || 0) + 1;
+    p.topicStats[QZ.topicId].correct = (p.topicStats[QZ.topicId].correct || 0) + 1;
+    // 错题不记录
+    savePlayerData(currentPlayer.id, p);
+    renderTopbar();
+  } else if (currentPlayer && !correct) {
+    const p = getPlayerData(currentPlayer.id) || {...currentPlayer, score:0};
+    if (!p.topicStats) p.topicStats = {};
+    if (!p.topicStats[QZ.topicId]) p.topicStats[QZ.topicId] = {total:0, correct:0};
+    p.topicStats[QZ.topicId].total = (p.topicStats[QZ.topicId].total || 0) + 1;
+    // 错题集
+    if (!p.wrongQuestions) p.wrongQuestions = [];
+    const wr = p.wrongQuestions.find(w => w.qid === q.id);
+    if (!wr) p.wrongQuestions.push({ qid: q.id, topicId: QZ.topicId, times:1, mastered:false });
+    else { wr.times++; wr.mastered = false; }
+    savePlayerData(currentPlayer.id, p);
+  }
+
+  // 高亮选项
+  document.querySelectorAll('.qo-option').forEach((btn, i) => {
+    btn.style.pointerEvents = 'none';
+    if (i === q.answer) {
+      btn.style.background = 'rgba(64,192,112,.2)';
+      btn.style.borderColor = '#40c070';
+      btn.style.color = '#40c070';
+    } else if (i === optIdx && !correct) {
+      btn.style.background = 'rgba(240,80,80,.15)';
+      btn.style.borderColor = '#f06060';
+      btn.style.color = '#f06060';
+    }
+  });
+
+  // 结果横幅
+  const banner = document.getElementById('qo-result-banner');
+  if (correct) {
+    banner.style.background = 'rgba(64,192,112,.15)';
+    banner.style.border = '1px solid rgba(64,192,112,.4)';
+    banner.innerHTML = `<div style="font-size:22px;margin-bottom:4px;">✅ 回答正确！</div><div style="font-size:14px;color:#40c070;font-weight:700;">+${pts} 积分</div>`;
+  } else {
+    banner.style.background = 'rgba(240,80,80,.1)';
+    banner.style.border = '1px solid rgba(240,80,80,.3)';
+    const correctOpt = q.options[q.answer];
+    banner.innerHTML = `<div style="font-size:22px;margin-bottom:4px;">❌ 答错了</div><div style="font-size:13px;color:#f06060;">正确答案：${String.fromCharCode(65+q.answer)}. ${correctOpt}</div>`;
+  }
+
+  // 解析
+  const analysisEl = document.getElementById('qo-analysis');
+  analysisEl.innerHTML = q.analysis || '';
+
+  // 更新下一题/完成按钮
+  const isLast = QZ.idx >= QZ.queue.length - 1;
+  const btn = document.getElementById('qo-next-btn');
+  btn.textContent = isLast ? '查看结果 →' : '下一题 →';
+
+  // 显示结果区
+  document.getElementById('qo-result-wrap').style.display = 'block';
+  // 滚到结果区
+  setTimeout(() => {
+    document.getElementById('qo-result-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 100);
+}
+
+function quizNextQuestion() {
+  const isLast = QZ.idx >= QZ.queue.length - 1;
+  if (isLast) {
+    showQuizSummary();
+    return;
+  }
+  QZ.idx++;
+  document.getElementById('quiz-overlay').scrollTop = 0;
+  quizRenderQuestion(QZ.queue[QZ.idx]);
+}
+
+function showQuizSummary() {
+  const total = QZ.results.length;
+  const correctCnt = QZ.results.filter(r => r.correct).length;
+  const totalPts = QZ.results.reduce((s,r) => s+r.pts, 0);
+  const accuracy = total ? Math.round(correctCnt/total*100) : 0;
+
+  document.getElementById('qs-topic-name').textContent = '专项：' + QZ.topicName;
+  document.getElementById('qs-correct').textContent = correctCnt;
+  document.getElementById('qs-total').textContent = total;
+  document.getElementById('qs-accuracy').textContent = accuracy + '%';
+  document.getElementById('qs-bonus').textContent = '+' + totalPts + ' 积分';
+
+  // 错题列表
+  const wrong = QZ.results.filter(r => !r.correct);
+  const wrongBlock = document.getElementById('qs-wrong-block');
+  if (wrong.length > 0) {
+    wrongBlock.style.display = 'block';
+    document.getElementById('qs-wrong-list').innerHTML = wrong.map(r => {
+      const q = QZ.queue.find(qq => qq.id === r.qid);
+      return `<div style="background:var(--bg2);border-radius:10px;padding:10px 12px;border:1px solid rgba(240,80,80,.3);">
+        <div style="font-size:13px;font-weight:600;color:#f06060;margin-bottom:4px;">❌ ${q ? q.scenario.slice(0,40)+'…' : r.qid}</div>
+        <div style="font-size:12px;color:var(--text-dim);">正确答案：${q ? String.fromCharCode(65+q.answer)+'. '+q.options[q.answer] : '-'}</div>
+      </div>`;
+    }).join('');
+  } else {
+    wrongBlock.style.display = 'none';
+  }
+
+  document.getElementById('quiz-summary-overlay').style.display = 'block';
+  document.getElementById('quiz-overlay').style.display = 'none';
+  document.getElementById('quiz-summary-overlay').scrollTop = 0;
+}
+
+function quizRetry() {
+  document.getElementById('quiz-summary-overlay').style.display = 'none';
+  startTopicQuiz(QZ.topicId);
+}
+
+function closeQuizSummary() {
+  document.getElementById('quiz-summary-overlay').style.display = 'none';
+  renderTopicGrid();
+}
+
+/* ===================================================
+   自由游戏 - 竖版手机版
+   =================================================== */
+
+// ---- 游戏常量 ----
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RV = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const HAND_NAMES=['高牌','一对','两对','三条','顺子','同花','葫芦','四条','同花顺','皇家同花顺'];
+const ROUND_LABEL={preflop:'翻牌前',flop:'翻牌',turn:'转牌',river:'河牌'};
+const AI_NAMES=['博少','杰笑','大表','小康','达仔','抽抽侠','阿钊','大舅子','小舅子'];
+const MG_BUY_IN = 2000;
+let MG_SB = 10, MG_BB = 20;
+
+// ---- 升盲设置 ----
+let mgBlindMode = 'fixed'; // fixed / slow / fast / turbo
+const BLIND_LEVELS = [
+  [10,20],[15,30],[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000]
+];
+function mgGetBlindForHand(handNum){
+  if(mgBlindMode === 'fixed') return BLIND_LEVELS[0];
+  const interval = mgBlindMode==='slow'?10 : mgBlindMode==='fast'?5 : 3;
+  const lvl = Math.min(Math.floor((handNum-1)/interval), BLIND_LEVELS.length-1);
+  return BLIND_LEVELS[lvl];
+}
+
+// ---- 工具 ----
+const mgSleep = ms => new Promise(r => setTimeout(r, ms));
+const makeDeckMG = () => { const d=[]; for(const s of SUITS) for(const r of RANKS) d.push({r,s}); return d; };
+const shuffleMG = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]];} return b; };
+const rvMG = r => RV[r] || parseInt(r);
+
+// ---- 手牌评估 ----
+function choose5MG(cards) {
+  if(cards.length===5) return [cards];
+  const res=[]; function go(i,cur){ if(cur.length===5){res.push([...cur]);return;} if(i>=cards.length)return; cur.push(cards[i]);go(i+1,cur);cur.pop();go(i+1,cur); } go(0,[]); return res;
+}
+function scoreHandMG(cards){
+  const vals=cards.map(c=>rvMG(c.r)).sort((a,b)=>b-a); const suits=cards.map(c=>c.s);
+  const flush=suits.every(s=>s===suits[0]); let straight=false,strH=0;
+  if([...new Set(vals)].length===5){ if(vals[0]-vals[4]===4){straight=true;strH=vals[0];} if(vals[0]===14&&vals[1]===5&&vals[2]===4&&vals[3]===3&&vals[4]===2){straight=true;strH=5;} }
+  const cnt={};for(const v of vals)cnt[v]=(cnt[v]||0)+1;
+  const g=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||b[0]-a[0]);
+  const[g1v,g1c]=[+g[0][0],g[0][1]]; const[g2v,g2c]=g[1]?[+g[1][0],g[1][1]]:[0,0];
+  if(flush&&straight)return strH===14?[9,14]:[8,strH]; if(g1c===4)return[7,g1v,g2v]; if(g1c===3&&g2c===2)return[6,g1v,g2v];
+  if(flush)return[5,...vals]; if(straight)return[4,strH]; if(g1c===3)return[3,g1v,...g.slice(1).map(x=>+x[0])];
+  if(g1c===2&&g2c===2)return[2,Math.max(g1v,g2v),Math.min(g1v,g2v),...g.slice(2).map(x=>+x[0])];
+  if(g1c===2)return[1,g1v,...g.slice(1).map(x=>+x[0])]; return[0,...vals];
+}
+function cmpScoreMG(a,b){for(let i=0;i<Math.max(a.length,b.length);i++){const d=(a[i]||0)-(b[i]||0);if(d)return d>0?1:-1;}return 0;}
+function evalHandMG(cards){ if(!cards||cards.length<5)return{score:[0],cards:cards||[]}; const cs=choose5MG(cards);let best=null; for(const c of cs){const s=scoreHandMG(c);if(!best||cmpScoreMG(s,best.score)>0)best={score:s,cards:c};} return best; }
+const handNameMG = s => HAND_NAMES[s[0]]||'高牌';
+
+// ---- 游戏状态 ----
+let MG = null;
+let mgHeroResolve = null;
+let mgActiveIdx = -1;
+const mgReviewLog = []; // 全局复盘记录（跨多手）
+let mgTotalDecisions = 0; // 总决策数
+
+// ---- AI ----
+function estimateStrMG(cards){
+  if(!cards||cards.length<2) return 0.3;
+  if(cards.length===2){ const[a,b]=cards.map(c=>rvMG(c.r)).sort((x,y)=>y-x); let s=(a+b)/28; if(a===b)s+=0.3; if(a>=12||b>=12)s+=0.1; return Math.min(1,s); }
+  const res=evalHandMG(cards); if(!res)return 0.3;
+  const tier=res.score[0]; return Math.min(1,0.05+tier*0.12+res.score[1]/100);
+}
+function decideAIMG(idx){
+  const p=MG.players[idx]; const callAmt=MG.lastBet-p.bet;
+  const potOdds=MG.pot>0?callAmt/(MG.pot+callAmt):0;
+  const str=estimateStrMG([...p.hand,...MG.community]); const r=Math.random();
+  if(callAmt<=0){ if(str>0.68&&r<0.55){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.5+r*0.4))|0));return{action:'raise',raiseTotal:p.bet+bet};} if(str>0.42&&r<0.22)return{action:'raise',raiseTotal:p.bet+Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.4)|0))};return{action:'check',raiseTotal:0}; }
+  if(str>potOdds+0.18||(str>0.5&&callAmt<=p.chips)){ if(str>0.72&&r<0.3&&p.chips>callAmt){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.6)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};} if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0}; }
+  if(r<0.12&&str>0.35){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.55)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+  if(callAmt<=0)return{action:'check',raiseTotal:0}; return{action:'fold',raiseTotal:0};
+}
+
+// ---- 执行行动 ----
+function applyActionMG(idx, action, raiseTotal){
+  const p=MG.players[idx]; const callAmt=MG.lastBet-p.bet;
+  if(action==='fold'){ p.folded=true; mgAddLog(`${p.name} 弃牌`); return{raised:false}; }
+  else if(action==='check'){ mgAddLog(`${p.name} 过牌`); return{raised:false}; }
+  else if(action==='call'){ const pay=Math.min(callAmt,p.chips); p.chips-=pay;p.bet+=pay;MG.pot+=pay; if(p.chips===0){p.allIn=true;mgAddLog(`${p.name} 跟注全下`);}else mgAddLog(`${p.name} 跟注 ${p.bet}`); return{raised:false}; }
+  else if(action==='raise'){ const extra=raiseTotal-p.bet; const pay=Math.min(extra,p.chips); p.chips-=pay;MG.pot+=pay; const newBet=p.bet+pay; MG.minRaise=Math.max(MG_BB,newBet-MG.lastBet);MG.lastBet=newBet;p.bet=newBet; if(p.chips===0){p.allIn=true;mgAddLog(`${p.name} 加注全下至 ${p.bet}`);}else mgAddLog(`${p.name} 加注至 ${p.bet}`); return{raised:true,raiserIdx:idx}; }
+  else if(action==='allin'){ const pay=p.chips; const wasHigher=p.bet+pay>MG.lastBet; p.bet+=pay;MG.pot+=pay;p.chips=0;p.allIn=true; if(wasHigher){MG.minRaise=Math.max(MG_BB,p.bet-MG.lastBet);MG.lastBet=p.bet;} mgAddLog(`${p.name} 全下 ${p.bet}`); return{raised:wasHigher,raiserIdx:idx}; }
+  return{raised:false};
+}
+
+// ---- 日志 ----
+function mgAddLog(text, cls=''){
+  const el=document.getElementById('mg-log'); if(!el)return;
+  const d=document.createElement('div'); d.className='mg-log-item'+(cls?' '+cls:''); d.textContent=text; el.appendChild(d);
+  while(el.children.length>3) el.removeChild(el.firstChild);
+  el.scrollTop=el.scrollHeight;
+}
+
+// ---- nextSeat ----
+function nextSeatMG(from){
+  const n=MG.players.length; let idx=(from+1)%n;
+  for(let i=0;i<n;i++){ if(!MG.players[idx].eliminated)return idx; idx=(idx+1)%n; }
+  return from;
+}
+
+// ---- 牌面渲染工具 ----
+function mgCardHtml(card, isBack){
+  if(!card||isBack) return '<div class="mg-card back"><span class="mg-rank">🂠</span></div>';
+  const isRed = card.s==='♥'||card.s==='♦';
+  return `<div class="mg-card${isRed?' red':''}"><span class="mg-rank">${card.r}</span><span class="mg-suit">${card.s}</span></div>`;
+}
+
+// ---- 渲染对手列表 ----
+function mgRenderOpponents(){
+  const container = document.getElementById('mg-opponents'); if(!container)return;
+  container.innerHTML = '';
+  for(let i=1;i<MG.players.length;i++){
+    const p = MG.players[i];
+    const isActive = (i===mgActiveIdx);
+    const isDealer = (i===MG.dealer);
+    const sbIdx = nextSeatMG(MG.dealer);
+    const bbIdx = nextSeatMG(sbIdx);
+    let cls = 'mg-opponent-row';
+    if(isActive) cls += ' active';
+    if(p.folded) cls += ' folded';
+    if(p.eliminated) cls += ' eliminated';
+    if(MG.showdown && p._isWinner) cls += ' winner';
+
+    // 牌面
+    let cardsHtml = '';
+    if(!p.eliminated && p.hand.length>0){
+      if(MG.showdown && !p.folded) cardsHtml = p.hand.map(c=>mgCardHtml(c,false)).join('');
+      else if(!p.folded) cardsHtml = p.hand.map(()=>mgCardHtml(null,true)).join('');
+    }
+
+    // 状态标签
+    let statusBadge = '';
+    if(p.allIn) statusBadge = '<span style="font-size:9px;color:#d080d0;margin-left:4px;">[全下]</span>';
+    if(p.folded && !p.eliminated) statusBadge = '<span style="font-size:9px;color:#888;margin-left:4px;">[弃牌]</span>';
+    if(p.eliminated) statusBadge = '<span style="font-size:9px;color:#666;margin-left:4px;">[出局]</span>';
+    
+    // 盲注标签
+    const isSB = (i===sbIdx);
+    const isBB = (i===bbIdx);
+    let blindBadge = '';
+    if(isDealer) blindBadge += '<span class="dealer-d">D</span>';
+    if(isSB) blindBadge += '<span class="mg-blind-badge sb">SB</span>';
+    if(isBB) blindBadge += '<span class="mg-blind-badge bb">BB</span>';
+
+    // 手牌名称
+    let handLabel = '';
+    if(MG.showdown && !p.folded && !p.eliminated && p._handName)
+      handLabel = `<div style="font-size:10px;color:${p._isWinner?'#40c070':'var(--text-dim)'};">${p._handName}</div>`;
+
+    const betInfo = p.bet>0 ? `<div class="mg-op-bet">投注: ${p.bet}</div>` : '';
+
+    const row = document.createElement('div');
+    row.className = cls;
+    row.innerHTML = `
+      <div class="mg-op-info">
+        <div class="mg-op-name">${p.name}${blindBadge}${statusBadge}</div>
+        <div class="mg-op-chips">${p.eliminated?'出局':p.chips+' 积分'}</div>
+        ${betInfo}
+        ${handLabel}
+      </div>
+      <div class="mg-op-cards">${cardsHtml}</div>
+    `;
+    container.appendChild(row);
+  }
+}
+
+// ---- 渲染公牌 ----
+function mgRenderBoard(){
+  const el=document.getElementById('mg-board-cards'); if(!el)return;
+  if(MG.community.length===0){ el.innerHTML='<div style="color:rgba(255,255,255,.15);font-size:12px;">等待发牌...</div>'; return; }
+  el.innerHTML = MG.community.map(c=>mgCardHtml(c,false)).join('');
+}
+
+// ---- 渲染顶栏 ----
+function mgRenderTopbar(){
+  const potEl=document.getElementById('mg-pot'); if(potEl) potEl.textContent=MG.pot;
+  const rlEl=document.getElementById('mg-round-label'); if(rlEl) rlEl.textContent=ROUND_LABEL[MG.round]||MG.round;
+  const blEl=document.getElementById('mg-blind-label'); if(blEl) blEl.textContent=`盲注 ${MG_SB}/${MG_BB}`;
+}
+
+// ---- 渲染英雄区 ----
+function mgRenderHero(){
+  const hero=MG.players[0];
+  const chipsEl=document.getElementById('mg-hero-chips'); if(chipsEl) chipsEl.textContent=hero.chips+' 积分';
+  const betEl=document.getElementById('mg-hero-bet-disp'); if(betEl) betEl.textContent=hero.bet>0?`投注: ${hero.bet}`:'';
+  const cardsEl=document.getElementById('mg-hero-cards'); if(cardsEl) cardsEl.innerHTML=hero.hand.map(c=>mgCardHtml(c,false)).join('');
+  const hnEl=document.getElementById('mg-hero-hand-name');
+  if(hnEl){
+    if(hero.hand.length>0&&!hero.folded&&!hero.eliminated&&MG.community.length>=0){
+      try{ const all=[...hero.hand,...MG.community]; if(all.length>=2) hnEl.textContent=handNameMG(evalHandMG(all).score); }catch(e){ hnEl.textContent=''; }
+    } else hnEl.textContent='';
+  }
+  // 英雄盲注标签
+  const sbIdx=nextSeatMG(MG.dealer); const bbIdx=nextSeatMG(sbIdx);
+  const isSB=(0===sbIdx); const isBB=(0===bbIdx); const isDealer=(0===MG.dealer);
+  let heroLabel = '你';
+  if(isDealer) heroLabel += ' <span class="dealer-d">D</span>';
+  if(isSB) heroLabel += ' <span class="mg-blind-badge sb">SB</span>';
+  if(isBB) heroLabel += ' <span class="mg-blind-badge bb">BB</span>';
+  const heroNameEl = document.querySelector('#mg-hero-area .mg-hero-name');
+  if(heroNameEl) heroNameEl.innerHTML = heroLabel;
+}
+
+// ---- 渲染操作按钮 ----
+function mgRenderActions(){
+  const hero=MG.players[0];
+  const btns=document.getElementById('mg-action-btns'); if(!btns)return;
+  const raiseWrap=document.getElementById('mg-raise-wrap'); if(raiseWrap) raiseWrap.style.display='none';
+  btns.innerHTML='';
+
+  if(hero.eliminated||hero.folded||hero.allIn){
+    btns.innerHTML=`<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:6px;">${hero.eliminated?'你已出局':hero.allIn?'已全下，等待其他玩家':'已弃牌，等待本手结束'}</div>`;
+    return;
+  }
+  if(!mgHeroResolve){
+    btns.innerHTML=`<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:6px;">等待其他玩家...</div>`;
+    return;
+  }
+
+  const callAmt=MG.lastBet-hero.bet;
+  const canCheck=callAmt<=0;
+
+  if(!canCheck){
+    const b=document.createElement('button'); b.className='mg-action-btn mg-btn-fold'; b.textContent='弃牌';
+    b.onclick=()=>mgResolveHero('fold',0); btns.appendChild(b);
+  }
+  if(canCheck){
+    const b=document.createElement('button'); b.className='mg-action-btn mg-btn-check'; b.textContent='过牌';
+    b.onclick=()=>mgResolveHero('check',0); btns.appendChild(b);
+  } else {
+    const actual=Math.min(callAmt,hero.chips);
+    const b=document.createElement('button'); b.className='mg-action-btn mg-btn-call'; b.textContent=`跟注 ${actual}`;
+    b.onclick=()=>mgResolveHero('call',0); btns.appendChild(b);
+  }
+  const minRT=MG.lastBet+Math.max(MG.minRaise,MG_BB);
+  const maxRT=hero.chips+hero.bet;
+  if(hero.chips>callAmt&&minRT<=maxRT){
+    const b=document.createElement('button'); b.className='mg-action-btn mg-btn-raise'; b.textContent=canCheck?'下注':'加注';
+    b.onclick=()=>mgShowRaiseSlider(minRT,maxRT,canCheck); btns.appendChild(b);
+  }
+  const ab=document.createElement('button'); ab.className='mg-action-btn mg-btn-allin'; ab.textContent=`全下`;
+  ab.onclick=()=>mgResolveHero('allin',0); btns.appendChild(ab);
+}
+
+let _mgRaiseMin=0, _mgRaiseMax=0, _mgRaiseCanCheck=false;
+function mgShowRaiseSlider(min,max,canCheck){
+  _mgRaiseMin=min; _mgRaiseMax=max; _mgRaiseCanCheck=canCheck;
+  const wrap=document.getElementById('mg-raise-wrap'); if(!wrap)return;
+  const lbl=document.getElementById('mg-raise-lbl'); if(lbl) lbl.textContent=canCheck?'下注至':'加注至';
+  const sl=document.getElementById('mg-raise-slider');
+  if(sl){ sl.min=min; sl.max=max; sl.step=MG_BB; sl.value=Math.min(min,max); }
+  const vl=document.getElementById('mg-raise-val'); if(vl) vl.textContent=Math.min(min,max);
+  wrap.style.display='block';
+  // 滚动到底部
+  wrap.scrollIntoView({behavior:'smooth',block:'end'});
+}
+function mgRaiseSlide(sl){ const vl=document.getElementById('mg-raise-val'); if(vl) vl.textContent=sl.value; }
+function mgRaiseCancel(){ const w=document.getElementById('mg-raise-wrap'); if(w) w.style.display='none'; }
+function mgRaiseConfirm(){
+  const sl=document.getElementById('mg-raise-slider'); if(!sl)return;
+  mgResolveHero(_mgRaiseCanCheck?'raise':'raise', parseInt(sl.value));
+  const w=document.getElementById('mg-raise-wrap'); if(w) w.style.display='none';
+}
+function mgResolveHero(action, raiseTotal){
+  if(!mgHeroResolve)return;
+  const fn=mgHeroResolve; mgHeroResolve=null; fn({action,raiseTotal});
+}
+
+// ---- 全部渲染 ----
+function mgRenderAll(){
+  mgRenderTopbar();
+  mgRenderBoard();
+  mgRenderOpponents();
+  mgRenderHero();
+  mgRenderActions();
+}
+
+// ---- 蒙特卡洛 ----
+function mgMonteCarloWinRate(heroHand, community, numOpponents, iterations=600){
+  const known=[...heroHand,...community]; const knownSet=new Set(known.map(c=>c.r+c.s));
+  const deck=makeDeckMG().filter(c=>!knownSet.has(c.r+c.s));
+  let wins=0,ties=0; const needed=5-community.length;
+  for(let i=0;i<iterations;i++){
+    const d=shuffleMG(deck); let ptr=0;
+    const board=[...community]; for(let j=0;j<needed;j++) board.push(d[ptr++]);
+    const opponents=[]; for(let o=0;o<numOpponents;o++) opponents.push([d[ptr++],d[ptr++]]);
+    const heroScore=evalHandMG([...heroHand,...board]).score;
+    let heroWins=true,heroTies=false;
+    for(const op of opponents){
+      const opScore=evalHandMG([...op,...board]).score; const cmp=cmpScoreMG(heroScore,opScore);
+      if(cmp<0){heroWins=false;heroTies=false;break;} if(cmp===0){heroWins=false;heroTies=true;}
+    }
+    if(heroWins)wins++; else if(heroTies)ties++;
+  }
+  return{winRate:wins/iterations,tieRate:ties/iterations,total:(wins+ties)/iterations};
+}
+
+// ---- GTO建议 ----
+function mgGetGTOAdvice(winRate, potOdds, callAmt, heroChips, pot){
+  const ev_call = winRate*(pot+callAmt)-(1-winRate)*callAmt;
+  const advice=[];
+  if(callAmt<=0){
+    if(winRate>0.65){ const betSize=Math.round(pot*(0.5+(winRate-0.65))); advice.push({action:'下注',freq:Math.round(winRate*85),recommended:true,reason:`胜率${(winRate*100).toFixed(0)}%，建议下注 ${betSize}`}); advice.push({action:'过牌',freq:Math.round((1-winRate)*85+15),recommended:false,reason:'偶尔慢打'}); }
+    else if(winRate>0.45){ advice.push({action:'过牌',freq:65,recommended:true,reason:'胜率中等，过牌保护范围'}); advice.push({action:'下注',freq:35,recommended:false,reason:'半诈唬或价值'}); }
+    else { advice.push({action:'过牌',freq:80,recommended:true,reason:'胜率较低，避免投入更多'}); advice.push({action:'下注(诈唬)',freq:20,recommended:false,reason:'偶尔诈唬'}); }
+  } else {
+    if(winRate>potOdds+0.15&&ev_call>0){ const raiseFreq=winRate>0.65?Math.round(winRate*50):15; advice.push({action:'加注',freq:raiseFreq,recommended:winRate>0.68,reason:`强牌，EV+${ev_call.toFixed(0)}`}); advice.push({action:'跟注',freq:Math.round((winRate-potOdds)*100),recommended:winRate<=0.68,reason:`胜率${(winRate*100).toFixed(0)}%>赔率${(potOdds*100).toFixed(0)}%`}); }
+    else if(winRate>potOdds-0.05){ advice.push({action:'跟注',freq:55,recommended:true,reason:`边界情况，EV ${ev_call.toFixed(0)}`}); advice.push({action:'弃牌',freq:45,recommended:false,reason:'边缘牌力'}); }
+    else { advice.push({action:'弃牌',freq:75,recommended:true,reason:`赔率${(potOdds*100).toFixed(0)}%>胜率${(winRate*100).toFixed(0)}%`}); if(winRate>0.25) advice.push({action:'加注(诈唬)',freq:25,recommended:false,reason:'偶尔诈唬'}); }
+  }
+  return{advice,ev_call:ev_call.toFixed(1)};
+}
+
+// ---- 更新GTO面板 ----
+function mgUpdateGTOPanel(){
+  const panel=document.getElementById('mg-gto-panel'); if(!panel||panel.style.display==='none')return;
+  const hero=MG.players[0]; if(!hero||hero.eliminated||hero.folded)return;
+  const numOpp=MG.players.filter(p=>!p.folded&&!p.eliminated&&!p.isHero).length; if(numOpp<1)return;
+  const sim=mgMonteCarloWinRate(hero.hand,MG.community,numOpp,600);
+  const winRate=sim.winRate; const callAmt=Math.max(0,MG.lastBet-hero.bet);
+  const potOdds=MG.pot>0?callAmt/(MG.pot+callAmt):0;
+  const {advice,ev_call}=mgGetGTOAdvice(winRate,potOdds,callAmt,hero.chips,MG.pot);
+  const pct=Math.round(winRate*100);
+  const ringColor=winRate>0.6?'#40c070':winRate>0.4?'#e0a020':'#e05050';
+  const el=document.getElementById('mg-gto-content'); if(!el)return;
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div style="font-size:24px;font-weight:800;color:${ringColor};">${pct}%</div>
+      <div>
+        <div style="color:var(--text);font-size:12px;">胜率估算</div>
+        <div style="color:var(--text-dim);font-size:11px;">对阵${numOpp}人 · ${callAmt>0?'赔率'+(potOdds*100).toFixed(0)+'%':'无需跟注'} · EV${parseFloat(ev_call)>=0?'+':''}${ev_call}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">推荐行动：</div>
+    ${advice.map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;margin-bottom:4px;border-radius:7px;background:${a.recommended?'rgba(240,192,64,.1)':'rgba(255,255,255,.03)'};border:1px solid ${a.recommended?'rgba(240,192,64,.3)':'transparent'};">
+      <div><span style="font-size:12px;font-weight:600;color:${a.recommended?'var(--gold)':'var(--text)'};">${a.recommended?'★ ':''}${a.action}</span><span style="font-size:11px;color:var(--text-dim);margin-left:6px;">${a.reason}</span></div>
+      <div style="font-size:11px;color:var(--text-dim);flex-shrink:0;margin-left:8px;">${a.freq}%</div>
+    </div>`).join('')}
+  `;
+}
+
+function mgToggleGTO(){
+  const panel=document.getElementById('mg-gto-panel'); if(!panel)return;
+  const btn=document.getElementById('mg-gto-btn');
+  if(panel.style.display==='none'||!panel.style.display){
+    panel.style.display='block'; if(btn){btn.style.background='rgba(64,192,112,.25)';btn.style.borderColor='rgba(64,192,112,.5)';}
+    if(MG&&mgHeroResolve) mgUpdateGTOPanel();
+  } else {
+    panel.style.display='none'; if(btn){btn.style.background='rgba(64,192,112,.12)';btn.style.borderColor='rgba(64,192,112,.25)';}
+  }
+}
+
+// ---- 记录决策 ----
+const mgHandReviewLog = []; // 本手复盘
+function mgRecordDecision(round, action, winRate, potOdds, callAmt, pot){
+  const {advice}=mgGetGTOAdvice(winRate,potOdds,callAmt,MG.players[0].chips,pot);
+  const topAction=advice.find(a=>a.recommended)?.action||advice[0]?.action;
+  const actionMap={'fold':'弃牌','check':'过牌','call':'跟注','raise':'加注','allin':'全下'};
+  const actCN=actionMap[action]||action;
+  let quality='ok',comment='';
+  const ev=winRate*(pot+Math.max(callAmt,0))-(1-winRate)*Math.max(callAmt,0);
+  if(action==='fold'){ if(winRate>potOdds+0.15){quality='bad';comment=`弃牌可能有误，胜率${(winRate*100).toFixed(0)}%远高于赔率${(potOdds*100).toFixed(0)}%`;}else if(winRate>potOdds){quality='warn';comment=`胜率略高于赔率，可考虑跟注`;}else{quality='ok';comment=`弃牌正确，负期望`;}
+  } else if(action==='check'||action==='call'){ if(winRate>0.65&&callAmt<=0){quality='warn';comment=`强牌选择过牌，可考虑价值下注`;}else if(ev>0){quality='ok';comment=`期望值+${ev.toFixed(0)}，决策合理`;}else{quality='warn';comment=`期望值${ev.toFixed(0)}，需谨慎`;}
+  } else if(action==='raise'||action==='allin'){ if(winRate>0.55){quality='ok';comment=`强牌加注，价值下注正确`;}else if(ev>0){quality='ok';comment=`EV+${ev.toFixed(0)}，下注正确`;}else if(winRate>0.25){quality='warn';comment=`胜率${(winRate*100).toFixed(0)}%，注意对手范围`;}else{quality='warn';comment=`牌力偏弱加注，确保是有效诈唬`;}
+  }
+  const rec={round:ROUND_LABEL[round]||round,action:actCN,winRate,potOdds,quality,comment,ev:ev.toFixed(0)};
+  mgHandReviewLog.push(rec);
+  mgReviewLog.push(rec);
+  mgTotalDecisions++;
+}
+
+// ---- 核心：一轮下注 ----
+async function mgBettingRound(firstIdx){
+  const n=MG.players.length;
+  function buildQueue(start){ const q=[]; let idx=start; for(let i=0;i<n;i++){const p=MG.players[idx];if(!p.folded&&!p.allIn&&!p.eliminated)q.push(idx);idx=(idx+1)%n;} return q; }
+  let queue=buildQueue(firstIdx);
+  while(queue.length>0){
+    const active=MG.players.filter(p=>!p.folded&&!p.eliminated); if(active.length<=1)return;
+    const idx=queue.shift(); const p=MG.players[idx];
+    if(p.folded||p.allIn||p.eliminated) continue;
+    mgActiveIdx=idx; mgRenderAll();
+    let action,raiseTotal;
+    if(p.isHero){
+      mgUpdateGTOPanel();
+      const callAmtNow=Math.max(0,MG.lastBet-p.bet);
+      const potOddsNow=MG.pot>0?callAmtNow/(MG.pot+callAmtNow):0;
+      const winRateNow=mgMonteCarloWinRate(p.hand,MG.community,MG.players.filter(q=>!q.folded&&!q.eliminated&&!q.isHero).length,500).winRate;
+      const result=await new Promise(resolve=>{mgHeroResolve=resolve;mgRenderActions();});
+      action=result.action; raiseTotal=result.raiseTotal;
+      mgRecordDecision(MG.round,action,winRateNow,potOddsNow,callAmtNow,MG.pot);
+    } else {
+      await mgSleep(350+Math.random()*500);
+      if(!MG||MG.ended)return;
+      const act=decideAIMG(idx); action=act.action; raiseTotal=act.raiseTotal;
+    }
+    const result=applyActionMG(idx,action,raiseTotal);
+    mgActiveIdx=-1; mgRenderAll();
+    if(result.raised){ const nextStart=(result.raiserIdx+1)%n; queue=buildQueue(nextStart).filter(i=>i!==result.raiserIdx); }
+    await mgSleep(80);
+  }
+  mgActiveIdx=-1; mgRenderAll();
+}
+
+// ---- 结算 ----
+async function mgEndHand(showdown){
+  mgActiveIdx=-1; mgHeroResolve=null;
+  const eligible=MG.players.filter(p=>!p.folded&&!p.eliminated);
+  MG.players.forEach(p=>{p._isWinner=false;p._handName='';});
+  MG.showdown=false;
+
+  if(!showdown||eligible.length===1){
+    const winner=eligible[0]||MG.players.filter(p=>!p.eliminated)[0];
+    winner.chips+=MG.pot; winner._isWinner=true;
+    mgAddLog(`${winner.name} 赢得底池 ${MG.pot}！`,'gold');
+    document.getElementById('mg-rb-winner').textContent=`🏆 ${winner.name} 赢得 ${MG.pot} 积分`;
+    document.getElementById('mg-rb-detail').textContent='其他玩家全部弃牌';
+  } else {
+    const all7=p=>[...p.hand,...MG.community];
+    const evaled=eligible.map(p=>{const e=evalHandMG(all7(p));return{player:p,score:e.score,handName:handNameMG(e.score),win:0};});
+    evaled.sort((a,b)=>cmpScoreMG(b.score,a.score));
+    const topScore=evaled[0].score; const winners=evaled.filter(e=>cmpScoreMG(e.score,topScore)===0);
+    const share=Math.floor(MG.pot/winners.length);
+    winners.forEach(w=>{w.player.chips+=share;w.win=share;});
+    evaled.forEach(e=>{e.player._handName=e.handName;e.player._isWinner=e.win>0;});
+    MG.showdown=true;
+    winners.forEach(w=>mgAddLog(`${w.player.name} 赢 ${w.win}（${w.handName}）`,'gold'));
+    const winNames=winners.map(w=>`${w.player.name}（${w.handName}）`).join('、');
+    document.getElementById('mg-rb-winner').textContent=`🏆 ${winNames} 赢 ${MG.pot}`;
+    const details=evaled.filter(e=>!e.player._isWinner).map(e=>`${e.player.name}:${e.handName}`).join(' · ');
+    document.getElementById('mg-rb-detail').textContent=details;
+  }
+
+  // 处理出局
+  for(const p of MG.players){ if(!p.eliminated&&p.chips<=0){p.eliminated=true;mgAddLog(`${p.name} 出局！`,'red');} }
+  const aliveAfter=MG.players.filter(p=>!p.eliminated);
+
+  mgRenderAll();
+  document.getElementById('mg-result-bar').style.display='flex';
+  
+  if(aliveAfter.length<=1){ setTimeout(()=>mgGameOver(),1800); }
+}
+
+// ---- 一手牌主流程 ----
+async function mgPlayHand(){
+  // 升盲判断
+  const [newSB, newBB] = mgGetBlindForHand(MG.handNum);
+  if(newSB !== MG_SB || newBB !== MG_BB){
+    MG_SB = newSB; MG_BB = newBB;
+    mgAddLog(`⬆ 升盲！当前盲注 ${MG_SB}/${MG_BB}`,'gold');
+  }
+  
+  MG.deck=shuffleMG(makeDeckMG()); MG.community=[]; MG.pot=0; MG.round='preflop'; MG.lastBet=MG_BB; MG.minRaise=MG_BB; MG.ended=false; MG.showdown=false;
+  mgHandReviewLog.length=0;
+  document.getElementById('mg-result-bar').style.display='none';
+  document.getElementById('mg-raise-wrap').style.display='none';
+  for(const p of MG.players){p.hand=[];p.bet=0;p.folded=p.eliminated;p.allIn=false;p._isWinner=false;p._handName='';}
+  const alive=MG.players.filter(p=>!p.eliminated);
+  if(alive.length<2){mgGameOver();return;}
+  do{MG.dealer=(MG.dealer+1)%MG.players.length;}while(MG.players[MG.dealer].eliminated);
+  for(let i=0;i<2;i++) for(const p of alive) p.hand.push(MG.deck.pop());
+  const sbIdx=nextSeatMG(MG.dealer); const bbIdx=nextSeatMG(sbIdx);
+  const payB=(idx,amt)=>{const p=MG.players[idx];const pay=Math.min(amt,p.chips);p.chips-=pay;p.bet=pay;MG.pot+=pay;if(p.chips===0)p.allIn=true;};
+  payB(sbIdx,MG_SB); payB(bbIdx,MG_BB);
+  mgAddLog(`手牌 #${MG.handNum} · 盲注${MG_SB}/${MG_BB}`,'gold');
+  mgRenderAll();
+  await mgSleep(200);
+  const firstIdx=nextSeatMG(bbIdx);
+  await mgBettingRound(firstIdx);
+  const stillContesting=MG.players.filter(p=>!p.folded&&!p.eliminated);
+  if(stillContesting.length<=1){await mgEndHand(false);return;}
+  // 翻牌
+  MG.round='flop'; MG.deck.pop(); for(let i=0;i<3;i++) MG.community.push(MG.deck.pop());
+  for(const p of MG.players) if(!p.eliminated){p.bet=0;} MG.lastBet=0;MG.minRaise=MG_BB;
+  mgRenderAll(); await mgSleep(400);
+  if(MG.players.filter(p=>!p.folded&&!p.allIn&&!p.eliminated).length>1) await mgBettingRound(nextSeatMG(MG.dealer));
+  if(MG.players.filter(p=>!p.folded&&!p.eliminated).length<=1){await mgEndHand(false);return;}
+  // 转牌
+  MG.round='turn'; MG.deck.pop(); MG.community.push(MG.deck.pop());
+  for(const p of MG.players) if(!p.eliminated){p.bet=0;} MG.lastBet=0;MG.minRaise=MG_BB;
+  mgRenderAll(); await mgSleep(400);
+  if(MG.players.filter(p=>!p.folded&&!p.allIn&&!p.eliminated).length>1) await mgBettingRound(nextSeatMG(MG.dealer));
+  if(MG.players.filter(p=>!p.folded&&!p.eliminated).length<=1){await mgEndHand(false);return;}
+  // 河牌
+  MG.round='river'; MG.deck.pop(); MG.community.push(MG.deck.pop());
+  for(const p of MG.players) if(!p.eliminated){p.bet=0;} MG.lastBet=0;MG.minRaise=MG_BB;
+  mgRenderAll(); await mgSleep(400);
+  if(MG.players.filter(p=>!p.folded&&!p.allIn&&!p.eliminated).length>1) await mgBettingRound(nextSeatMG(MG.dealer));
+  await mgEndHand(true);
+}
+
+// ---- 下一手 ----
+function mgNextHand(){
+  document.getElementById('mg-result-bar').style.display='none';
+  const alive=MG.players.filter(p=>!p.eliminated);
+  if(alive.length<2){mgGameOver();return;}
+  MG.handNum++;
+  mgPlayHand();
+}
+
+// ---- GTO 全局综合评分 ----
+function mgCalcOverallGTOScore(){
+  if(mgReviewLog.length===0) return null;
+  const goodCount=mgReviewLog.filter(r=>r.quality==='ok').length;
+  const warnCount=mgReviewLog.filter(r=>r.quality==='warn').length;
+  const badCount=mgReviewLog.filter(r=>r.quality==='bad').length;
+  const score=Math.round(((goodCount*2+warnCount*1)/(mgReviewLog.length*2))*100);
+  const grade=score>=90?'S':score>=80?'A':score>=65?'B':score>=50?'C':'D';
+  const gradeColor=score>=80?'#40c070':score>=60?'#e0a020':'#e05050';
+  const gradeDesc=score>=90?'教科书级别，GTO大师':score>=80?'优秀，决策整体合理':score>=65?'良好，部分细节可优化':score>=50?'一般，存在明显失误':'需要大量改进';
+  
+  // 改进建议
+  const tips=[];
+  const foldErrors=mgReviewLog.filter(r=>r.action==='弃牌'&&r.quality!=='ok');
+  const missedBets=mgReviewLog.filter(r=>r.comment.includes('强牌选择过牌'));
+  const looseCall=mgReviewLog.filter(r=>r.quality==='warn'&&(r.action==='跟注'||r.action==='过牌')&&r.comment.includes('负期望'));
+  if(foldErrors.length>0) tips.push(`💡 <b>弃牌时机</b>：${foldErrors.length}次过早弃牌，注意胜率vs赔率对比`);
+  if(missedBets.length>0) tips.push(`💡 <b>价值下注</b>：${missedBets.length}次持强牌未下注，要主动建底池`);
+  if(looseCall.length>0) tips.push(`💡 <b>跟注纪律</b>：${looseCall.length}次负期望跟注，计算清楚再行动`);
+  if(tips.length===0&&score>=80) tips.push(`✅ 整体决策质量不错，继续保持！`);
+  if(tips.length===0&&score<80) tips.push(`💡 多关注底池赔率与胜率的对比`);
+
+  return {score,grade,gradeColor,gradeDesc,goodCount,warnCount,badCount,tips};
+}
+
+// ---- 游戏结束 ----
+function mgGameOver(){
+  const hero=MG.players[0]; const won=!hero.eliminated;
+  mgHeroResolve=null; MG.ended=true;
+  document.getElementById('mg-result-bar').style.display='none';
+  const overlay=document.getElementById('mg-over-overlay');
+  if(!overlay)return;
+  overlay.style.display='flex';
+  document.getElementById('mg-over-icon').textContent=won?'🏆':'💀';
+  document.getElementById('mg-over-title').textContent=won?'恭喜你赢了！':'你已出局';
+  document.getElementById('mg-over-desc').innerHTML=won?`击败所有对手，共 <b style="color:var(--gold)">${MG.handNum}</b> 手牌<br>最终积分：<b style="color:var(--gold)">${hero.chips}</b>`:`共打了 <b style="color:var(--gold)">${MG.handNum}</b> 手牌`;
+  
+  // GTO综合评分
+  const scoreData=mgCalcOverallGTOScore();
+  const scoreWrap=document.getElementById('mg-over-score-wrap');
+  const scoreContent=document.getElementById('mg-over-score-content');
+  if(scoreData&&scoreWrap&&scoreContent){
+    scoreWrap.style.display='block';
+    scoreContent.innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="width:52px;height:52px;background:rgba(255,255,255,.04);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;border:2px solid ${scoreData.gradeColor};flex-shrink:0;">
+          <span style="font-size:22px;font-weight:900;color:${scoreData.gradeColor};line-height:1">${scoreData.grade}</span>
+          <span style="font-size:9px;color:${scoreData.gradeColor};opacity:.7">${scoreData.score}分</span>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${scoreData.gradeDesc}</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">
+            ✓ <b style="color:#40c070">${scoreData.goodCount}</b> 正确 &nbsp;
+            ⚠ <b style="color:#e0a020">${scoreData.warnCount}</b> 待改进 &nbsp;
+            ✗ <b style="color:#e05050">${scoreData.badCount}</b> 错误
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">共 ${mgReviewLog.length} 次决策 · ${MG.handNum} 手牌</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">改进建议：</div>
+      ${scoreData.tips.map(t=>`<div style="font-size:11px;color:var(--text);line-height:1.6;padding:6px 10px;border-radius:7px;background:rgba(255,255,255,.03);border-left:3px solid rgba(240,192,64,.4);margin-bottom:5px;">${t}</div>`).join('')}
+    `;
+  }
+}
+
+// ---- 退出游戏 ----
+function mgQuitGame(){
+  if(confirm('确定退出当前游戏？')){
+    MG=null; mgHeroResolve=null; mgActiveIdx=-1;
+    document.getElementById('mg-table').style.display='none';
+    document.getElementById('mg-start').style.display='flex';
+    document.getElementById('mg-over-overlay').style.display='none';
+  }
+}
+
+function mgReturnToStart(){
+  MG=null; mgHeroResolve=null; mgActiveIdx=-1; MG_SB=10; MG_BB=20;
+  mgReviewLog.length=0; mgTotalDecisions=0;
+  document.getElementById('mg-table').style.display='none';
+  document.getElementById('mg-start').style.display='flex';
+  document.getElementById('mg-over-overlay').style.display='none';
+}
+
+// ---- 开始游戏 ----
+let mgSelectedN = 3;
+function mgSelectN(btn){
+  document.querySelectorAll('.mg-n-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mgSelectedN = parseInt(btn.dataset.n);
+}
+function mgBlindChange(radio){
+  mgBlindMode = radio.value;
+}
+function mgStartGame(){
+  const n = mgSelectedN;
+  MG_SB=10; MG_BB=20;
+  mgReviewLog.length=0; mgTotalDecisions=0;
+  // 初始化游戏状态
+  const ps=[{id:0,name:'你',isHero:true,chips:MG_BUY_IN,hand:[],bet:0,folded:false,allIn:false,eliminated:false}];
+  const names=shuffleMG([...AI_NAMES]).slice(0,n-1);
+  for(let i=1;i<n;i++) ps.push({id:i,name:names[i-1],isHero:false,chips:MG_BUY_IN,hand:[],bet:0,folded:false,allIn:false,eliminated:false});
+  MG={players:ps,deck:[],community:[],pot:0,round:'preflop',dealer:-1,handNum:1,lastBet:MG_BB,minRaise:MG_BB,ended:false,showdown:false};
+  mgActiveIdx=-1; mgHeroResolve=null;
+  // 切换界面
+  document.getElementById('mg-start').style.display='none';
+  document.getElementById('mg-table').style.display='flex';
+  document.getElementById('mg-over-overlay').style.display='none';
+  mgPlayHand();
+}
+
 
 /* ===================================================
    情景实战逻辑

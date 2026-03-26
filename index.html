@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="theme-color" content="#0d1117"/>
-<title>游戏瞎 · 德州扑克训练</title>
+<title>得得地 · 德州扑克训练</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{--felt:#1a6b3c;--felt-dark:#145530;--felt-light:#1f7d47;--gold:#f0c040;--gold-dark:#c89a20;--text:#f5f0e8;--text-dim:#a09080;--btn-fold:#c0392b;--btn-call:#27ae60;--btn-raise:#2980b9;--btn-allin:#8e44ad;--bg:#0d1117;--sidebar-bg:#080d17;--card-bg:#111827;--border:rgba(255,255,255,.08);}
@@ -366,7 +366,7 @@ body{background:var(--bg);font-family:'Segoe UI','PingFang SC','Microsoft YaHei'
 <body>
 <div id="player-overlay">
   <div class="pso-box">
-    <div class="pso-title">🃏 游戏瞎</div>
+    <div class="pso-title">🃏 得得地</div>
     <div class="pso-sub">选择你的玩家档案，或创建新档案</div>
     <div class="player-list" id="player-list"></div>
     <div class="new-player-row">
@@ -377,7 +377,7 @@ body{background:var(--bg);font-family:'Segoe UI','PingFang SC','Microsoft YaHei'
 </div>
 <div id="topbar">
   <div style="display:flex;align-items:center;">
-    <div class="tb-logo">🃏 游戏瞎</div>
+    <div class="tb-logo">🃏 得得地</div>
     <div class="tb-player" id="tb-player-btn">
       <div class="tb-avatar" id="tb-avatar">?</div>
       <div>
@@ -890,7 +890,7 @@ const QUIZ_DATA = {
     {id:"bl01",diff:"hard",scenario:"河牌：A♠K♦Q♣J♠T♥（公牌顺子，但有一张同花）。你持9♣9♦（没有顺子），先行动，底池600。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♠"},{"r":"K","s":"♦"},{"r":"Q","s":"♣"},{"r":"J","s":"♠"},{"r":"T","s":"♥"}],pot:600,heroCards:[{"r":"9","s":"♣"},{"r":"9","s":"♦"}],heroInfo:"先行动 · 底池600",options:["过牌，99没有成牌","下注360（60%）诈唬","下注600满池诈唬","全下极化诈唬"],answer:2,pts:30,analysis:"<strong>公牌顺子牌面的诈唬策略</strong>：过牌！AKQJT是公牌顺子，所有人都有顺子（除非持有同花可能赢）。在这个牌面先行动下注没有意义：①对手也有顺子，不会弃牌；②对手过牌后你也应该过牌，让顺子分池；③唯一例外是你有♠同花顺，那才是价值下注场景。"},
     {id:"bl02",diff:"hard",scenario:"翻牌：K♥7♦2♣。你在BTN，3-bet后CO跟注，CO过牌。你持A♠Q♠，无成牌。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"CO","active":true}],community:[{"r":"K","s":"♥"},{"r":"7","s":"♦"},{"r":"2","s":"♣"}],pot:380,heroCards:[{"r":"A","s":"♠"},{"r":"Q","s":"♠"}],heroInfo:"3-bet主动方 · 先行动",options:["过牌，AQ未成牌","下注228（60%）C-bet","下注380满池C-bet","全下"],answer:1,pts:30,analysis:"<strong>干燥K高牌面的C-bet</strong>：60%是正确大小。K♥7♦2♣干燥彩虹，非常有利于3-bet方的范围（AA/KK/AK/AQ等），CO跟注3-bet后过牌说明他没有强K或更好的牌。你虽无成牌但C-bet代表的范围很强，让AX/QQ/JJ等手牌弃牌。C-bet频率应该很高（70%+），大小60%足够。"},
     {id:"bl03",diff:"hard",scenario:"转牌：A♣6♦3♠9♥。你持4♥5♥（双端顺子听牌完成了），先行动，底池500。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♣"},{"r":"6","s":"♦"},{"r":"3","s":"♠"},{"r":"9","s":"♥"}],pot:500,heroCards:[{"r":"4","s":"♥"},{"r":"5","s":"♥"}],heroInfo:"先行动 · 顺子完成",options:["过牌，诱导对手下注","下注150（30%）小注引钓","下注375（75%）价值下注","全下"],answer:2,pts:30,analysis:"<strong>顺子完成后的价值策略</strong>：75%底池价值下注！A♣6♦3♠9♥，你的45完成了A高顺子（A2345？不对，3456789—等等，4-5-6-A？实际是A-2-3-4-5的轮子顺子！）这是最强顺子之一（但A2345低顺，要注意更高顺子）。不论如何，持有顺子应该积极价值下注，让AX/两对等付费。"},
-    {id:"bl04",diff:"hard",scenario:"河牌：Q♦J♣T♠9♦8♥。你持A♥K♠（高牌未成，但有百老汇顺子AKQJT=broadway但需要A+T在手）...实际你持K♦Q♠（有顺子K高顺子KQJT9=顺子）。底池700，先行动。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"Q","s":"♦"},{"r":"J","s":"♣"},{"r":"T","s":"♠"},{"r":"9","s":"♦"},{"r":"8","s":"♥"}],pot:700,heroCards:[{"r":"K","s":"♦"},{"r":"Q","s":"♠"}],heroInfo:"先行动 · K高顺子",options:["过牌，这个牌面可能有更高顺子","下注420（60%）价值下注","下注700满池","全下"],answer:0,pts:30,analysis:"<strong>顺子在极度连接牌面的谨慎策略</strong>：过牌！QJJT98牌面中，你持KQ有K高顺子（KQJT9），但对手持有AK则有A高顺子（AKQJT）。在如此连接的牌面先行动下注有风险——如果被加注，你面临艰难决策。过牌让对手先行动，如果他下注再跟注（不加注），如果他也过牌就摊牌。控制底池是合理选择。"},
+    {id:"bl04",diff:"hard",scenario:"河牌：Q♦J♣T♠9♦8♥。你持K♦Q♠（K高顺子KQJT9成顺），底池700，先行动。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"Q","s":"♦"},{"r":"J","s":"♣"},{"r":"T","s":"♠"},{"r":"9","s":"♦"},{"r":"8","s":"♥"}],pot:700,heroCards:[{"r":"K","s":"♦"},{"r":"Q","s":"♠"}],heroInfo:"先行动 · K高顺子",options:["过牌，这个牌面可能有更高顺子","下注420（60%）价值下注","下注700满池","全下"],answer:0,pts:30,analysis:"<strong>顺子在极度连接牌面的谨慎策略</strong>：过牌！QJJT98牌面中，你持KQ有K高顺子（KQJT9），但对手持有AK则有A高顺子（AKQJT）。在如此连接的牌面先行动下注有风险——如果被加注，你面临艰难决策。过牌让对手先行动，如果他下注再跟注（不加注），如果他也过牌就摊牌。控制底池是合理选择。"},
     {id:"bl05",diff:"hard",scenario:"翻牌：A♦A♣7♥（对子牌面）。你持K♠Q♠，对手过牌，轮到你（BTN位）。",seats:[{"pos":0,"label":"BTN(你)","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"A","s":"♦"},{"r":"A","s":"♣"},{"r":"7","s":"♥"}],pot:240,heroCards:[{"r":"K","s":"♠"},{"r":"Q","s":"♠"}],heroInfo:"BTN · KQ未成牌",options:["过牌，KQ在对子A牌面没有价值","下注72（30%）小注诈唬","下注168（70%）大注诈唬","全下"],answer:1,pts:30,analysis:"<strong>对子A牌面（AA7）的诈唬策略</strong>：小注（25-33%）最优！对子牌面是诈唬的理想场景，原因：①对手的范围中持有A的比例较低（A牌只有4张，已出现2张）；②7低牌，对手的一对7/非对对子都很脆弱；③小注让对手认为你在价值下注，他持有的Kx/Qx会弃牌；④大注C-bet可能被持有A的对手反利用。"},
     {id:"bl06",diff:"hard",scenario:"转牌：K♠Q♦7♣2♥。你持J♣T♣（同花+顺子双听，在翻牌后已有），底池400，对手下注280。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♠"},{"r":"Q","s":"♦"},{"r":"7","s":"♣"},{"r":"2","s":"♥"}],pot:400,heroCards:[{"r":"J","s":"♣"},{"r":"T","s":"♣"}],heroInfo:"需跟注280 | 听牌中",options:["弃牌，面对下注无成牌","跟注280，保持听牌","加注到860，半诈唬最大化","全下"],answer:2,pts:30,analysis:"<strong>转牌听牌的半诈唬加注</strong>：加注到860是最优！JT在KQ牌面有：顺子听牌（A高需要A或J完成）+同花潜力。加注原因：①折叠价值——很多K+低踢牌会弃牌；②完成听牌时赢取更大底池；③主动权——不被动等牌。半诈唬是当你既有折叠价值又有完成听牌价值时的最强打法。"},
     {id:"bl07",diff:"hard",scenario:"河牌：K♣Q♥J♦2♠4♣（两张杂牌河牌）。你持A♦T♣（错过了顺子听牌）。对手在翻牌和转牌都下注，河牌过牌，轮到你。底池800。",seats:[{"pos":0,"label":"你","hero":true},{"pos":1,"label":"对手","active":true}],community:[{"r":"K","s":"♣"},{"r":"Q","s":"♥"},{"r":"J","s":"♦"},{"r":"2","s":"♠"},{"r":"4","s":"♣"}],pot:800,heroCards:[{"r":"A","s":"♦"},{"r":"T","s":"♣"}],heroInfo:"对手河牌过牌，你后行动",options:["过牌，AT未成牌没有价值","下注400（50%）诈唬","下注800满池大诈唬","全下极化"],answer:1,pts:30,analysis:"<strong>河牌超线诈唬：对手过牌后的探测性下注</strong>：50%底池诈唬有价值！对手在翻牌/转牌下注后河牌过牌，这通常代表他有中等强度手牌（中对、弱K等）或者在放弃。你的AT没有任何摊牌价值，过牌肯定输。50%底池诈唬：①对手的中等手牌面对50%下注会考虑弃牌；②你的A阻断了对手持有A的组合；③T也是边界阻断牌。"},
@@ -4350,13 +4350,13 @@ const SCENARIO_DATA = [
  keyPoint:"弱中等手牌(顶对弱踢)的河牌处理：过牌控制底池，利用摊牌价值，避免大注面对困境。"},
 
 {id:"R03",street:"river",streetLabel:"河牌",posType:"ip",potType:"3bet",
- title:"BTN在3-bet底池，AKT J→河牌Q，Broadway完成！",
+ title:"BTN在3-bet底池，AKTJ→河牌Q，Broadway完成！",
  setup:{
    pos:"BTN（庄家）",heroPos:"BTN",villainPos:"BB",stack:35,pot:65,
-   heroCards:["Q♠","T♦"],boardCards:["A♦","K♥","7♣","T♠","Q♥"],
-   villainAction:"三条街都有行动，河牌Q出来，BB过牌"
+   heroCards:["Q♠","T♦"],boardCards:["A♦","K♥","J♣","T♠","Q♥"],
+   villainAction:"三条街都有行动，河牌Q完成Broadway，BB过牌"
  },
- question:"AKTQJ完成板，你有QT（两对），河牌Q，BB过牌，怎么做？",
+ question:"AKQJT完成Broadway板，你有QT（两对），河牌Q，BB过牌，怎么做？",
  options:[
    {label:"过牌（check）",score:20,tag:"check"},
    {label:"下注 1/3底注（约22BB）",score:60,tag:"bet_third"},
@@ -4563,19 +4563,19 @@ const SCENARIO_DATA = [
  keyPoint:"河牌弱手牌面对全下时，冷静计算实际权益（而不只是底池赔率），不够权益则弃牌。"},
 
 {id:"R16",street:"river",streetLabel:"河牌",posType:"oop",potType:"3bet",
- title:"BB 3-bet底池，AJ8 T→河牌Q，面对BTN大注",
+ title:"BB 3-bet底池，AJ8T→河牌Q，对手持K成Broadway",
  setup:{
    pos:"BB（大盲）",heroPos:"BB",villainPos:"BTN",stack:42,pot:58,
    heroCards:["A♦","J♠"],boardCards:["A♣","J♦","8♠","T♥","Q♦"],
    villainAction:"河牌BTN下注2/3（约39BB）"
  },
- question:"AJ8TQ（Broadway板），你有AJ（两对），面对BTN大注怎么应对？",
+ question:"AJ8TQ（顺子危险板，对手持K可成Broadway），你有AJ（两对），面对BTN大注怎么应对？",
  options:[
    {label:"弃牌",score:65,tag:"fold",star:true},
    {label:"跟注（call 39BB）",score:45,tag:"call"},
    {label:"加注全下",score:15,tag:"raise"}
  ],
- explain:"AJ两对在AJ8TQ完整Broadway板面对BTN 2/3大注：① AJ8TQ是完整顺子板（A-K-Q-J-T，持有K可以打成Broadway），任何持有K的手牌（KQ/KJ/K8等）都打成了顺子，并且超过你的两对；② BTN 3-bet call范围有大量KQ/KJs/KTs等，这些在河牌Q出来后全部打成顺子；③ 你的AJ两对在这里很可能落后；④ 底池赔率：39BB进97BB，需要40%权益；⑤ AJ两对对BTN大注范围权益约30-35%，弃牌是GTO的主要选择，虽然接近边界。",
+ explain:"AJ两对在AJ8TQ顺子危险板面对BTN 2/3大注：① AJ8TQ是顺子板（缺K，但对手持K可以打成A-K-Q-J-T Broadway顺子），任何持有K的手牌（KQ/KJ/K8等）都打成了顺子，并且超过你的两对；② BTN 3-bet call范围有大量KQ/KJs/KTs等，这些在河牌Q出来后全部打成顺子；③ 你的AJ两对在这里很可能落后；④ 底池赔率：39BB进97BB，需要40%权益；⑤ AJ两对对BTN大注范围权益约30-35%，弃牌是GTO的主要选择，虽然接近边界。",
  keyPoint:"在有顺子/同花完成的危险河牌面对大注时，中等强度手牌（两对等）通常选择弃牌。"},
 
 {id:"R17",street:"river",streetLabel:"河牌",posType:"ip",potType:"srp",
