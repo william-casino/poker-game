@@ -1563,9 +1563,9 @@ const SCENARIO_DATA = [
  setup:{
    pos:"SB（小盲）",heroPos:"SB",villainPos:"HJ",stack:100,pot:0,
    heroCards:["Q♣","J♣"],boardCards:[],
-   villainAction:"HJ加注2.5BB，CO/BTN均弃牌，BB弃牌，轮到你"
+   villainAction:"HJ加注2.5BB，CO/BTN均弃牌，轮到你（SB）"
  },
- question:"HJ开池，后面都弃牌，你SB手持 Q♣J♣ 怎么做？",
+ question:"HJ开池，CO/BTN弃牌，轮到你（SB）手持 Q♣J♣ 怎么做？",
  options:[
    {label:"弃牌",score:25,tag:"fold"},
    {label:"跟注（call 2BB）",score:30,tag:"call"},
@@ -3378,7 +3378,20 @@ const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const RV = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
 const HAND_NAMES=['高牌','一对','两对','三条','顺子','同花','葫芦','四条','同花顺','皇家同花顺'];
 const ROUND_LABEL={preflop:'翻牌前',flop:'翻牌',turn:'转牌',river:'河牌'};
-const AI_NAMES=['博少','杰笑','大表','小康','达仔','抽抽侠','阿钊','大舅子','小舅子'];
+// AI 风格档案
+// style: hellmuth=紧攻等强牌  dwan=疯狗极激进  ivey=猎手慢打  linus=极化大注  normal=普通
+const AI_PROFILES = [
+  {name:'博少',   style:'ivey',     tip:'猎手型 · 慢打陷阱'},
+  {name:'杰笑',   style:'hellmuth', tip:'紧攻型 · 等强牌'},
+  {name:'大表',   style:'hellmuth', tip:'紧攻型 · 等强牌'},
+  {name:'小康',   style:'normal',   tip:'均衡型'},
+  {name:'达仔',   style:'normal',   tip:'均衡型'},
+  {name:'抽抽侠', style:'dwan',     tip:'疯狗型 · 极激进'},
+  {name:'阿钊',   style:'linus',    tip:'极化型 · 满池大注'},
+  {name:'大舅子', style:'normal',   tip:'均衡型'},
+  {name:'小舅子', style:'ivey',     tip:'猎手型 · 慢打陷阱'},
+];
+const AI_NAMES=AI_PROFILES.map(p=>p.name);
 const MG_BUY_IN = 2000;
 let MG_SB = 10, MG_BB = 20;
 
@@ -3436,13 +3449,116 @@ function estimateStrMG(cards){
   const tier=res.score[0]; return Math.min(1,0.05+tier*0.12+res.score[1]/100);
 }
 function decideAIMG(idx){
-  const p=MG.players[idx]; const callAmt=MG.lastBet-p.bet;
+  const p=MG.players[idx];
+  const callAmt=MG.lastBet-p.bet;
   const potOdds=MG.pot>0?callAmt/(MG.pot+callAmt):0;
-  const str=estimateStrMG([...p.hand,...MG.community]); const r=Math.random();
-  if(callAmt<=0){ if(str>0.68&&r<0.55){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.5+r*0.4))|0));return{action:'raise',raiseTotal:p.bet+bet};} if(str>0.42&&r<0.22)return{action:'raise',raiseTotal:p.bet+Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.4)|0))};return{action:'check',raiseTotal:0}; }
-  if(str>potOdds+0.18||(str>0.5&&callAmt<=p.chips)){ if(str>0.72&&r<0.3&&p.chips>callAmt){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.6)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};} if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0}; }
-  if(r<0.12&&str>0.35){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.55)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
-  if(callAmt<=0)return{action:'check',raiseTotal:0}; return{action:'fold',raiseTotal:0};
+  const str=estimateStrMG([...p.hand,...MG.community]);
+  const r=Math.random();
+  const phase=MG.round;
+  const isPostflop=(phase==='flop'||phase==='turn'||phase==='river');
+  const style=p.style||'normal';
+
+  // ======= Phil Hellmuth 风格：杰笑、大表 =======
+  // 特征：只玩强牌，面对加注经常弃掉中等牌，强牌时狠狠下注
+  if(style==='hellmuth'){
+    if(callAmt<=0){
+      if(str>0.75&&r<0.70){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.6+r*0.3))|0));return{action:'raise',raiseTotal:p.bet+bet};}
+      if(str>0.60&&r<0.35){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.5)|0));return{action:'raise',raiseTotal:p.bet+bet};}
+      return{action:'check',raiseTotal:0};
+    }
+    // 面对加注：只有强牌才跟/再加，弱中牌直接弃
+    if(str>0.72&&r<0.45&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.8)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+    if(str>potOdds+0.22){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    // 中等牌遇加注大概率弃（偶尔赌一把）
+    if(str>0.45&&r<0.15){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    return{action:'fold',raiseTotal:0};
+  }
+
+  // ======= Tom Dwan 风格：抽抽侠 =======
+  // 特征：超高频加注/再加注，宽范围3-bet，爱用大注，翻牌后几乎不弃
+  if(style==='dwan'){
+    if(callAmt<=0){
+      // 极高频主动下注，甚至弱牌也下
+      if(str>0.55&&r<0.80){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.65+r*0.5))|0));return{action:'raise',raiseTotal:p.bet+bet};}
+      if(r<0.45){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.5+r*0.4))|0));return{action:'raise',raiseTotal:p.bet+bet};}
+      return{action:'check',raiseTotal:0};
+    }
+    // 面对加注：大多数情况再加注
+    if(str>0.60&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*(0.8+r*0.6))|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+    // 弱牌也有45%再加注（诈唬）
+    if(r<0.45&&str>0.20&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*(0.6+r*0.4))|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+    // 跟注也很宽松
+    if(str>potOdds-0.05||(isPostflop&&str>0.22)){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    if(r<0.30){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    return{action:'fold',raiseTotal:0};
+  }
+
+  // ======= Phil Ivey 风格：博少、小舅子 =======
+  // 特征：慢打陷阱，翻牌过牌强牌，转牌/河牌突然大注，精准读牌
+  if(style==='ivey'){
+    if(callAmt<=0){
+      if(phase==='flop'){
+        // 翻牌强牌倾向过牌慢打（陷阱）
+        if(str>0.75&&r<0.60) return{action:'check',raiseTotal:0}; // 强牌过牌陷阱
+        if(str>0.55&&r<0.40){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.4)|0));return{action:'raise',raiseTotal:p.bet+bet};}
+        return{action:'check',raiseTotal:0};
+      }
+      if(phase==='turn'||phase==='river'){
+        // 转牌/河牌：之前慢打的强牌现在大注
+        if(str>0.68&&r<0.75){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.7+r*0.4))|0));return{action:'raise',raiseTotal:p.bet+bet};}
+        if(str>0.45&&r<0.35){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.55)|0));return{action:'raise',raiseTotal:p.bet+bet};}
+        return{action:'check',raiseTotal:0};
+      }
+      if(str>0.65&&r<0.50){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.5)|0));return{action:'raise',raiseTotal:p.bet+bet};}
+      return{action:'check',raiseTotal:0};
+    }
+    // 面对加注：有陷阱手牌时偶尔只跟（等下一街），强牌河牌狠加
+    if(str>0.78&&(phase==='river'||phase==='turn')&&r<0.60&&p.chips>callAmt*2){
+      const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*(0.75+r*0.4))|0));
+      if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};
+    }
+    if(str>potOdds+0.08||(isPostflop&&str>0.42)){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    if(isPostflop&&str>0.30&&r<0.30){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    return{action:'fold',raiseTotal:0};
+  }
+
+  // ======= Linus Loeliger 风格：阿钊 =======
+  // 特征：超极化下注（要么满池/超池，要么过牌），高频加注，河牌大注
+  if(style==='linus'){
+    if(callAmt<=0){
+      if(str>0.70&&r<0.72){
+        // 极化大注（满池或超池）
+        const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.9+r*0.6))|0));
+        return{action:'raise',raiseTotal:p.bet+bet};
+      }
+      // 高频小注/诈唬
+      if(r<0.38&&isPostflop){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.85)|0));return{action:'raise',raiseTotal:p.bet+bet};}
+      return{action:'check',raiseTotal:0};
+    }
+    // 面对加注：强牌超池再加注，弱牌也有诈唬反加
+    if(str>0.70&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*(1.0+r*0.5))|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+    if(r<0.20&&isPostflop&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.9)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+    // 跟注范围适中
+    if(str>potOdds+0.06||(isPostflop&&str>0.38)){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    if(isPostflop&&r<0.22){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+    return{action:'fold',raiseTotal:0};
+  }
+
+  // ======= 均衡型：小康、达仔、大舅子 =======
+  if(callAmt<=0){
+    if(str>0.68&&r<0.65){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.5+r*0.35))|0));return{action:'raise',raiseTotal:p.bet+bet};}
+    if(str>0.52&&r<0.42){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.4+r*0.25))|0));return{action:'raise',raiseTotal:p.bet+bet};}
+    if(str>0.35&&r<0.25){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*0.35)|0));return{action:'raise',raiseTotal:p.bet+bet};}
+    if(isPostflop&&r<0.28&&str<0.3){const bet=Math.min(p.chips,Math.max(MG_BB,(MG.pot*(0.45+r*0.3))|0));return{action:'raise',raiseTotal:p.bet+bet};}
+    return{action:'check',raiseTotal:0};
+  }
+  if(str>0.78&&r<0.55&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*(0.7+r*0.4))|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+  if(str>0.58&&isPostflop&&r<0.25&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.6)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+  if(str>potOdds+0.05||(isPostflop&&str>0.38)){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+  if(isPostflop&&str>0.28&&r<0.35){if(callAmt>=p.chips)return{action:'allin',raiseTotal:0};return{action:'call',raiseTotal:0};}
+  if(isPostflop&&r<0.08&&str<0.3&&p.chips>callAmt*2){const rt=Math.min(p.chips+p.bet,MG.lastBet+Math.max(MG.minRaise,(MG.pot*0.55)|0));if(rt>MG.lastBet)return{action:'raise',raiseTotal:rt};}
+  if(callAmt<=0)return{action:'check',raiseTotal:0};
+  return{action:'fold',raiseTotal:0};
 }
 
 // ---- 执行行动 ----
@@ -3515,6 +3631,8 @@ function mgRenderOpponents(){
     if(isSB) blindBadge += '<span class="mg-blind-badge sb">SB</span>';
     if(isBB) blindBadge += '<span class="mg-blind-badge bb">BB</span>';
 
+    const styleBadge=''; // 风格标签隐藏，不在牌桌显示
+
     // 手牌名称
     let handLabel = '';
     if(MG.showdown && !p.folded && !p.eliminated && p._handName)
@@ -3526,7 +3644,7 @@ function mgRenderOpponents(){
     row.className = cls;
     row.innerHTML = `
       <div class="mg-op-info">
-        <div class="mg-op-name">${p.name}${blindBadge}${statusBadge}</div>
+        <div class="mg-op-name">${p.name}${styleBadge}${blindBadge}${statusBadge}</div>
         <div class="mg-op-chips">${p.eliminated?'出局':p.chips+' 积分'}</div>
         ${betInfo}
         ${handLabel}
@@ -3969,8 +4087,8 @@ function mgStartGame(){
   mgReviewLog.length=0; mgTotalDecisions=0;
   // 初始化游戏状态
   const ps=[{id:0,name:'你',isHero:true,chips:MG_BUY_IN,hand:[],bet:0,folded:false,allIn:false,eliminated:false}];
-  const names=shuffleMG([...AI_NAMES]).slice(0,n-1);
-  for(let i=1;i<n;i++) ps.push({id:i,name:names[i-1],isHero:false,chips:MG_BUY_IN,hand:[],bet:0,folded:false,allIn:false,eliminated:false});
+  const profiles=shuffleMG([...AI_PROFILES]).slice(0,n-1);
+  for(let i=1;i<n;i++) ps.push({id:i,name:profiles[i-1].name,style:profiles[i-1].style,styleTip:profiles[i-1].tip,isHero:false,chips:MG_BUY_IN,hand:[],bet:0,folded:false,allIn:false,eliminated:false});
   MG={players:ps,deck:[],community:[],pot:0,round:'preflop',dealer:-1,handNum:1,lastBet:MG_BB,minRaise:MG_BB,ended:false,showdown:false};
   mgActiveIdx=-1; mgHeroResolve=null;
   // 切换界面
